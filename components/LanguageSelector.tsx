@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { Language } from '../types';
 
@@ -15,17 +16,16 @@ const languages: { code: Language; name: string }[] = [
 
 const LanguageSelector: React.FC<LanguageSelectorProps> = ({ selectedLanguage, onSelectLanguage }) => {
   return (
-    <div className="bg-gray-900/50 rounded-full p-1 flex items-center space-x-1 rtl:space-x-reverse border border-gray-700">
+    <div className="bg-gray-700 rounded-full p-1 flex items-center space-x-1 rtl:space-x-reverse">
       {languages.map((lang) => (
         <button
           key={lang.code}
           onClick={() => onSelectLanguage(lang.code)}
-          className={`px-3 py-1 text-sm font-semibold rounded-full transition-colors duration-300 ${
+          className={`px-3 py-1 text-sm font-semibold rounded-full transition-colors duration-200 ${
             selectedLanguage === lang.code
               ? 'bg-purple-600 text-white'
-              : 'text-gray-300 hover:bg-gray-700'
+              : 'text-gray-300 hover:bg-gray-600'
           }`}
-          aria-pressed={selectedLanguage === lang.code}
         >
           {lang.name}
         </button>

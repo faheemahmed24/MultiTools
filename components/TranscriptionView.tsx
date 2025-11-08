@@ -1,10 +1,20 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import type { Transcription, TranslationSet, TranscriptionSegment } from '../types';
+import type { TranslationSet, TranscriptionSegment } from '../types';
 import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
 import { EditIcon } from './icons/EditIcon';
 import { SaveIcon } from './icons/SaveIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
+
+// The internal representation of a transcription for this view
+export interface Transcription {
+    id: string;
+    fileName: string;
+    // Fix: Add date property to Transcription interface to align with usage.
+    date: string;
+    detectedLanguage: string;
+    segments: TranscriptionSegment[];
+}
 
 interface TranscriptionViewProps {
   transcription: Transcription;
@@ -89,7 +99,16 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
     if (format === 'txt') {
       createDownload(`${baseFilename}.txt`, fullText, 'text/plain;charset=utf-8');
     } else if (format === 'json') {
-      createDownload(`${baseFilename}.json`, JSON.stringify(transcription, null, 2), 'application/json;charset=utf-8');
+      // We need to reconstruct the full transcription object for export
+      const exportableTranscription = {
+          id: transcription.id,
+          fileName: transcription.fileName,
+          // Fix: Use the transcription's original date for export consistency.
+          date: transcription.date,
+          detectedLanguage: transcription.detectedLanguage,
+          segments: transcription.segments
+      }
+      createDownload(`${baseFilename}.json`, JSON.stringify(exportableTranscription, null, 2), 'application/json;charset=utf-8');
     } else if (format === 'srt') {
       const toSrtTime = (time: string) => time.replace('.', ',') + ',000';
       const srtContent = transcription.segments.map((seg, i) => 

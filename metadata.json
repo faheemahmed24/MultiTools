@@ -1,5 +1,5 @@
 {
-  "name": "AI Transcriber",
-  "description": "A powerful, local-first transcription application that converts speech from audio and video files into text. It features auto-language detection, multi-language support (English, Arabic, Urdu, Hindi), timestamp toggling, and a persistent history of your transcriptions.",
+  "name": "MultiTools",
+  "description": "A MultiTools website that contains all digital tools that can be used for writing and text extraction and making text file to pdf and pdf/images to text Etc..",
   "requestFramePermissions": []
 }

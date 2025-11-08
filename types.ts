@@ -1,3 +1,4 @@
+// types.ts
 export interface TranscriptionSegment {
   startTime: string;
   endTime: string;
@@ -5,22 +6,41 @@ export interface TranscriptionSegment {
   text: string;
 }
 
-export interface Transcription {
-  id: string;
-  fileName: string;
-  date: string;
+// Data payload specific to a transcription
+export interface TranscriptionData {
   detectedLanguage: string;
   segments: TranscriptionSegment[];
 }
 
+// Generic structure for any item saved in history
+export interface HistoryItem {
+  id: string;
+  fileName: string;
+  date: string;
+  tool: Tool;
+  data: TranscriptionData | { [key: string]: any }; // Can hold data for any tool
+}
+
+
 export type Language = 'en' | 'ar' | 'ur' | 'hi';
+
+export type Tool = 'transcriber' | 'ocr' | 'pdf-to-image' | 'image-to-pdf' | 'pdf-to-word' | 'word-to-pdf';
 
 export interface TranslationSet {
   title: string;
+  selectTool: string;
+  toolTranscriber: string;
+  toolOcr: string;
+  toolPdfToImage: string;
+  toolImageToPdf: string;
+  toolPdfToWord: string;
+  toolWordToPdf: string;
+  comingSoon: string;
   uploadFile: string;
   dropFile: string;
   transcribing: string;
   history: string;
+  historyAndSavedFiles: string; // New key for the updated title
   noHistory: string;
   transcription: string;
   showTimestamps: string;
@@ -42,25 +62,6 @@ export interface TranslationSet {
   downloadAs: string;
   detectedLanguage: string;
   securityNote: string;
-  // New keys for UI/UX update
-  fileConstraints: string;
-  releaseToUpload: string;
-  noHistoryDescription: string;
-  sortBy: string;
-  newest: string;
-  oldest: string;
-  nameAZ: string;
-  duration: string;
-  uploadProgress: string;
-  uploadCancel: string;
-  progressStep1: string;
-  progressStep2: string;
-  progressStep3: string;
-  progressStep4: string;
-  progressStep5: string;
-  timeRemaining: string;
-  minutes: string;
-  completed: string;
 }
 
 export type Translations = Record<Language, TranslationSet>;
