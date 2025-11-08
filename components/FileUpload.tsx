@@ -1,70 +1,121 @@
-import React, { useCallback, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { UploadIcon } from './icons/UploadIcon';
-import { AudioRecorder } from './AudioRecorder';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import type { TranslationSet } from '../types';
+import type { StatusType } from '../App';
+import { UploadIcon } from './icons/UploadIcon';
 
 interface FileUploadProps {
-  onFileUpload: (files: File[]) => void;
+  onFileSelect: (file: File) => void;
+  onCancel: () => void;
   t: TranslationSet;
-  isLoading: boolean;
+  status: StatusType;
+  fileName?: string;
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload, t, isLoading }) => {
-  const [activeTab, setActiveTab] = useState<'upload' | 'record'>('upload');
-  const [isDragActive, setIsDragActive] = useState(false);
+const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, onCancel, t, status, fileName }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    onFileUpload(acceptedFiles);
-  }, [onFileUpload]);
+  const isLoading = status !== 'idle';
 
-  const { getRootProps, getInputProps } = useDropzone({
-    onDrop,
-    accept: {
-      'audio/*': [],
-      'video/*': [],
-    },
-    disabled: isLoading,
-    onDragEnter: () => setIsDragActive(true),
-    onDragLeave: () => setIsDragActive(false),
-  });
+  useEffect(() => {
+    let timer: number;
+    if (status === 'reading') {
+      setProgress(0);
+      // Fake progress for FileReader since it's hard to get real progress
+      timer = window.setInterval(() => {
+        setProgress(prev => (prev >= 95 ? 95 : prev + 5));
+      }, 200);
+    } else {
+      setProgress(0);
+    }
+    return () => {
+      clearInterval(timer);
+    };
+  }, [status]);
+
+
+  const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isLoading) setIsDragging(true);
+  }, [isLoading]);
+
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+  
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (!isLoading && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      onFileSelect(e.dataTransfer.files[0]);
+    }
+  }, [onFileSelect, isLoading]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      onFileSelect(e.target.files[0]);
+    }
+  };
+
+  const handleClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  if (status === 'reading') {
+    return (
+       <div className="bg-gray-800 rounded-2xl shadow-lg p-6 text-center">
+         <h3 className="font-bold text-lg text-gray-200">{t.uploadProgress}</h3>
+         <p className="text-sm text-gray-400 truncate mt-1" title={fileName}>{fileName}</p>
+         <div className="w-full bg-gray-700 rounded-full h-2.5 my-4">
+           <div className="bg-purple-600 h-2.5 rounded-full" style={{ width: `${progress}%`, transition: 'width 0.2s ease-in-out' }}></div>
+         </div>
+         <button
+          onClick={onCancel}
+          className="px-4 py-1 text-sm bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors duration-200"
+        >
+          {t.uploadCancel}
+        </button>
+       </div>
+    );
+  }
 
   return (
-    <div className="bg-[color:var(--bg-secondary)] rounded-xl shadow-sm">
-      <div className="flex border-b border-gray-200 dark:border-gray-700">
+    <div className="bg-gray-800 rounded-2xl shadow-lg p-6">
+      <div
+        className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl transition-all duration-300 ${isDragging ? 'border-green-400 bg-gray-700 scale-105' : 'border-gray-600 hover:border-purple-500'}`}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        <UploadIcon className="w-12 h-12 text-gray-500 mb-4" />
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept="audio/*,video/*,.flac,.m4a"
+          className="hidden"
+          disabled={isLoading}
+        />
         <button
-          onClick={() => setActiveTab('upload')}
-          className={`flex-1 py-3 text-sm font-semibold transition-colors ${activeTab === 'upload' ? 'text-[color:var(--accent-primary)] border-b-2 border-[color:var(--accent-secondary)]' : 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]'}`}
+          onClick={handleClick}
+          disabled={isLoading}
+          className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200"
         >
-          {t.uploadFile}
+          {isLoading ? t.transcribing : t.uploadFile}
         </button>
-        <button
-          onClick={() => setActiveTab('record')}
-          className={`flex-1 py-3 text-sm font-semibold transition-colors ${activeTab === 'record' ? 'text-[color:var(--accent-primary)] border-b-2 border-[color:var(--accent-secondary)]' : 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]'}`}
-        >
-          {t.recordAudio}
-        </button>
-      </div>
-
-      <div className="p-4">
-        {activeTab === 'upload' && (
-           <div
-            {...getRootProps()}
-            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors duration-300
-            ${isLoading ? 'cursor-not-allowed bg-gray-200 dark:bg-gray-700/50' : 'hover:border-[color:var(--accent-primary)] hover:bg-[color:var(--accent-primary)]/10'}
-            ${isDragActive ? 'border-[color:var(--accent-primary)] bg-[color:var(--accent-primary)]/20' : 'border-gray-300 dark:border-gray-600'}`}
-          >
-            <input {...getInputProps()} />
-            <div className="flex flex-col items-center justify-center text-[color:var(--text-secondary)]">
-              <UploadIcon className="w-12 h-12 mb-4" />
-              <h3 className="text-lg font-semibold text-[color:var(--text-primary)]">{t.uploadTitle}</h3>
-              <p className="mt-1 text-sm">{t.uploadSubtitle}</p>
-            </div>
-          </div>
-        )}
-        {activeTab === 'record' && (
-          <AudioRecorder onRecordingComplete={(file) => onFileUpload([file])} t={t} />
-        )}
+        <p className="mt-2 text-sm text-gray-400 font-bold">{isDragging ? t.releaseToUpload : t.dropFile}</p>
+        <p className="mt-2 text-xs text-gray-500">{t.fileConstraints}</p>
       </div>
     </div>
   );

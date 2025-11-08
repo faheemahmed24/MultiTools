@@ -1,275 +1,185 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import type { Language, Transcription, TranscriptionSegment } from './types';
+import { translations } from './lib/i18n';
+import { transcribeAudio } from './services/geminiService';
+import { useLocalStorage } from './hooks/useLocalStorage';
 import Header from './components/Header';
 import FileUpload from './components/FileUpload';
 import TranscriptionView from './components/TranscriptionView';
 import HistoryPanel from './components/HistoryPanel';
-import FileQueue from './components/FileQueue';
 import Loader from './components/Loader';
-import CustomVocabulary from './components/CustomVocabulary';
-import { useLocalStorage } from './hooks/useLocalStorage';
-import { transcribeAudio, summarizeText, translateText, detectLanguage } from './services/geminiService';
-import { getTranslations } from './lib/i18n';
-import type { Language, Theme, Transcription, FileQueueItem } from './types';
+
+export type SortByType = 'newest' | 'oldest' | 'name';
+export type StatusType = 'idle' | 'reading' | 'transcribing';
 
 const App: React.FC = () => {
-  const [language, setLanguage] = useLocalStorage<Language>('language', 'en');
-  const [theme, setTheme] = useLocalStorage<Theme>('theme', 'light');
-  const [history, setHistory] = useLocalStorage<Transcription[]>('transcriptionHistory', []);
+  const [uiLanguage, setUiLanguage] = useState<Language>('en');
+  const [transcriptions, setTranscriptions] = useLocalStorage<Transcription[]>('transcriptions', []);
   const [activeTranscription, setActiveTranscription] = useState<Transcription | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSummarizing, setIsSummarizing] = useState(false);
-  const [isTranslating, setIsTranslating] = useState(false);
+  const [status, setStatus] = useState<StatusType>('idle');
   const [error, setError] = useState<string | null>(null);
-  const [fileQueue, setFileQueue] = useState<FileQueueItem[]>([]);
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [processTimeLeft, setProcessTimeLeft] = useState(0);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [customVocabulary, setCustomVocabulary] = useState<string>('');
-
-  const t = getTranslations(language);
+  const [processingFile, setProcessingFile] = useState<File | null>(null);
+  const [progressStep, setProgressStep] = useState(0);
+  const [sortBy, setSortBy] = useState<SortByType>('newest');
 
   useEffect(() => {
-    document.documentElement.lang = language;
-    document.documentElement.dir = ['ar', 'ur'].includes(language) ? 'rtl' : 'ltr';
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [language, theme]);
-  
-  // FIX: Changed NodeJS.Timeout to ReturnType<typeof setTimeout> for browser compatibility and fixed potential runtime error.
-  useEffect(() => {
-    if (isLoading && timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading, timeLeft]);
+    const dir = uiLanguage === 'ar' || uiLanguage === 'ur' ? 'rtl' : 'ltr';
+    document.documentElement.dir = dir;
+    document.documentElement.lang = uiLanguage;
+  }, [uiLanguage]);
 
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    if ((isSummarizing || isTranslating) && processTimeLeft > 0) {
-      timer = setTimeout(() => setProcessTimeLeft(processTimeLeft - 1), 1000);
-    }
-    return () => clearTimeout(timer);
-  }, [isSummarizing, isTranslating, processTimeLeft]);
+  const t = translations[uiLanguage];
 
-  useEffect(() => {
-    // Revoke the old audio URL when a new one is set or component unmounts
-    return () => {
-      if (audioUrl) {
-        URL.revokeObjectURL(audioUrl);
-      }
-    };
-  }, [audioUrl]);
-
-  const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
-  };
-
-  const processFile = async (file: File) => {
-    const startTime = Date.now();
-    try {
-      // Create a URL for the audio player
-      const newAudioUrl = URL.createObjectURL(file);
-      setAudioUrl(newAudioUrl);
-
-      const segments = await transcribeAudio(file, customVocabulary);
-      
-      const newTranscription: Transcription = {
-        id: `${Date.now()}-${file.name}`,
-        fileName: file.name,
-        segments: segments,
-        createdAt: new Date().toISOString(),
-        audioUrl: newAudioUrl, // Store URL with the transcription
-      };
-      
-      setHistory(prev => [newTranscription, ...prev]);
-      setActiveTranscription(newTranscription);
-      const duration = Math.round((Date.now() - startTime) / 1000);
-      setFileQueue(prev => prev.map(item => item.name === file.name ? { ...item, status: 'done', duration } : item));
-
-    } catch (err) {
-      console.error(err);
-      setError(t.transcriptionError);
-      const duration = Math.round((Date.now() - startTime) / 1000);
-      setFileQueue(prev => prev.map(item => item.name === file.name ? { ...item, status: 'error', duration } : item));
-    }
-  };
-
-  const handleFileUpload = async (files: File[]) => {
-    const newQueueItems: FileQueueItem[] = files.map(file => ({ name: file.name, status: 'processing' }));
-    setFileQueue(prev => [...prev, ...newQueueItems]);
-    setActiveTranscription(null);
-    if(audioUrl) URL.revokeObjectURL(audioUrl);
-    setAudioUrl(null);
-    setIsLoading(true);
+  const handleFileTranscribe = async (file: File) => {
+    setStatus('reading');
     setError(null);
-    
-    // Estimate based on 1 minute per 1MB, capped at 10 mins
-    const totalSizeMB = files.reduce((acc, file) => acc + file.size, 0) / (1024 * 1024);
-    const estimatedDuration = Math.min(Math.round(totalSizeMB * 60), 600);
-    setTimeLeft(estimatedDuration);
-    
-    for (const file of files) {
-      await processFile(file);
-    }
-    setIsLoading(false);
-  };
-  
-  const handleSelectHistory = (id: string) => {
-    const selected = history.find(item => item.id === id);
-    if (selected) {
-      setActiveTranscription(selected);
-      // Ensure the audio URL from history is used
-      if (audioUrl && audioUrl !== selected.audioUrl) {
-         URL.revokeObjectURL(audioUrl);
+    setActiveTranscription(null);
+    setProcessingFile(file);
+    setProgressStep(0);
+
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        setStatus('transcribing');
+        setProgressStep(1);
+        
+        // Simulate analysis steps for better UX
+        setTimeout(() => setProgressStep(2), 800);
+        setTimeout(() => setProgressStep(3), 2000);
+
+        const base64String = (reader.result as string).split(',')[1];
+        if (!base64String) {
+          throw new Error("Failed to read file.");
+        }
+
+        const { detectedLanguage, segments } = await transcribeAudio(base64String, file.type);
+        
+        setProgressStep(4);
+
+        const newTranscription: Transcription = {
+          id: new Date().toISOString(),
+          fileName: file.name,
+          date: new Date().toLocaleString(),
+          detectedLanguage,
+          segments,
+        };
+
+        setTimeout(() => {
+            setActiveTranscription(newTranscription);
+            setStatus('idle');
+            setProcessingFile(null);
+            setProgressStep(5);
+        }, 500);
+      };
+      reader.onerror = () => {
+        setStatus('idle');
+        setProcessingFile(null);
+        throw new Error("Error reading file.");
       }
-      setAudioUrl(selected.audioUrl || null);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'An unexpected error occurred during transcription.');
+      setStatus('idle');
+      setProcessingFile(null);
     }
   };
 
+  const handleCancel = () => {
+      setStatus('idle');
+      setProcessingFile(null);
+      setError(null);
+  };
+  
+  const handleSaveTranscription = useCallback(() => {
+    if (activeTranscription && !transcriptions.some(t => t.id === activeTranscription.id)) {
+      setTranscriptions([activeTranscription, ...transcriptions]);
+    }
+  }, [activeTranscription, transcriptions, setTranscriptions]);
+
+  const handleUpdateTranscription = (id: string, updatedSegments: TranscriptionSegment[]) => {
+    const updatedTranscription = { ...activeTranscription!, segments: updatedSegments };
+    setActiveTranscription(updatedTranscription);
+    
+    // Update history as well
+    const historyIndex = transcriptions.findIndex(t => t.id === id);
+    if (historyIndex > -1) {
+      const newTranscriptions = [...transcriptions];
+      newTranscriptions[historyIndex] = updatedTranscription;
+      setTranscriptions(newTranscriptions);
+    }
+  };
+  
+  const handleSelectHistory = (transcription: Transcription) => {
+    setActiveTranscription(transcription);
+  };
+  
   const handleDeleteHistory = (id: string) => {
-    const itemToDelete = history.find(item => item.id === id);
-    setHistory(history.filter(item => item.id !== id));
+    setTranscriptions(transcriptions.filter(t => t.id !== id));
     if (activeTranscription?.id === id) {
       setActiveTranscription(null);
-      if(itemToDelete?.audioUrl) {
-        URL.revokeObjectURL(itemToDelete.audioUrl);
+    }
+  };
+
+  const sortedTranscriptions = useMemo(() => {
+    return [...transcriptions].sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest':
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        case 'name':
+          return a.fileName.localeCompare(b.fileName);
+        case 'newest':
+        default:
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
       }
-      setAudioUrl(null);
-    }
-  };
-
-  const handleClearHistory = () => {
-    history.forEach(item => {
-      if(item.audioUrl) URL.revokeObjectURL(item.audioUrl);
     });
-    setHistory([]);
-    setActiveTranscription(null);
-    setAudioUrl(null);
-  };
+  }, [transcriptions, sortBy]);
 
-  const handleNewTranscription = () => {
-    setActiveTranscription(null);
-    if (audioUrl) {
-      URL.revokeObjectURL(audioUrl);
-    }
-    setAudioUrl(null);
-    // Reset queue for a fresh start
-    setFileQueue([]);
-  };
-  
-  const handleUpdateTranscription = (updatedData: Transcription) => {
-    setActiveTranscription(updatedData);
-    setHistory(history.map(item => item.id === updatedData.id ? updatedData : item));
-  };
-
-  const estimateProcessingTime = (text: string) => {
-    // Estimate based on ~1s per 800 chars, with a min of 5s and a max of 90s for more accuracy
-    return Math.max(5, Math.min(90, Math.round(text.length / 800)));
-  };
-
-  const handleSummarize = async (targetLanguage: string) => {
-    if (!activeTranscription) return;
-    setIsSummarizing(true);
-    const fullText = activeTranscription.segments.map(s => s.text).join(' ');
-    setProcessTimeLeft(estimateProcessingTime(fullText));
-    try {
-      const summary = await summarizeText(fullText, targetLanguage);
-      const updatedTranscription = { ...activeTranscription, summary };
-      handleUpdateTranscription(updatedTranscription);
-    } catch (error) {
-      console.error("Summarization failed", error);
-    } finally {
-      setIsSummarizing(false);
-    }
-  };
-
-  const handleTranslate = async (targetLanguage: string) => {
-    if (!activeTranscription) return;
-    setIsTranslating(true);
-    const fullText = activeTranscription.segments.map(s => s.text).join('\n');
-    setProcessTimeLeft(estimateProcessingTime(fullText));
-    try {
-      const translation = await translateText(fullText, targetLanguage, activeTranscription.detectedLanguage);
-      const updatedTranscription = { ...activeTranscription, translation };
-      handleUpdateTranscription(updatedTranscription);
-    } catch (error) {
-      console.error("Translation failed", error);
-    } finally {
-      setIsTranslating(false);
-    }
-  };
-
-  const handleDetectLanguage = async () => {
-    if (!activeTranscription || activeTranscription.detectedLanguage) return;
-    try {
-      const fullText = activeTranscription.segments.map(s => s.text).join('\n');
-      const language = await detectLanguage(fullText);
-      const updatedTranscription = { ...activeTranscription, detectedLanguage: language };
-      handleUpdateTranscription(updatedTranscription);
-    } catch (error) {
-      console.error("Language detection failed", error);
-      // Optionally set an error state to show in the UI
-    }
-  };
-
+  const isLoading = status !== 'idle';
 
   return (
-    <div className={`min-h-screen text-[color:var(--text-primary)] transition-colors ${theme === 'dark' ? 'theme-dark' : 'theme-light'}`}>
-      <Header
-        t={t}
-        selectedLanguage={language}
-        onSelectLanguage={setLanguage}
-        theme={theme}
-        onThemeToggle={toggleTheme}
-      />
-      <main className="container mx-auto p-4 md:p-8">
-        <div className="flex flex-col md:flex-row gap-8">
-          <div className="flex-grow">
-            {isLoading ? (
-              <Loader t={t} timeLeft={timeLeft} />
-            ) : activeTranscription ? (
-              <>
-                <TranscriptionView 
-                  key={activeTranscription.id} // Re-mount component on change
-                  data={activeTranscription} 
-                  t={t} 
-                  onUpdate={handleUpdateTranscription} 
-                  onSummarize={handleSummarize}
-                  isSummarizing={isSummarizing}
-                  onTranslate={handleTranslate}
-                  isTranslating={isTranslating}
-                  onDetectLanguage={handleDetectLanguage}
-                  processTimeLeft={processTimeLeft}
-                />
-                <div className="mt-6 text-center">
-                  <button
-                    onClick={handleNewTranscription}
-                    className="px-6 py-2 bg-[color:var(--accent-primary)] text-white font-semibold rounded-lg shadow-md hover:bg-[color:var(--accent-primary-hover)] transition-colors"
-                  >
-                    {t.transcribeAnother}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <FileUpload onFileUpload={handleFileUpload} t={t} isLoading={isLoading} />
-                <CustomVocabulary value={customVocabulary} onChange={setCustomVocabulary} t={t} />
-              </>
-            )}
-            {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
-            <FileQueue files={fileQueue} t={t} />
-          </div>
-          <HistoryPanel
-            history={history}
-            onSelectHistory={handleSelectHistory}
-            onDeleteHistory={handleDeleteHistory}
-            onClearHistory={handleClearHistory}
+    <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col">
+      <Header t={t} uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} />
+      <main className="flex-grow container mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className="lg:col-span-1 flex flex-col gap-6">
+          <FileUpload 
+            onFileSelect={handleFileTranscribe}
+            onCancel={handleCancel}
             t={t}
-            activeId={activeTranscription?.id}
+            status={status}
+            fileName={processingFile?.name}
           />
+          <HistoryPanel 
+            transcriptions={sortedTranscriptions}
+            onSelect={handleSelectHistory}
+            onDelete={handleDeleteHistory}
+            activeId={activeTranscription?.id}
+            t={t}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+          />
+        </div>
+        <div className="lg:col-span-2 bg-gray-800 rounded-2xl shadow-lg p-6 flex flex-col min-h-[60vh] lg:min-h-0">
+          {status === 'transcribing' && <Loader t={t} step={progressStep} fileName={processingFile?.name || ''} />}
+          {error && <div className="m-auto text-center text-red-400">
+              <h3 className="text-xl font-bold">{t.errorTitle}</h3>
+              <p>{error}</p>
+            </div>}
+          {!isLoading && !error && activeTranscription && (
+            <TranscriptionView 
+              transcription={activeTranscription}
+              onSave={handleSaveTranscription}
+              onUpdate={handleUpdateTranscription}
+              t={t}
+            />
+          )}
+          {!isLoading && !error && !activeTranscription && (
+            <div className="m-auto text-center text-gray-400 px-4">
+              <h3 className="text-3xl font-bold text-gray-100">{t.welcomeTitle}</h3>
+              <p className="mt-4 max-w-prose mx-auto text-gray-300">{t.welcomeMessage}</p>
+              <p className="mt-4 text-xs text-gray-500">{t.securityNote}</p>
+            </div>
+          )}
         </div>
       </main>
     </div>

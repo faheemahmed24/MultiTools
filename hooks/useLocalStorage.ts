@@ -1,9 +1,7 @@
+// FIX: Import React to provide the namespace for types like React.Dispatch.
+import React, { useState, useEffect } from 'react';
 
-
-// FIX: Import Dispatch and SetStateAction to resolve missing 'React' namespace.
-import { useState, useEffect, Dispatch, SetStateAction } from 'react';
-
-export function useLocalStorage<T,>(key: string, initialValue: T): [T, Dispatch<SetStateAction<T>>] {
+export function useLocalStorage<T,>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
       const item = window.localStorage.getItem(key);
