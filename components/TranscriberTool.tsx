@@ -166,7 +166,7 @@ const TranscriberTool: React.FC<TranscriberToolProps> = ({ t }) => {
   const isUploading = tasks.some(t => t.type === 'transcription' && t.status === 'processing');
 
   return (
-    <main className="flex-grow container mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+    <main className="flex-grow container mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
       <div className="lg:col-span-1 flex flex-col gap-6">
         <FileUpload 
           onFileSelect={handleFileTranscribe} 
@@ -178,6 +178,8 @@ const TranscriberTool: React.FC<TranscriberToolProps> = ({ t }) => {
         <NotificationManager t={t} />
         <TasksPanel
           tasks={transcriptionTasks}
+          // FIX: Added the required 'taskType' prop.
+          taskType="transcription"
           onSelect={handleSelectTask}
           onDismiss={dismissTask}
           activeId={activeSelection?.type === 'task' ? activeSelection.id : undefined}
@@ -191,7 +193,7 @@ const TranscriberTool: React.FC<TranscriberToolProps> = ({ t }) => {
           t={t}
         />
       </div>
-      <div className="lg:col-span-2 bg-gray-800 rounded-2xl shadow-lg p-6 flex flex-col min-h-[60vh] lg:min-h-0">
+      <div className="lg:col-span-2 bg-gray-800 rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col min-h-[60vh] lg:min-h-0">
         {renderMainView()}
       </div>
     </main>

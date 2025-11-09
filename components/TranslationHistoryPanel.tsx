@@ -1,26 +1,26 @@
 import React from 'react';
-import type { Transcription, TranslationSet } from '../types';
+import type { TranslationItem, TranslationSet } from '../types';
 import { TrashIcon } from './icons/TrashIcon';
 
-interface HistoryPanelProps {
-  transcriptions: Transcription[];
-  onSelect: (transcription: Transcription) => void;
+interface TranslationHistoryPanelProps {
+  translations: TranslationItem[];
+  onSelect: (item: TranslationItem) => void;
   onDelete: (id: string) => void;
   activeId?: string;
   t: TranslationSet;
 }
 
-const HistoryPanel: React.FC<HistoryPanelProps> = ({ transcriptions, onSelect, onDelete, activeId, t }) => {
+const TranslationHistoryPanel: React.FC<TranslationHistoryPanelProps> = ({ translations, onSelect, onDelete, activeId, t }) => {
   return (
     <div className="bg-gray-800 rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col h-full max-h-[50vh] lg:max-h-none">
-      <h2 className="text-xl font-bold mb-4 text-gray-200">{t.history}</h2>
-      {transcriptions.length === 0 ? (
+      <h2 className="text-xl font-bold mb-4 text-gray-200">{t.translationHistory}</h2>
+      {translations.length === 0 ? (
         <div className="flex-grow flex items-center justify-center">
-          <p className="text-gray-500">{t.noHistory}</p>
+          <p className="text-gray-500">{t.noTranslationHistory}</p>
         </div>
       ) : (
         <ul className="space-y-2 overflow-y-auto -me-3 pe-3">
-          {transcriptions.map((item) => (
+          {translations.map((item) => (
             <li
               key={item.id}
               className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors duration-200 ${
@@ -29,11 +29,14 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ transcriptions, onSelect, o
               onClick={() => onSelect(item)}
             >
               <div className="flex-grow overflow-hidden">
-                <p className="font-semibold truncate text-gray-200">{item.fileName}</p>
-                <div className="flex items-center gap-2">
-                  <p className="text-xs text-gray-400">{item.date}</p>
+                <p className="font-semibold truncate text-gray-200" title={item.sourceText}>"{item.sourceText.substring(0, 50)}..."</p>
+                <div className="flex items-center gap-2 mt-1">
                   <span className="bg-gray-600 text-purple-300 text-[10px] font-medium px-1.5 py-0.5 rounded">
-                    {item.detectedLanguage}
+                    {item.sourceLanguage}
+                  </span>
+                  <span className="text-gray-400 text-xs">→</span>
+                  <span className="bg-gray-600 text-green-300 text-[10px] font-medium px-1.5 py-0.5 rounded">
+                    {item.targetLanguage}
                   </span>
                 </div>
               </div>
@@ -55,4 +58,4 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ transcriptions, onSelect, o
   );
 };
 
-export default HistoryPanel;
+export default TranslationHistoryPanel;

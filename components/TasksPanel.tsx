@@ -1,12 +1,12 @@
 import React from 'react';
-// Fix: Import `TranscriptionTask` to use it as a type guard.
-import type { Task, TranslationSet, TranscriptionTask } from '../types';
+import type { Task, TranslationSet, TranscriptionTask, TextTranslationTask } from '../types';
 import { SpinnerIcon } from './icons/SpinnerIcon';
 import { CheckIcon } from './icons/CheckIcon';
 import { TrashIcon } from './icons/TrashIcon'; // Placeholder for an error icon
 
 interface TasksPanelProps {
   tasks: Task[];
+  taskType: 'transcription' | 'text-translation';
   onSelect: (task: Task) => void;
   onDismiss: (taskId: string) => void;
   activeId?: string;
@@ -26,47 +26,52 @@ const TaskStatusIcon: React.FC<{ status: Task['status'] }> = ({ status }) => {
   }
 };
 
-const TasksPanel: React.FC<TasksPanelProps> = ({ tasks, onSelect, onDismiss, activeId, t }) => {
-  // Fix: Use a type guard in the filter to correctly type `transcriptionTasks` as `TranscriptionTask[]`.
-  const transcriptionTasks = tasks.filter((task): task is TranscriptionTask => task.type === 'transcription');
+const TasksPanel: React.FC<TasksPanelProps> = ({ tasks, taskType, onSelect, onDismiss, activeId, t }) => {
+  const relevantTasks = tasks.filter(task => task.type === taskType);
 
-  if (transcriptionTasks.length === 0) {
+  if (relevantTasks.length === 0) {
     return null;
   }
 
   return (
-    <div className="bg-gray-800 rounded-2xl shadow-lg p-6 flex flex-col h-full max-h-[50vh] lg:max-h-auto">
+    <div className="bg-gray-800 rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col h-full max-h-[50vh] lg:max-h-auto">
       <h2 className="text-xl font-bold mb-4 text-gray-200">Active Tasks</h2>
       <ul className="space-y-2 overflow-y-auto -me-3 pe-3">
-        {transcriptionTasks.map((task) => (
-          <li
-            key={task.id}
-            className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors duration-200 ${
-              activeId === task.id ? 'bg-purple-600/50' : 'bg-gray-700/50 hover:bg-gray-700'
-            }`}
-            onClick={() => onSelect(task)}
-          >
-            <div className="flex items-center gap-3 flex-grow overflow-hidden">
-                <TaskStatusIcon status={task.status} />
-                <div className="flex-grow overflow-hidden">
-                    <p className="font-semibold truncate text-gray-200">{task.fileName}</p>
-                    <p className="text-xs text-gray-400 capitalize">{task.status}</p>
-                </div>
-            </div>
-            {task.status !== 'processing' && (
-                 <button 
-                 onClick={(e) => {
-                   e.stopPropagation();
-                   onDismiss(task.id);
-                 }}
-                 className="ms-2 p-2 rounded-full text-gray-400 hover:bg-red-500/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                 aria-label={t.delete}
-               >
-                 <TrashIcon className="w-5 h-5" />
-               </button>
-            )}
-          </li>
-        ))}
+        {relevantTasks.map((task) => {
+          const title = task.type === 'transcription' 
+            ? (task as TranscriptionTask).fileName 
+            : `"${(task as TextTranslationTask).sourceText.substring(0, 40)}..."`;
+
+          return (
+            <li
+              key={task.id}
+              className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors duration-200 ${
+                activeId === task.id ? 'bg-purple-600/50' : 'bg-gray-700/50 hover:bg-gray-700'
+              }`}
+              onClick={() => onSelect(task)}
+            >
+              <div className="flex items-center gap-3 flex-grow overflow-hidden">
+                  <TaskStatusIcon status={task.status} />
+                  <div className="flex-grow overflow-hidden">
+                      <p className="font-semibold truncate text-gray-200" title={title}>{title}</p>
+                      <p className="text-xs text-gray-400 capitalize">{task.status}</p>
+                  </div>
+              </div>
+              {task.status !== 'processing' && (
+                  <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDismiss(task.id);
+                  }}
+                  className="ms-2 p-2 rounded-full text-gray-400 hover:bg-red-500/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label={t.delete}
+                >
+                  <TrashIcon className="w-5 h-5" />
+                </button>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

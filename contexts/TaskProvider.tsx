@@ -1,11 +1,12 @@
 import React, { createContext, useState, useCallback, ReactNode, useEffect } from 'react';
-import type { Task, Transcription, TranscriptionSegment, TranscriptionTask, TranslationTask } from '../types';
+import type { Task, Transcription, TranscriptionSegment, TranscriptionTask, TranslationTask, TextTranslationTask } from '../types';
 import * as db from '../lib/db';
 
 interface TaskContextType {
   tasks: Task[];
   startTranscription: (file: File, languageName?: string) => Promise<void>;
   startTranslation: (segments: TranscriptionSegment[], targetLanguage: {code: string, name: string}, parentId: string) => Promise<void>;
+  startTextTranslation: (sourceText: string, targetLanguage: {code: string, name: string}, sourceLanguage?: {code: string, name: string}) => Promise<void>;
   dismissTask: (taskId: string) => void;
 }
 
@@ -101,13 +102,31 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     postMessageToServiceWorker({ type: 'START_TASK', payload: newTask });
   }, []);
 
+  const startTextTranslation = useCallback(async (sourceText: string, targetLanguage: {code: string, name: string}, sourceLanguage?: {code: string, name: string}) => {
+    const taskId = `task_text_transl_${Date.now()}`;
+    
+    const newTask: TextTranslationTask = {
+      id: taskId,
+      type: 'text-translation',
+      status: 'processing',
+      createdAt: new Date().toISOString(),
+      sourceText,
+      targetLanguageName: targetLanguage.name,
+      sourceLanguageName: sourceLanguage?.name,
+    };
+
+    await db.addTask(newTask);
+    setTasks(prev => [newTask, ...prev]);
+    postMessageToServiceWorker({ type: 'START_TASK', payload: newTask });
+  }, []);
+
   const dismissTask = useCallback(async (taskId: string) => {
     await db.deleteTask(taskId);
     setTasks(prev => prev.filter(t => t.id !== taskId));
   }, []);
 
   return (
-    <TaskContext.Provider value={{ tasks, startTranscription, startTranslation, dismissTask }}>
+    <TaskContext.Provider value={{ tasks, startTranscription, startTranslation, startTextTranslation, dismissTask }}>
       {children}
     </TaskContext.Provider>
   );

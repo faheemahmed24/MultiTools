@@ -27,6 +27,8 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   const [isEditing, setIsEditing] = useState(false);
   const [editedSegments, setEditedSegments] = useState<TranscriptionSegment[]>([]);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [speakerRenames, setSpeakerRenames] = useState<Record<string, string>>({});
+  const [currentlyEditingSpeaker, setCurrentlyEditingSpeaker] = useState<string | null>(null);
 
   // Translation state from context
   const [activeView, setActiveView] = useState<'transcription' | 'translation'>('transcription');
@@ -98,9 +100,26 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
 
   const handleEditToggle = () => {
     if (isEditing) {
+      // Cancel editing
       setIsEditing(false);
+      setCurrentlyEditingSpeaker(null);
+      setSpeakerRenames({});
     } else {
+      // Start editing
       setEditedSegments(JSON.parse(JSON.stringify(transcription.segments))); // Deep copy
+      
+      // Initialize speaker renames map
+      const uniqueSpeakers = [...new Set(transcription.segments.map(s => s.speaker))];
+      // FIX: Add a type guard to ensure `speaker` is a string before using it as an index.
+      // This resolves the "Type 'unknown' cannot be used as an index type" error.
+      const initialRenames = uniqueSpeakers.reduce((acc, speaker) => {
+        if (typeof speaker === 'string') {
+          acc[speaker] = speaker;
+        }
+        return acc;
+      }, {} as Record<string, string>);
+      setSpeakerRenames(initialRenames);
+      
       setIsEditing(true);
     }
   };
@@ -110,10 +129,20 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
     newSegments[index].text = newText;
     setEditedSegments(newSegments);
   };
+  
+  const handleSpeakerNameChange = (originalSpeaker: string, newName: string) => {
+    setSpeakerRenames(prev => ({ ...prev, [originalSpeaker]: newName }));
+  };
 
   const handleSaveChanges = () => {
-    onUpdate(transcription.id, editedSegments);
+    const updatedSegmentsWithSpeakerNames = editedSegments.map(segment => ({
+      ...segment,
+      speaker: speakerRenames[segment.speaker] || segment.speaker,
+    }));
+    onUpdate(transcription.id, updatedSegmentsWithSpeakerNames);
     setIsEditing(false);
+    setCurrentlyEditingSpeaker(null);
+    setSpeakerRenames({});
   };
 
   const createDownload = (filename: string, content: string, mime: string) => {
@@ -154,7 +183,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
 
   const renderTranscriptionView = () => (
     <div className="flex flex-col h-full">
-      <div className="flex items-center space-x-4 rtl:space-x-reverse mb-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 rtl:space-x-reverse mb-4">
           <label className="flex items-center cursor-pointer">
             <div className="relative">
               <input type="checkbox" className="sr-only" checked={showTimestamps} onChange={() => setShowTimestamps(!showTimestamps)} />
@@ -178,7 +207,35 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
             editedSegments.map((segment, index) => (
               <div key={index} className="mb-2 flex items-start gap-3">
                 {showTimestamps && <span className="text-purple-400 whitespace-nowrap pt-1">[{segment.startTime}]</span>}
-                {showSpeaker && <strong className="text-pink-400 whitespace-nowrap pt-1">{segment.speaker}:</strong>}
+                {showSpeaker && (
+                  <div className="pt-1 whitespace-nowrap">
+                    {currentlyEditingSpeaker === segment.speaker ? (
+                      <input
+                        type="text"
+                        value={speakerRenames[segment.speaker] || ''}
+                        onChange={(e) => handleSpeakerNameChange(segment.speaker, e.target.value)}
+                        onBlur={() => setCurrentlyEditingSpeaker(null)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === 'Escape') {
+                            setCurrentlyEditingSpeaker(null);
+                            e.preventDefault();
+                          }
+                        }}
+                        autoFocus
+                        className="text-pink-400 bg-gray-800 border border-purple-500 rounded-md px-1 py-0 w-28"
+                        onFocus={(e) => e.target.select()}
+                      />
+                    ) : (
+                      <strong
+                        className="text-pink-400 cursor-pointer hover:bg-gray-700 rounded px-1 py-0.5 transition-colors"
+                        onClick={() => setCurrentlyEditingSpeaker(segment.speaker)}
+                        title={`Click to rename ${speakerRenames[segment.speaker]}`}
+                      >
+                        {speakerRenames[segment.speaker] || segment.speaker}:
+                      </strong>
+                    )}
+                  </div>
+                )}
                 <textarea
                   value={segment.text}
                   onChange={(e) => handleSegmentChange(index, e.target.value)}
@@ -200,17 +257,17 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
           )}
         </div>
       </div>
-      <div className="flex flex-wrap gap-2 justify-between">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-2 justify-between items-stretch sm:items-center">
         <div className="flex flex-wrap gap-2">
-           <button onClick={handleCopy} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
+           <button onClick={handleCopy} className="flex items-center justify-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
             {isCopied ? <CheckIcon className="w-5 h-5 me-2"/> : <CopyIcon className="w-5 h-5 me-2" />}
             {isCopied ? t.copied : t.copy}
           </button>
-          <button onClick={handleSave} disabled={isSaved} className="px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-purple-800 disabled:cursor-not-allowed transition-colors duration-200">
+          <button onClick={handleSave} disabled={isSaved} className="flex-1 sm:flex-none justify-center px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-purple-800 disabled:cursor-not-allowed transition-colors duration-200">
             {isSaved ? t.saved : t.save}
           </button>
           <div className="relative">
-            <button onClick={() => setShowExportMenu(!showExportMenu)} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
+            <button onClick={() => setShowExportMenu(!showExportMenu)} className="flex w-full justify-center items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
               <DownloadIcon className="w-5 h-5 me-2" /> {t.export}
             </button>
             {showExportMenu && (
@@ -224,11 +281,11 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
         </div>
         <div className="flex flex-wrap gap-2">
             {isEditing && (
-              <button onClick={handleSaveChanges} className="flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200">
+              <button onClick={handleSaveChanges} className="flex items-center justify-center flex-1 sm:flex-none px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200">
                 <SaveIcon className="w-5 h-5 me-2"/> {t.saveChanges}
               </button>
             )}
-            <button onClick={handleEditToggle} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
+            <button onClick={handleEditToggle} className="flex items-center justify-center flex-1 sm:flex-none px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
               <EditIcon className="w-5 h-5 me-2"/> {isEditing ? t.cancel : t.edit}
             </button>
         </div>
@@ -291,7 +348,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   return (
     <div className="flex flex-col h-full">
         <div className="flex-1">
-            <h2 className="text-xl font-bold text-gray-200" title={transcription.fileName}>{transcription.fileName}</h2>
+            <h2 className="text-xl font-bold text-gray-200 truncate" title={transcription.fileName}>{transcription.fileName}</h2>
             <p className="text-xs text-purple-400 mt-1">{t.detectedLanguage}: <span className="font-semibold">{transcription.detectedLanguage}</span></p>
         </div>
 

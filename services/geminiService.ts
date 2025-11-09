@@ -91,11 +91,16 @@ export const translateText = async (segments: TranscriptionSegment[], targetLang
   
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-  const prompt = `You are an expert translator. Your task is to translate the 'text' field of each JSON object in the provided array into ${targetLanguage}.
-IMPORTANT:
-- Keep the 'startTime', 'endTime', and 'speaker' fields exactly the same as in the original.
-- Respond ONLY with a single JSON object containing a 'segments' array that strictly matches the provided schema.
-- Do not include any other text, explanations, or markdown formatting.`;
+  const prompt = `You are a professional translator specializing in dialogue. Your task is to translate the 'text' field of each JSON object in the provided array of transcription segments into ${targetLanguage}.
+Your translation must be:
+- **Nuanced and Contextual:** Accurately convey the original meaning, tone, and intent. Pay close attention to colloquialisms, idioms, and cultural nuances.
+- **Fluent and Natural:** The output should read like it was originally spoken in ${targetLanguage}, not like a literal, word-for-word translation.
+- **Consistent:** Maintain consistency in terminology and style across all segments.
+
+IMPORTANT INSTRUCTIONS:
+- You MUST preserve the 'startTime', 'endTime', and 'speaker' fields exactly as they appear in the original segments. Do not modify them.
+- Your response MUST be a single, valid JSON object containing a 'segments' array that strictly adheres to the provided schema.
+- Do not include any additional text, explanations, code block formatting (like \`\`\`json), or markdown. The response should be pure JSON.`;
 
   const segmentsJsonString = JSON.stringify(segments);
 
@@ -105,7 +110,7 @@ IMPORTANT:
       contents: {
         parts: [
           { text: prompt },
-          { text: `Here is the JSON array of transcription segments:\n${segmentsJsonString}` }
+          { text: `Here is the JSON array of transcription segments to translate:\n${segmentsJsonString}` }
         ],
       },
       config: {
@@ -136,8 +141,66 @@ IMPORTANT:
     const result = JSON.parse(jsonString);
     return result.segments;
 
-  } catch (error) {
+  } catch (error)
+ {
     console.error("Error calling Gemini API for translation:", error);
+    if (error instanceof Error) {
+        throw new Error(`Gemini API Error: ${error.message}`);
+    }
+    throw new Error("An unknown error occurred while translating the text.");
+  }
+};
+
+export const translateFreeformText = async (
+  sourceText: string,
+  targetLanguage: string,
+  sourceLanguage?: string
+): Promise<{ translatedText: string; detectedSourceLanguage: string }> => {
+  if (!process.env.API_KEY) {
+    throw new Error("API_KEY environment variable not set.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+  const prompt = `You are a professional translator.
+1. ${sourceLanguage ? `Assume the source text is in ${sourceLanguage}. The detected language should be reported as ${sourceLanguage}.` : 'Auto-detect the source language of the text and report which language you detected.'}
+2. Translate the following text into ${targetLanguage}.
+3. Your translation must be nuanced, contextual, fluent, natural, and consistent.
+4. Respond ONLY with a single JSON object matching the provided schema. Do not include any other text, explanations, or markdown formatting.
+
+Text to translate:
+---
+${sourceText}
+---`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-pro",
+      contents: { parts: [{ text: prompt }] },
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            translatedText: {
+              type: Type.STRING,
+              description: `The translated text in ${targetLanguage}.`
+            },
+            detectedSourceLanguage: {
+              type: Type.STRING,
+              description: "The detected source language of the original text (e.g., 'English')."
+            }
+          },
+          required: ["translatedText", "detectedSourceLanguage"]
+        },
+      },
+    });
+    
+    const jsonString = response.text.trim();
+    return JSON.parse(jsonString);
+
+  } catch (error) {
+    console.error("Error calling Gemini API for freeform translation:", error);
     if (error instanceof Error) {
         throw new Error(`Gemini API Error: ${error.message}`);
     }

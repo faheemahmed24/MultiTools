@@ -57,7 +57,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, t, isLoading, lan
   };
 
   return (
-    <div className="bg-gray-800 rounded-2xl shadow-lg p-6">
+    <div className="bg-gray-800 rounded-2xl shadow-lg p-4 sm:p-6">
       <div className="mb-4">
         <label htmlFor="language-select" className="block text-sm font-medium text-gray-300 mb-1">{t.selectLanguagePrompt}</label>
         <select 
@@ -75,7 +75,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, t, isLoading, lan
         </select>
       </div>
       <div
-        className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 ${isDragging ? 'border-purple-500 bg-gray-700' : 'border-gray-600 hover:border-purple-500'}`}
+        className={`flex flex-col items-center justify-center p-6 sm:p-8 border-2 border-dashed rounded-xl transition-colors duration-300 ${isDragging ? 'border-purple-500 bg-gray-700' : 'border-gray-600 hover:border-purple-500'}`}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}

@@ -50,9 +50,8 @@ const getApiKey = () => {
     // The API key is assumed to be available through a mechanism
     // that doesn't rely on Node.js environment variables.
     // For this environment, we will assume it is globally available or fetched.
-    // We will use a placeholder and rely on the execution environment to provide it.
-    // In a real app, this might be fetched from a config endpoint or stored in IndexedDB.
-    return self.process.env.API_KEY;
+    // The instructions guarantee process.env.API_KEY is available.
+    return process.env.API_KEY;
 }
 
 const transcribeAudio = async (base64Data, mimeType, languageName) => {
@@ -104,17 +103,22 @@ const translateText = async (segments, targetLanguage) => {
   
   const ai = new GoogleGenAI({ apiKey });
 
-  const prompt = `You are an expert translator. Your task is to translate the 'text' field of each JSON object in the provided array into ${targetLanguage}.
-IMPORTANT:
-- Keep the 'startTime', 'endTime', and 'speaker' fields exactly the same as in the original.
-- Respond ONLY with a single JSON object containing a 'segments' array that strictly matches the provided schema.
-- Do not include any other text, explanations, or markdown formatting.`;
+  const prompt = `You are a professional translator specializing in dialogue. Your task is to translate the 'text' field of each JSON object in the provided array of transcription segments into ${targetLanguage}.
+Your translation must be:
+- **Nuanced and Contextual:** Accurately convey the original meaning, tone, and intent. Pay close attention to colloquialisms, idioms, and cultural nuances.
+- **Fluent and Natural:** The output should read like it was originally spoken in ${targetLanguage}, not like a literal, word-for-word translation.
+- **Consistent:** Maintain consistency in terminology and style across all segments.
+
+IMPORTANT INSTRUCTIONS:
+- You MUST preserve the 'startTime', 'endTime', and 'speaker' fields exactly as they appear in the original segments. Do not modify them.
+- Your response MUST be a single, valid JSON object containing a 'segments' array that strictly adheres to the provided schema.
+- Do not include any additional text, explanations, code block formatting (like \`\`\`json), or markdown. The response should be pure JSON.`;
 
   const segmentsJsonString = JSON.stringify(segments);
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-pro",
-    contents: { parts: [{ text: prompt }, { text: `Here is the JSON array of transcription segments:\n${segmentsJsonString}` }] },
+    contents: { parts: [{ text: prompt }, { text: `Here is the JSON array of transcription segments to translate:\n${segmentsJsonString}` }] },
     config: {
       responseMimeType: "application/json",
       responseSchema: {
@@ -140,6 +144,41 @@ IMPORTANT:
   });
   const result = JSON.parse(response.text.trim());
   return result.segments;
+};
+
+const translateFreeformText = async (sourceText, targetLanguage, sourceLanguage) => {
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error("API_KEY not available in service worker.");
+  
+  const ai = new GoogleGenAI({ apiKey });
+
+  const prompt = `You are a professional translator.
+1. ${sourceLanguage ? `Assume the source text is in ${sourceLanguage}. The detected language should be reported as ${sourceLanguage}.` : 'Auto-detect the source language of the text and report which language you detected.'}
+2. Translate the following text into ${targetLanguage}.
+3. Your translation must be nuanced, contextual, fluent, natural, and consistent.
+4. Respond ONLY with a single JSON object matching the provided schema. Do not include any other text, explanations, or markdown formatting.
+
+Text to translate:
+---
+${sourceText}
+---`;
+  
+  const response = await ai.models.generateContent({
+      model: "gemini-2.5-pro",
+      contents: { parts: [{ text: prompt }] },
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            translatedText: { type: Type.STRING },
+            detectedSourceLanguage: { type: Type.STRING }
+          },
+          required: ["translatedText", "detectedSourceLanguage"]
+        },
+      },
+    });
+    return JSON.parse(response.text.trim());
 };
 
 
@@ -172,6 +211,8 @@ async function handleTask(task) {
       };
     } else if (task.type === 'translation') {
       task.result = await translateText(task.segments, task.targetLanguageName);
+    } else if (task.type === 'text-translation') {
+      task.result = await translateFreeformText(task.sourceText, task.targetLanguageName, task.sourceLanguageName);
     }
 
     task.status = 'completed';
@@ -208,6 +249,9 @@ async function showNotification(task) {
     } else if (task.type === 'translation') {
       title = "Translation Complete";
       body = `Translation to ${task.targetLanguageName} is ready.`
+    } else if (task.type === 'text-translation') {
+        title = "Translation Complete";
+        body = `Your text has been translated to ${task.targetLanguageName}.`
     }
 
     self.registration.showNotification(title, {
