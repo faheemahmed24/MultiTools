@@ -1,123 +1,198 @@
-import React, { useState, useCallback } from 'react';
-import type { TranslationSet, Transcription, TranscriptionSegment } from '../types';
-import { translations } from '../lib/i18n';
-import { transcribeAudio } from '../services/geminiService';
+import React, { useState, useCallback, useEffect } from 'react';
+import type { TranslationSet, Transcription, TranscriptionSegment, Task, TranscriptionTask } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useTasks } from '../hooks/useTasks';
 import FileUpload from './FileUpload';
 import TranscriptionView from './TranscriptionView';
 import HistoryPanel from './HistoryPanel';
+import TasksPanel from './TasksPanel';
 import Loader from './Loader';
+import { LANGUAGES } from '../lib/languages';
 
 interface TranscriberToolProps {
   t: TranslationSet;
 }
 
+type ActiveSelection = {
+  type: 'task' | 'history';
+  id: string;
+} | null;
+
+const NotificationManager: React.FC<{ t: TranslationSet }> = ({ t }) => {
+  const [permission, setPermission] = useState(Notification.permission);
+
+  const requestPermission = async () => {
+    const result = await Notification.requestPermission();
+    setPermission(result);
+  };
+
+  if (permission === 'granted') {
+    return <div className="text-center text-xs text-green-400">{t.notificationsEnabled}</div>;
+  }
+  
+  if (permission === 'denied') {
+    return <div className="text-center text-xs text-red-400">{t.notificationsDenied}</div>;
+  }
+
+  return (
+    <div className="text-center">
+      <button onClick={requestPermission} className="text-xs text-purple-400 hover:underline">
+        {t.enableNotifications}
+      </button>
+    </div>
+  );
+};
+
 const TranscriberTool: React.FC<TranscriberToolProps> = ({ t }) => {
   const [transcriptions, setTranscriptions] = useLocalStorage<Transcription[]>('transcriptions', []);
-  const [activeTranscription, setActiveTranscription] = useState<Transcription | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [activeSelection, setActiveSelection] = useState<ActiveSelection>(null);
+  const [transcriptionLanguage, setTranscriptionLanguage] = useState<string>('auto');
+
+  const { tasks, startTranscription, dismissTask } = useTasks();
 
   const handleFileTranscribe = async (file: File) => {
-    setIsLoading(true);
-    setError(null);
-    setActiveTranscription(null);
-
-    try {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = async () => {
-        const base64String = (reader.result as string).split(',')[1];
-        if (!base64String) {
-          throw new Error("Failed to read file.");
-        }
-
-        const { detectedLanguage, segments } = await transcribeAudio(base64String, file.type);
-        
-        const newTranscription: Transcription = {
-          id: new Date().toISOString(),
-          fileName: file.name,
-          date: new Date().toLocaleString(),
-          detectedLanguage,
-          segments,
-        };
-        setActiveTranscription(newTranscription);
-        setIsLoading(false);
-      };
-      reader.onerror = () => {
-        setIsLoading(false);
-        throw new Error("Error reading file.");
-      }
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || 'An unexpected error occurred during transcription.');
-      setIsLoading(false);
-    }
+    const languageName = transcriptionLanguage === 'auto'
+      ? undefined
+      : LANGUAGES.find(l => l.code === transcriptionLanguage)?.name;
+    startTranscription(file, languageName);
   };
   
-  const handleSaveTranscription = useCallback(() => {
-    if (activeTranscription && !transcriptions.some(t => t.id === activeTranscription.id)) {
-      setTranscriptions([activeTranscription, ...transcriptions]);
+  const handleSaveTranscription = useCallback((transcription: Transcription) => {
+    // A task result is being saved.
+    // The task ID might be like 'task_trans_123'. We save it to history with a new ID.
+    if (!transcriptions.some(t => t.id === `hist_${transcription.id}`)) {
+      const historyItem = { ...transcription, id: `hist_${transcription.id}`};
+      setTranscriptions(prev => [historyItem, ...prev]);
     }
-  }, [activeTranscription, transcriptions, setTranscriptions]);
+    // Dismiss the original task from the active tasks list
+    dismissTask(transcription.id);
+    // Unset active selection after saving
+    setActiveSelection(null);
+  }, [transcriptions, setTranscriptions, dismissTask]);
 
   const handleUpdateTranscription = (id: string, updatedSegments: TranscriptionSegment[]) => {
-    const updatedTranscription = { ...activeTranscription!, segments: updatedSegments };
-    setActiveTranscription(updatedTranscription);
-    
-    // Update history as well
+    // This function now primarily updates items in the history
     const historyIndex = transcriptions.findIndex(t => t.id === id);
     if (historyIndex > -1) {
       const newTranscriptions = [...transcriptions];
-      newTranscriptions[historyIndex] = updatedTranscription;
+      const updatedItem = { ...newTranscriptions[historyIndex], segments: updatedSegments };
+      newTranscriptions[historyIndex] = updatedItem;
       setTranscriptions(newTranscriptions);
+
+      if (activeSelection?.id === id) {
+         // Force re-render of view if active item is updated
+         setActiveSelection({ ...activeSelection });
+      }
     }
   };
   
   const handleSelectHistory = (transcription: Transcription) => {
-    setActiveTranscription(transcription);
+    setActiveSelection({ type: 'history', id: transcription.id });
+  };
+  
+  const handleSelectTask = (task: Task) => {
+    setActiveSelection({ type: 'task', id: task.id });
   };
   
   const handleDeleteHistory = (id: string) => {
     setTranscriptions(transcriptions.filter(t => t.id !== id));
-    if (activeTranscription?.id === id) {
-      setActiveTranscription(null);
+    if (activeSelection?.type === 'history' && activeSelection.id === id) {
+      setActiveSelection(null);
     }
   };
+
+  const renderMainView = () => {
+    if (!activeSelection) {
+      return (
+        <div className="m-auto text-center text-gray-400">
+          <h3 className="text-2xl font-semibold">{t.welcomeTitle}</h3>
+          <p className="mt-2 max-w-prose mx-auto">{t.welcomeMessage}</p>
+          <p className="mt-4 text-xs text-gray-500">{t.securityNote}</p>
+        </div>
+      );
+    }
+
+    if (activeSelection.type === 'task') {
+      const task = tasks.find(t => t.id === activeSelection.id) as TranscriptionTask | undefined;
+      if (!task) return null; // Task might have been dismissed
+
+      switch (task.status) {
+        case 'processing':
+          return <Loader message={t.transcribing} subMessage={t.loadingMessage} duration={90} t={t} />;
+        case 'error':
+          return (
+            <div className="m-auto text-center text-red-400">
+              <h3 className="text-xl font-bold">{t.errorTitle}</h3>
+              <p>{task.error}</p>
+            </div>
+          );
+        case 'completed':
+          if (task.result) {
+            return (
+              <TranscriptionView
+                transcription={task.result}
+                onSave={handleSaveTranscription}
+                onUpdate={handleUpdateTranscription}
+                t={t}
+                isFromHistory={false}
+              />
+            );
+          }
+          return null;
+        default:
+          return null;
+      }
+    }
+
+    if (activeSelection.type === 'history') {
+      const transcription = transcriptions.find(t => t.id === activeSelection.id);
+      if (transcription) {
+        return (
+          <TranscriptionView
+            transcription={transcription}
+            onSave={handleSaveTranscription}
+            onUpdate={handleUpdateTranscription}
+            t={t}
+            isFromHistory={true}
+          />
+        );
+      }
+    }
+    
+    return null;
+  };
+
+  const transcriptionTasks = tasks.filter(t => t.type === 'transcription');
+  const isUploading = tasks.some(t => t.type === 'transcription' && t.status === 'processing');
 
   return (
     <main className="flex-grow container mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
       <div className="lg:col-span-1 flex flex-col gap-6">
-        <FileUpload onFileSelect={handleFileTranscribe} t={t} isLoading={isLoading} />
+        <FileUpload 
+          onFileSelect={handleFileTranscribe} 
+          t={t} 
+          isLoading={isUploading} 
+          language={transcriptionLanguage}
+          onLanguageChange={setTranscriptionLanguage}
+        />
+        <NotificationManager t={t} />
+        <TasksPanel
+          tasks={transcriptionTasks}
+          onSelect={handleSelectTask}
+          onDismiss={dismissTask}
+          activeId={activeSelection?.type === 'task' ? activeSelection.id : undefined}
+          t={t}
+        />
         <HistoryPanel 
           transcriptions={transcriptions}
           onSelect={handleSelectHistory}
           onDelete={handleDeleteHistory}
-          activeId={activeTranscription?.id}
+          activeId={activeSelection?.type === 'history' ? activeSelection.id : undefined}
           t={t}
         />
       </div>
       <div className="lg:col-span-2 bg-gray-800 rounded-2xl shadow-lg p-6 flex flex-col min-h-[60vh] lg:min-h-0">
-        {isLoading && <Loader t={t} />}
-        {error && <div className="m-auto text-center text-red-400">
-            <h3 className="text-xl font-bold">{t.errorTitle}</h3>
-            <p>{error}</p>
-          </div>}
-        {!isLoading && !error && activeTranscription && (
-          <TranscriptionView 
-            transcription={activeTranscription}
-            onSave={handleSaveTranscription}
-            onUpdate={handleUpdateTranscription}
-            t={t}
-          />
-        )}
-        {!isLoading && !error && !activeTranscription && (
-          <div className="m-auto text-center text-gray-400">
-            <h3 className="text-2xl font-semibold">{t.welcomeTitle}</h3>
-            <p className="mt-2 max-w-prose mx-auto">{t.welcomeMessage}</p>
-            <p className="mt-4 text-xs text-gray-500">{t.securityNote}</p>
-          </div>
-        )}
+        {renderMainView()}
       </div>
     </main>
   );

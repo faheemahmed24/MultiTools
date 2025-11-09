@@ -1,17 +1,24 @@
-
 import React, { useState, useCallback, useRef } from 'react';
 import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';
+import { LANGUAGES } from '../lib/languages';
 
 interface FileUploadProps {
   onFileSelect: (file: File) => void;
   t: TranslationSet;
   isLoading: boolean;
+  language: string;
+  onLanguageChange: (language: string) => void;
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, t, isLoading }) => {
+const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, t, isLoading, language, onLanguageChange }) => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const languageOptions = [
+    { code: 'auto', name: t.autoDetect },
+    ...LANGUAGES
+  ];
 
   const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -51,6 +58,22 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, t, isLoading }) =
 
   return (
     <div className="bg-gray-800 rounded-2xl shadow-lg p-6">
+      <div className="mb-4">
+        <label htmlFor="language-select" className="block text-sm font-medium text-gray-300 mb-1">{t.selectLanguagePrompt}</label>
+        <select 
+          id="language-select" 
+          value={language}
+          onChange={(e) => onLanguageChange(e.target.value)}
+          disabled={isLoading}
+          className="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-purple-500 focus:border-purple-500 block p-2.5"
+        >
+          {languageOptions.map(opt => (
+            <option key={opt.code} value={opt.code}>
+              {opt.name}
+            </option>
+          ))}
+        </select>
+      </div>
       <div
         className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 ${isDragging ? 'border-purple-500 bg-gray-700' : 'border-gray-600 hover:border-purple-500'}`}
         onDragEnter={handleDragEnter}

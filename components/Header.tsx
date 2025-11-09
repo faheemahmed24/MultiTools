@@ -1,6 +1,8 @@
 import React from 'react';
 import type { TranslationSet, Language, Tool } from '../types';
 import LanguageSelector from './LanguageSelector';
+import { useTasks } from '../hooks/useTasks';
+import { SpinnerIcon } from './icons/SpinnerIcon';
 
 interface HeaderProps {
   t: TranslationSet;
@@ -11,6 +13,9 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ t, uiLanguage, setUiLanguage, activeTool, setActiveTool }) => {
+  const { tasks } = useTasks();
+  const isProcessing = tasks.some(task => task.status === 'processing');
+
   const tools: { id: Tool; labelKey: keyof TranslationSet }[] = [
     { id: 'transcriber', labelKey: 'toolTranscriber' },
     { id: 'ocr', labelKey: 'toolOcr' },
@@ -35,13 +40,14 @@ const Header: React.FC<HeaderProps> = ({ t, uiLanguage, setUiLanguage, activeToo
               <button
                 key={tool.id}
                 onClick={() => setActiveTool(tool.id)}
-                className={`whitespace-nowrap px-4 py-1.5 text-sm font-semibold rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 ${
+                className={`flex items-center whitespace-nowrap px-4 py-1.5 text-sm font-semibold rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 ${
                   activeTool === tool.id
                     ? 'bg-purple-600 text-white shadow-md'
                     : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                 }`}
               >
                 {t[tool.labelKey]}
+                {tool.id === 'transcriber' && isProcessing && <SpinnerIcon className="w-4 h-4 ms-2 animate-spin" />}
               </button>
             ))}
           </div>

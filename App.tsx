@@ -4,6 +4,7 @@ import { translations } from './lib/i18n';
 import Header from './components/Header';
 import TranscriberTool from './components/TranscriberTool';
 import ComingSoonTool from './components/ComingSoonTool';
+import { TaskProvider } from './contexts/TaskProvider';
 
 const App: React.FC = () => {
   const [uiLanguage, setUiLanguage] = useState<Language>('en');
@@ -14,6 +15,18 @@ const App: React.FC = () => {
     document.documentElement.dir = dir;
     document.documentElement.lang = uiLanguage;
   }, [uiLanguage]);
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js', { type: 'module' })
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service Worker registration failed:', error);
+        });
+    }
+  }, []);
 
   const t = translations[uiLanguage];
 
@@ -37,16 +50,18 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col">
-      <Header
-        t={t}
-        uiLanguage={uiLanguage}
-        setUiLanguage={setUiLanguage}
-        activeTool={activeTool}
-        setActiveTool={setActiveTool}
-      />
-      {renderTool()}
-    </div>
+    <TaskProvider>
+      <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col">
+        <Header
+          t={t}
+          uiLanguage={uiLanguage}
+          setUiLanguage={setUiLanguage}
+          activeTool={activeTool}
+          setActiveTool={setActiveTool}
+        />
+        {renderTool()}
+      </div>
+    </TaskProvider>
   );
 };
 

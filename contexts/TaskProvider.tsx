@@ -1,0 +1,114 @@
+import React, { createContext, useState, useCallback, ReactNode, useEffect } from 'react';
+import type { Task, Transcription, TranscriptionSegment, TranscriptionTask, TranslationTask } from '../types';
+import * as db from '../lib/db';
+
+interface TaskContextType {
+  tasks: Task[];
+  startTranscription: (file: File, languageName?: string) => Promise<void>;
+  startTranslation: (segments: TranscriptionSegment[], targetLanguage: {code: string, name: string}, parentId: string) => Promise<void>;
+  dismissTask: (taskId: string) => void;
+}
+
+export const TaskContext = createContext<TaskContextType | undefined>(undefined);
+
+const fileToBase64 = (file: File): Promise<{ base64: string, mimeType: string }> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const base64String = (reader.result as string)?.split(',')[1];
+      if (base64String) {
+        resolve({ base64: base64String, mimeType: file.type });
+      } else {
+        reject(new Error("Failed to read file."));
+      }
+    };
+    reader.onerror = (error) => reject(error);
+  });
+};
+
+const postMessageToServiceWorker = (message: any) => {
+  if (navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage(message);
+  } else {
+    // Wait for the controller to be available.
+    navigator.serviceWorker.ready.then(registration => {
+      registration.active?.postMessage(message);
+    });
+  }
+};
+
+export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [tasks, setTasks] = useState<Task[]>([]);
+
+  // Load tasks from DB on initial mount and set up SW listener
+  useEffect(() => {
+    const loadTasks = async () => {
+      const storedTasks = await db.getTasks();
+      setTasks(storedTasks);
+    };
+    loadTasks();
+
+    const handleServiceWorkerMessage = async (event: MessageEvent) => {
+      const { type, payload: updatedTask } = event.data;
+      if (type === 'TASK_UPDATE') {
+        setTasks(prevTasks => prevTasks.map(t => t.id === updatedTask.id ? updatedTask : t));
+      }
+    };
+
+    navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+
+    return () => {
+      navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
+    };
+  }, []);
+
+  const startTranscription = useCallback(async (file: File, languageName?: string) => {
+    const taskId = `task_trans_${Date.now()}`;
+    const fileData = await fileToBase64(file);
+    
+    const newTask: TranscriptionTask = {
+      id: taskId,
+      type: 'transcription',
+      status: 'processing',
+      createdAt: new Date().toISOString(),
+      fileName: file.name,
+      language: languageName,
+      fileData,
+    };
+
+    await db.addTask(newTask);
+    setTasks(prev => [newTask, ...prev]);
+    postMessageToServiceWorker({ type: 'START_TASK', payload: newTask });
+  }, []);
+
+  const startTranslation = useCallback(async (segments: TranscriptionSegment[], targetLanguage: {code: string, name: string}, parentId: string) => {
+    const taskId = `task_transl_${Date.now()}`;
+    
+    const newTask: TranslationTask = {
+      id: taskId,
+      type: 'translation',
+      status: 'processing',
+      createdAt: new Date().toISOString(),
+      parentId,
+      targetLanguageCode: targetLanguage.code,
+      targetLanguageName: targetLanguage.name,
+      segments: segments,
+    };
+
+    await db.addTask(newTask);
+    setTasks(prev => [newTask, ...prev]);
+    postMessageToServiceWorker({ type: 'START_TASK', payload: newTask });
+  }, []);
+
+  const dismissTask = useCallback(async (taskId: string) => {
+    await db.deleteTask(taskId);
+    setTasks(prev => prev.filter(t => t.id !== taskId));
+  }, []);
+
+  return (
+    <TaskContext.Provider value={{ tasks, startTranscription, startTranslation, dismissTask }}>
+      {children}
+    </TaskContext.Provider>
+  );
+};
