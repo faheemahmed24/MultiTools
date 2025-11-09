@@ -1,26 +1,26 @@
 import React from 'react';
-import type { HistoryItem, TranslationSet, TranscriptionData } from '../types';
+import type { Transcription, TranslationSet } from '../types';
 import { TrashIcon } from './icons/TrashIcon';
 
 interface HistoryPanelProps {
-  items: HistoryItem[];
-  onSelect: (item: HistoryItem) => void;
+  transcriptions: Transcription[];
+  onSelect: (transcription: Transcription) => void;
   onDelete: (id: string) => void;
   activeId?: string;
   t: TranslationSet;
 }
 
-const HistoryPanel: React.FC<HistoryPanelProps> = ({ items, onSelect, onDelete, activeId, t }) => {
+const HistoryPanel: React.FC<HistoryPanelProps> = ({ transcriptions, onSelect, onDelete, activeId, t }) => {
   return (
     <div className="bg-gray-800 rounded-2xl shadow-lg p-6 flex flex-col h-full max-h-[50vh] lg:max-h-none">
-      <h2 className="text-xl font-bold mb-4 text-gray-200">{t.historyAndSavedFiles}</h2>
-      {items.length === 0 ? (
+      <h2 className="text-xl font-bold mb-4 text-gray-200">{t.history}</h2>
+      {transcriptions.length === 0 ? (
         <div className="flex-grow flex items-center justify-center">
           <p className="text-gray-500">{t.noHistory}</p>
         </div>
       ) : (
         <ul className="space-y-2 overflow-y-auto -me-3 pe-3">
-          {items.map((item) => (
+          {transcriptions.map((item) => (
             <li
               key={item.id}
               className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors duration-200 ${
@@ -32,12 +32,9 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ items, onSelect, onDelete, 
                 <p className="font-semibold truncate text-gray-200">{item.fileName}</p>
                 <div className="flex items-center gap-2">
                   <p className="text-xs text-gray-400">{item.date}</p>
-                  {/* Conditionally render info based on tool type */}
-                  {item.tool === 'transcriber' && (
-                     <span className="bg-gray-600 text-purple-300 text-[10px] font-medium px-1.5 py-0.5 rounded">
-                        {(item.data as TranscriptionData).detectedLanguage}
-                     </span>
-                  )}
+                  <span className="bg-gray-600 text-purple-300 text-[10px] font-medium px-1.5 py-0.5 rounded">
+                    {item.detectedLanguage}
+                  </span>
                 </div>
               </div>
               <button 
