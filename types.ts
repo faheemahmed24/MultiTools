@@ -77,6 +77,11 @@ export interface TranslationSet {
   notificationsDenied: string;
   notificationTitle: string;
   notificationBody: string;
+  recordAudio: string;
+  stopRecording: string;
+  recording: string;
+  microphonePermissionDenied: string;
+  microphoneError: string;
   // Translator tool specific
   inputText: string;
   outputText: string;
