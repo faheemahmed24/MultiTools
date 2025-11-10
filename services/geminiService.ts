@@ -83,3 +83,31 @@ Respond ONLY with a single JSON object that strictly matches the provided schema
     throw new Error("An unknown error occurred while communicating with the Gemini API.");
   }
 };
+
+export const detectLanguage = async (text: string): Promise<string> => {
+  if (!process.env.API_KEY) {
+    throw new Error("API_KEY environment variable not set.");
+  }
+  
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+  const prompt = `What language is this text? Respond with only the language name in English, without any punctuation. For example: 'English', 'Urdu', 'Spanish'.
+
+Text: "${text}"`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
+    
+    return response.text.trim();
+
+  } catch (error) {
+    console.error("Error calling Gemini API for language detection:", error);
+    if (error instanceof Error) {
+        throw new Error(`Gemini API Error (Language Detection): ${error.message}`);
+    }
+    throw new Error("An unknown error occurred during language detection.");
+  }
+};

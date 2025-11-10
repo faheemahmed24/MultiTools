@@ -38,6 +38,11 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
       .join('\n');
   }, [transcription.segments, showTimestamps]);
 
+  const characterCount = useMemo(() => {
+    const segmentsToCount = isEditing ? editedSegments : transcription.segments;
+    return segmentsToCount.reduce((acc, segment) => acc + segment.text.length, 0);
+  }, [isEditing, editedSegments, transcription.segments]);
+
   const handleCopy = () => {
     navigator.clipboard.writeText(fullText);
     setIsCopied(true);
@@ -151,6 +156,10 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
         </div>
       </div>
       
+      <div className="text-right text-sm text-gray-400 mb-2 px-1">
+        {characterCount} characters
+      </div>
+
       <div className="flex flex-wrap gap-2 justify-between">
         <div className="flex flex-wrap gap-2">
            <button 
