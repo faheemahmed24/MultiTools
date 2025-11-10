@@ -15,6 +15,7 @@ interface TranscriptionViewProps {
 
 const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, onSave, onUpdate, t }) => {
   const [showTimestamps, setShowTimestamps] = useState(true);
+  const [showSpeaker, setShowSpeaker] = useState(true);
   const [isCopied, setIsCopied] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -32,11 +33,11 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
     return transcription.segments
       .map(segment => {
         const timestamp = showTimestamps ? `[${segment.startTime} - ${segment.endTime}]` : '';
-        const speaker = `${segment.speaker}:`;
-        return `${timestamp} ${speaker} ${segment.text}`.trim();
+        const speaker = showSpeaker ? `${segment.speaker}:` : '';
+        return [timestamp, speaker, segment.text].filter(Boolean).join(' ').trim();
       })
       .join('\n');
-  }, [transcription.segments, showTimestamps]);
+  }, [transcription.segments, showTimestamps, showSpeaker]);
 
   const characterCount = useMemo(() => {
     const segmentsToCount = isEditing ? editedSegments : transcription.segments;
@@ -118,7 +119,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
             <p className="text-sm text-gray-400 truncate max-w-xs" title={transcription.fileName}>{transcription.fileName}</p>
             <p className="text-xs text-purple-400 mt-1">{t.detectedLanguage}: <span className="font-semibold">{transcription.detectedLanguage}</span></p>
         </div>
-        <div className="flex items-center space-x-2 rtl:space-x-reverse">
+        <div className="flex items-center space-x-4 rtl:space-x-reverse">
           <label className="flex items-center cursor-pointer">
             <div className="relative">
               <input type="checkbox" className="sr-only" checked={showTimestamps} onChange={() => setShowTimestamps(!showTimestamps)} />
@@ -126,6 +127,14 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
               <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${showTimestamps ? 'translate-x-full bg-purple-400' : ''}`}></div>
             </div>
             <div className="ms-3 text-sm font-medium text-gray-300">{showTimestamps ? t.hideTimestamps : t.showTimestamps}</div>
+          </label>
+           <label className="flex items-center cursor-pointer">
+            <div className="relative">
+              <input type="checkbox" className="sr-only" checked={showSpeaker} onChange={() => setShowSpeaker(!showSpeaker)} />
+              <div className="block bg-gray-600 w-10 h-6 rounded-full"></div>
+              <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${showSpeaker ? 'translate-x-full bg-purple-400' : ''}`}></div>
+            </div>
+            <div className="ms-3 text-sm font-medium text-gray-300">{showSpeaker ? t.hideSpeaker : t.showSpeaker}</div>
           </label>
         </div>
       </div>
@@ -136,7 +145,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
             editedSegments.map((segment, index) => (
               <div key={index} className="mb-2 flex items-start gap-3">
                 {showTimestamps && <span className="text-purple-400 whitespace-nowrap pt-1">[{segment.startTime}]</span>}
-                <strong className="text-pink-400 whitespace-nowrap pt-1">{segment.speaker}:</strong>
+                {showSpeaker && <strong className="text-pink-400 whitespace-nowrap pt-1">{segment.speaker}:</strong>}
                 <textarea
                   value={segment.text}
                   onChange={(e) => handleSegmentChange(index, e.target.value)}
@@ -149,7 +158,10 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
             transcription.segments.map((segment, index) => (
               <div key={index} className="mb-2 flex flex-row flex-wrap">
                 {showTimestamps && <span className="text-purple-400 me-3">[{segment.startTime} - {segment.endTime}]</span>}
-                <p className="flex-1 min-w-[200px]"><strong className="text-pink-400">{segment.speaker}:</strong> {segment.text}</p>
+                <p className="flex-1 min-w-[200px]">
+                  {showSpeaker && <strong className="text-pink-400 me-2">{segment.speaker}:</strong>}
+                  {segment.text}
+                </p>
               </div>
             ))
           )}

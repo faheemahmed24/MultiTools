@@ -1,4 +1,3 @@
-
 import type { Language, TranslationSet } from '../types';
 
 const translations: Record<Language, TranslationSet> = {
@@ -16,6 +15,8 @@ const translations: Record<Language, TranslationSet> = {
     detectedLanguage: 'Detected Language',
     hideTimestamps: 'Hide Timestamps',
     showTimestamps: 'Show Timestamps',
+    hideSpeaker: 'Hide Speaker',
+    showSpeaker: 'Show Speaker',
     copy: 'Copy',
     copied: 'Copied!',
     save: 'Save',
@@ -54,6 +55,8 @@ const translations: Record<Language, TranslationSet> = {
     detectedLanguage: 'पहचानी गई भाषा',
     hideTimestamps: 'समय-चिह्न छिपाएं',
     showTimestamps: 'समय-चिह्न दिखाएं',
+    hideSpeaker: 'वक्ता छिपाएं',
+    showSpeaker: 'वक्ता दिखाएं',
     copy: 'कॉपी करें',
     copied: 'कॉपी किया गया!',
     save: 'सहेजें',
@@ -92,6 +95,8 @@ const translations: Record<Language, TranslationSet> = {
     detectedLanguage: 'پہچانی گئی زبان',
     hideTimestamps: 'ٹائم اسٹیمپس چھپائیں',
     showTimestamps: 'ٹائم اسٹیمپس دکھائیں',
+    hideSpeaker: 'اسپیکر چھپائیں',
+    showSpeaker: 'اسپیکر دکھائیں',
     copy: 'کاپی کریں',
     copied: 'کاپی ہو گیا!',
     save: 'محفوظ کریں',
@@ -130,6 +135,8 @@ const translations: Record<Language, TranslationSet> = {
     detectedLanguage: 'اللغة المكتشفة',
     hideTimestamps: 'إخفاء الطوابع الزمنية',
     showTimestamps: 'إظهار الطوابع الزمنية',
+    hideSpeaker: 'إخفاء المتحدث',
+    showSpeaker: 'إظهار المتحدث',
     copy: 'نسخ',
     copied: 'تم النسخ!',
     save: 'حفظ',

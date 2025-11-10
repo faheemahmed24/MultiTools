@@ -1,4 +1,3 @@
-
 export type Language = 'en' | 'hi' | 'ur' | 'ar';
 
 export interface TranslationSet {
