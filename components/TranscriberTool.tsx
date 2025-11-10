@@ -58,34 +58,71 @@ const TranscriberTool: React.FC<TranscriberToolProps> = ({ t }) => {
   };
   
   const handleSaveTranscription = useCallback((transcription: Transcription) => {
-    // A task result is being saved.
-    // The task ID might be like 'task_trans_123'. We save it to history with a new ID.
-    if (!transcriptions.some(t => t.id === `hist_${transcription.id}`)) {
-      const historyItem = { ...transcription, id: `hist_${transcription.id}`};
-      setTranscriptions(prev => [historyItem, ...prev]);
-    }
-    // Dismiss the original task from the active tasks list
-    dismissTask(transcription.id);
-    // Unset active selection after saving
-    setActiveSelection(null);
-  }, [transcriptions, setTranscriptions, dismissTask]);
+    // This function handles both saving new transcriptions and updating existing ones.
+    const historyId = transcription.id.startsWith('hist_') ? transcription.id : `hist_${transcription.id}`;
+    const newHistoryItem = { ...transcription, id: historyId, date: new Date().toLocaleString() };
 
-  const handleUpdateTranscription = (id: string, updatedSegments: TranscriptionSegment[]) => {
-    // This function now primarily updates items in the history
-    const historyIndex = transcriptions.findIndex(t => t.id === id);
-    if (historyIndex > -1) {
-      const newTranscriptions = [...transcriptions];
-      const updatedItem = { ...newTranscriptions[historyIndex], segments: updatedSegments };
-      newTranscriptions[historyIndex] = updatedItem;
-      setTranscriptions(newTranscriptions);
+    setTranscriptions(prev => {
+        const existingIndex = prev.findIndex(t => t.id === historyId);
+        const newHistory = [...prev];
+        if (existingIndex > -1) {
+            // Update the existing item
+            newHistory[existingIndex] = newHistoryItem;
+        } else {
+            // Add the new item to the beginning
+            newHistory.unshift(newHistoryItem);
+        }
+        return newHistory;
+    });
 
-      if (activeSelection?.id === id) {
-         // Force re-render of view if active item is updated
-         setActiveSelection({ ...activeSelection });
-      }
+    // If the original ID was from a task, dismiss that task.
+    if (!transcription.id.startsWith('hist_')) {
+        dismissTask(transcription.id);
+        // Automatically select the newly saved history item.
+        setActiveSelection({ type: 'history', id: historyId });
     }
-  };
+  }, [setTranscriptions, dismissTask]);
+
+  const handleUpdateTranscription = useCallback((id: string, updatedSegments: TranscriptionSegment[]) => {
+    // This function is called by TranscriptionView when an item is modified.
+    
+    // Case 1: The item is already in history.
+    const historyItem = transcriptions.find(t => t.id === id);
+    if (historyItem) {
+        const updatedItem = { ...historyItem, segments: updatedSegments };
+        handleSaveTranscription(updatedItem);
+        return;
+    }
+
+    // Case 2: The item is a completed task result that hasn't been saved yet.
+    const task = tasks.find(t => t.id === id && t.status === 'completed') as TranscriptionTask | undefined;
+    if (task?.result) {
+        const updatedResult = { ...task.result, segments: updatedSegments };
+        handleSaveTranscription(updatedResult);
+    }
+  }, [transcriptions, tasks, handleSaveTranscription]);
   
+  // Auto-save completed tasks.
+  useEffect(() => {
+    const completedTasks = tasks.filter(
+      (task): task is TranscriptionTask =>
+        task.type === 'transcription' && task.status === 'completed'
+    );
+
+    if (completedTasks.length > 0) {
+      const timer = setTimeout(() => {
+        completedTasks.forEach(task => {
+          const historyId = `hist_${task.id}`;
+          const isAlreadySaved = transcriptions.some(t => t.id === historyId);
+          if (!isAlreadySaved && task.result) {
+            handleSaveTranscription(task.result);
+          }
+        });
+      }, 1000); // 1-second delay before auto-saving.
+      return () => clearTimeout(timer);
+    }
+  }, [tasks, transcriptions, handleSaveTranscription]);
+
   const handleSelectHistory = (transcription: Transcription) => {
     setActiveSelection({ type: 'history', id: transcription.id });
   };
@@ -119,7 +156,7 @@ const TranscriberTool: React.FC<TranscriberToolProps> = ({ t }) => {
       return (
         <TranscriptionView
           task={task}
-          onSave={handleSaveTranscription}
+          onSave={handleSaveTranscription} // Kept for manual save on unsaved items
           onUpdate={handleUpdateTranscription}
           t={t}
         />
