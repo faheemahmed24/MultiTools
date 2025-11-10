@@ -1,17 +1,20 @@
-
-import React, { useState, useEffect } from 'react';
-import type { Language, Tool, TranslationSet } from './types';
+import React, { useState, useEffect, useCallback } from 'react';
+import type { Language, Transcription, TranscriptionSegment } from './types';
 import { translations } from './lib/i18n';
+import { transcribeAudio } from './services/geminiService';
+import { useLocalStorage } from './hooks/useLocalStorage';
 import Header from './components/Header';
-import TranscriberTool from './components/TranscriberTool';
-import TranslatorTool from './components/TranslatorTool';
-import OcrTool from './components/OcrTool';
-import ComingSoonTool from './components/ComingSoonTool';
-import { TaskProvider } from './contexts/TaskProvider';
+import FileUpload from './components/FileUpload';
+import TranscriptionView from './components/TranscriptionView';
+import HistoryPanel from './components/HistoryPanel';
+import Loader from './components/Loader';
 
 const App: React.FC = () => {
   const [uiLanguage, setUiLanguage] = useState<Language>('en');
-  const [activeTool, setActiveTool] = useState<Tool>('transcriber');
+  const [transcriptions, setTranscriptions] = useLocalStorage<Transcription[]>('transcriptions', []);
+  const [activeTranscription, setActiveTranscription] = useState<Transcription | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const dir = uiLanguage === 'ar' || uiLanguage === 'ur' ? 'rtl' : 'ltr';
@@ -19,72 +22,113 @@ const App: React.FC = () => {
     document.documentElement.lang = uiLanguage;
   }, [uiLanguage]);
 
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      const registerServiceWorker = () => {
-        // Construct an absolute URL to the service worker script to avoid
-        // cross-origin errors in sandboxed or iframe-based environments.
-        // The path is resolved against the current page's origin.
-        const swUrl = new URL('service-worker.js', window.location.origin);
-        navigator.serviceWorker.register(swUrl.href, { type: 'module' })
-          .then(registration => {
-            console.log('Service Worker registered with scope:', registration.scope);
-          })
-          .catch(error => {
-            console.error('Service Worker registration failed:', error);
-          });
-      };
-      
-      // Delay registration until after the page has fully loaded to prevent
-      // "document is in an invalid state" errors.
-      window.addEventListener('load', registerServiceWorker);
-      
-      // Cleanup the event listener on component unmount
-      return () => {
-        window.removeEventListener('load', registerServiceWorker);
-      };
-    }
-  }, []);
-
   const t = translations[uiLanguage];
 
-  const toolLabels: Record<Tool, keyof TranslationSet> = {
-    transcriber: 'toolTranscriber',
-    translator: 'toolTranslator',
-    ocr: 'toolOcr',
-    'pdf-to-image': 'toolPdfToImage',
-    'image-to-pdf': 'toolImageToPdf',
-    'pdf-to-word': 'toolPdfToWord',
-    'word-to-pdf': 'toolWordToPdf',
-  };
+  const handleFileTranscribe = async (file: File) => {
+    setIsLoading(true);
+    setError(null);
+    setActiveTranscription(null);
 
-  const renderTool = () => {
-    switch (activeTool) {
-      case 'transcriber':
-        return <TranscriberTool t={t} />;
-      case 'translator':
-        return <TranslatorTool t={t} />;
-      case 'ocr':
-        return <OcrTool t={t} />;
-      default:
-        const toolName = t[toolLabels[activeTool]] || activeTool;
-        return <ComingSoonTool t={t} toolName={toolName} />;
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        const base64String = (reader.result as string).split(',')[1];
+        if (!base64String) {
+          throw new Error("Failed to read file.");
+        }
+
+        const { detectedLanguage, segments } = await transcribeAudio(base64String, file.type);
+        
+        const newTranscription: Transcription = {
+          id: new Date().toISOString(),
+          fileName: file.name,
+          date: new Date().toLocaleString(),
+          detectedLanguage,
+          segments,
+        };
+        setActiveTranscription(newTranscription);
+        setIsLoading(false);
+      };
+      reader.onerror = () => {
+        setIsLoading(false);
+        throw new Error("Error reading file.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'An unexpected error occurred during transcription.');
+      setIsLoading(false);
+    }
+  };
+  
+  const handleSaveTranscription = useCallback(() => {
+    if (activeTranscription && !transcriptions.some(t => t.id === activeTranscription.id)) {
+      setTranscriptions([activeTranscription, ...transcriptions]);
+    }
+  }, [activeTranscription, transcriptions, setTranscriptions]);
+
+  const handleUpdateTranscription = (id: string, updatedSegments: TranscriptionSegment[]) => {
+    const updatedTranscription = { ...activeTranscription!, segments: updatedSegments };
+    setActiveTranscription(updatedTranscription);
+    
+    // Update history as well
+    const historyIndex = transcriptions.findIndex(t => t.id === id);
+    if (historyIndex > -1) {
+      const newTranscriptions = [...transcriptions];
+      newTranscriptions[historyIndex] = updatedTranscription;
+      setTranscriptions(newTranscriptions);
+    }
+  };
+  
+  const handleSelectHistory = (transcription: Transcription) => {
+    setActiveTranscription(transcription);
+  };
+  
+  const handleDeleteHistory = (id: string) => {
+    setTranscriptions(transcriptions.filter(t => t.id !== id));
+    if (activeTranscription?.id === id) {
+      setActiveTranscription(null);
     }
   };
 
   return (
-    <TaskProvider>
-      <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col">
-        <Header
-          t={t}
-          uiLanguage={uiLanguage}
-          setUiLanguage={setUiLanguage}
-          activeTool={activeTool}
-          setActiveTool={setActiveTool}
-        />
-        {renderTool()}
-      </div>
-    </TaskProvider>
+    <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col">
+      <Header uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} />
+      <main className="flex-grow container mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className="lg:col-span-1 flex flex-col gap-6">
+          <FileUpload onFileSelect={handleFileTranscribe} t={t} isLoading={isLoading} />
+          <HistoryPanel 
+            transcriptions={transcriptions}
+            onSelect={handleSelectHistory}
+            onDelete={handleDeleteHistory}
+            activeId={activeTranscription?.id}
+            t={t}
+          />
+        </div>
+        <div className="lg:col-span-2 bg-gray-800 rounded-2xl shadow-lg p-6 flex flex-col min-h-[60vh] lg:min-h-0">
+          {isLoading && <Loader t={t} />}
+          {error && <div className="m-auto text-center text-red-400">
+              <h3 className="text-xl font-bold">{t.errorTitle}</h3>
+              <p>{error}</p>
+            </div>}
+          {!isLoading && !error && activeTranscription && (
+            <TranscriptionView 
+              transcription={activeTranscription}
+              onSave={handleSaveTranscription}
+              onUpdate={handleUpdateTranscription}
+              t={t}
+            />
+          )}
+          {!isLoading && !error && !activeTranscription && (
+            <div className="m-auto text-center text-gray-400">
+              <h3 className="text-2xl font-semibold">{t.welcomeTitle}</h3>
+              <p className="mt-2 max-w-prose mx-auto">{t.welcomeMessage}</p>
+              <p className="mt-4 text-xs text-gray-500">{t.securityNote}</p>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
   );
 };
 

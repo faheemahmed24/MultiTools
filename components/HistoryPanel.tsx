@@ -12,7 +12,7 @@ interface HistoryPanelProps {
 
 const HistoryPanel: React.FC<HistoryPanelProps> = ({ transcriptions, onSelect, onDelete, activeId, t }) => {
   return (
-    <div className="bg-gray-800 rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col h-full max-h-[50vh] lg:max-h-none">
+    <div className="bg-gray-800 rounded-2xl shadow-lg p-6 flex flex-col h-full max-h-[50vh] lg:max-h-none">
       <h2 className="text-xl font-bold mb-4 text-gray-200">{t.history}</h2>
       {transcriptions.length === 0 ? (
         <div className="flex-grow flex items-center justify-center">

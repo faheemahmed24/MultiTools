@@ -1,5 +1,5 @@
 
-// Fix: Import `React` to make its namespace available for types like `React.Dispatch`.
+
 import React, { useState, useEffect } from 'react';
 
 export function useLocalStorage<T,>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
