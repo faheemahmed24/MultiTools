@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { Language } from '../types';
+import type { Language, TranslationSet } from '../types';
 import LanguageSelector from './LanguageSelector';
 
 interface HeaderProps {
@@ -7,21 +7,40 @@ interface HeaderProps {
   setUiLanguage: (lang: Language) => void;
   activeTool: string;
   setActiveTool: (tool: string) => void;
+  t: TranslationSet;
 }
 
-const tools = [
-  'AI Transcriber', 'AI Translator', 'Image Analyzer', 'PDF to Image', 
-  'Image to PDF', 'PDF to Word', 'Word to PD'
-];
+const toolKeys = {
+  'AI Transcriber': 'aiTranscriber',
+  'AI Translator': 'aiTranslatorTitle',
+  'Image Analyzer': 'imageAnalyzerTitle',
+  'PDF to Image': 'pdfToImage',
+  'Image to PDF': 'imageToPdf',
+  'PDF to Word': 'pdfToWord',
+  'Word to PD': 'wordToPdf'
+};
 
-const Header: React.FC<HeaderProps> = ({ uiLanguage, setUiLanguage, activeTool, setActiveTool }) => {
+
+const Header: React.FC<HeaderProps> = ({ uiLanguage, setUiLanguage, activeTool, setActiveTool, t }) => {
   const [indicatorStyle, setIndicatorStyle] = useState({});
   const toolsContainerRef = useRef<HTMLDivElement>(null);
   const isInitialMount = useRef(true);
 
+  // Define tools inside the component to access `t`
+  const tools = [
+    { key: 'AI Transcriber', label: t.transcription },
+    { key: 'AI Translator', label: t.aiTranslatorTitle },
+    { key: 'Image Analyzer', label: t.imageAnalyzerTitle },
+    { key: 'PDF to Image', label: 'PDF to Image' }, // Placeholder, add translation keys
+    { key: 'Image to PDF', label: 'Image to PDF' },
+    { key: 'PDF to Word', label: 'PDF to Word' },
+    { key: 'Word to PD', label: 'Word to PDF' }
+  ];
+
+
   useEffect(() => {
     const updateIndicator = () => {
-      const activeToolElement = toolsContainerRef.current?.querySelector(`[data-tool="${activeTool}"]`) as HTMLElement;
+      const activeToolElement = toolsContainerRef.current?.querySelector(`[data-tool-key="${activeTool}"]`) as HTMLElement;
       if (activeToolElement) {
         setIndicatorStyle({
           left: `${activeToolElement.offsetLeft}px`,
@@ -30,6 +49,7 @@ const Header: React.FC<HeaderProps> = ({ uiLanguage, setUiLanguage, activeTool, 
       }
     };
     
+    // Delay initial animation slightly for smoother page load render
     const timer = setTimeout(updateIndicator, isInitialMount.current ? 100 : 0);
     isInitialMount.current = false;
 
@@ -40,7 +60,7 @@ const Header: React.FC<HeaderProps> = ({ uiLanguage, setUiLanguage, activeTool, 
       window.removeEventListener('resize', updateIndicator);
     };
 
-  }, [activeTool]);
+  }, [activeTool, t]); // Rerun when `t` changes
 
   return (
     <header className="bg-gray-900 border-b border-gray-700/50">
@@ -56,17 +76,17 @@ const Header: React.FC<HeaderProps> = ({ uiLanguage, setUiLanguage, activeTool, 
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {tools.map((tool) => (
-              <div key={tool} className="flex-shrink-0">
+              <div key={tool.key} className="flex-shrink-0">
                 <button 
-                  data-tool={tool}
-                  onClick={() => setActiveTool(tool)}
+                  data-tool-key={tool.key}
+                  onClick={() => setActiveTool(tool.key)}
                   className={`px-5 py-2 text-sm md:text-base rounded-full whitespace-nowrap transition-all duration-300 ${
-                    activeTool === tool 
+                    activeTool === tool.key
                       ? 'bg-purple-600 text-white font-semibold' 
                       : 'text-gray-400 font-medium hover:text-white'
                   }`}
                 >
-                  {tool}
+                  {tool.label}
                 </button>
               </div>
             ))}
