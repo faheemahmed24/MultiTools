@@ -84,6 +84,7 @@ export interface TranslationSet {
   microphoneError: string;
   microphoneNotFound: string;
   microphoneNotReadable: string;
+  fileTooLargeError: string;
   transcriptionContextPrompt: string;
   transcriptionContextPlaceholder: string;
   // Translator tool specific

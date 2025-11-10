@@ -59,6 +59,7 @@ export const translations: Translations = {
     microphoneError: "Could not access the microphone. Please check your connection and try again.",
     microphoneNotFound: "No microphone was found. Please ensure a microphone is connected.",
     microphoneNotReadable: "Microphone is busy or unreadable. Please check if another application is using it.",
+    fileTooLargeError: "File is too large (max 50 MB). Please select a smaller file.",
     transcriptionContextPrompt: "Context / Keywords (Optional)",
     transcriptionContextPlaceholder: "e.g., medical terms, product names, acronyms",
     // Translator tool specific
@@ -140,6 +141,7 @@ export const translations: Translations = {
     microphoneError: "تعذر الوصول إلى الميكروفون. يرجى التحقق من اتصالك والمحاولة مرة أخرى.",
     microphoneNotFound: "لم يتم العثور على ميكروفون. يرجى التأكد من توصيل ميكروفون.",
     microphoneNotReadable: "الميكروفون مشغول أو غير قابل للقراءة. يرجى التحقق مما إذا كان تطبيق آخر يستخدمه.",
+    fileTooLargeError: "الملف كبير جدًا (الحد الأقصى 50 ميجابايت). الرجاء تحديد ملف أصغر.",
     transcriptionContextPrompt: "السياق / الكلمات الرئيسية (اختياري)",
     transcriptionContextPlaceholder: "على سبيل المثال، المصطلحات الطبية، أسماء المنتجات، الاختصارات",
     // Translator tool specific
@@ -221,6 +223,7 @@ export const translations: Translations = {
     microphoneError: "مائیکروفون تک رسائی حاصل نہیں ہو سکی۔ براہ کرم اپنا کنکشن چیک کریں اور دوبارہ کوشش کریں۔",
     microphoneNotFound: "کوئی مائیکروفون نہیں ملا۔ براہ کرم یقینی بنائیں کہ ایک مائیکروفون منسلک ہے۔",
     microphoneNotReadable: "مائیکروفون مصروف یا ناقابل مطالعہ ہے۔ براہ کرم چیک کریں کہ آیا کوئی دوسری ایپلیکیشن اسے استعمال کر رہی ہے۔",
+    fileTooLargeError: "فائل بہت بڑی ہے (زیادہ سے زیادہ 50 ایم بی)۔ براہ کرم ایک چھوٹی فائل منتخب کریں۔",
     transcriptionContextPrompt: "سیاق / کلیدی الفاظ (اختیاری)",
     transcriptionContextPlaceholder: "مثال کے طور پر، طبی اصطلاحات، مصنوعات کے نام، مخففات",
     // Translator tool specific
@@ -302,6 +305,7 @@ export const translations: Translations = {
     microphoneError: "माइक्रोफ़ोन तक नहीं पहुँच सका। कृपया अपना कनेक्शन जांचें और पुनः प्रयास करें।",
     microphoneNotFound: "कोई माइक्रोफ़ोन नहीं मिला। कृपया सुनिश्चित करें कि एक माइक्रोफ़ोन जुड़ा हुआ है।",
     microphoneNotReadable: "माइक्रोफ़ोन व्यस्त या अपठनीय है। कृपया जांचें कि कोई अन्य एप्लिकेशन इसका उपयोग कर रहा है या नहीं।",
+    fileTooLargeError: "फ़ाइल बहुत बड़ी है (अधिकतम 50 एमबी)। कृपया एक छोटी फ़ाइल चुनें।",
     transcriptionContextPrompt: "संदर्भ / कीवर्ड (वैकल्पिक)",
     transcriptionContextPlaceholder: "जैसे, चिकित्सा शब्द, उत्पाद के नाम, परिवर्णी शब्द",
     // Translator tool specific

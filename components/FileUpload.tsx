@@ -15,10 +15,13 @@ interface FileUploadProps {
   onContextChange: (context: string) => void;
 }
 
+const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
+
 const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, t, isLoading, language, onLanguageChange, context, onContextChange }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingError, setRecordingError] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -28,6 +31,20 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, t, isLoading, lan
     { code: 'auto', name: t.autoDetect },
     ...LANGUAGES
   ];
+
+  const handleFile = useCallback((file: File) => {
+    setFileError(null);
+    setRecordingError(null);
+
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setFileError(t.fileTooLargeError);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""; // Reset input to allow re-selection
+      }
+      return;
+    }
+    onFileSelect(file);
+  }, [onFileSelect, t.fileTooLargeError]);
 
   const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -55,13 +72,13 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, t, isLoading, lan
     if (isRecording) return;
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      onFileSelect(e.dataTransfer.files[0]);
+      handleFile(e.dataTransfer.files[0]);
     }
-  }, [onFileSelect, isRecording]);
+  }, [handleFile, isRecording]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      onFileSelect(e.target.files[0]);
+      handleFile(e.target.files[0]);
     }
   };
 
@@ -76,6 +93,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, t, isLoading, lan
       return;
     }
     setRecordingError(null);
+    setFileError(null);
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -92,7 +110,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, t, isLoading, lan
         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         const fileExtension = mimeType.split('/')[1].split(';')[0];
         const audioFile = new File([audioBlob], `recording-${new Date().toISOString()}.${fileExtension}`, { type: mimeType });
-        onFileSelect(audioFile);
+        handleFile(audioFile);
 
         mediaStreamRef.current?.getTracks().forEach(track => track.stop());
       };
@@ -196,6 +214,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, t, isLoading, lan
         </button>
         <p className="mt-2 text-sm text-gray-400">{t.dropFile}</p>
       </div>
+      {fileError && <p className="mt-2 text-sm text-red-400 text-center">{fileError}</p>}
 
       <div className="flex items-center my-4">
         <div className="flex-grow border-t border-gray-600"></div>
