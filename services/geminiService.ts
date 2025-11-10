@@ -1,4 +1,3 @@
-
 // Fix: Import GoogleGenAI from @google/genai
 import { GoogleGenAI } from "@google/genai";
 import type { Transcription } from '../types';
@@ -86,7 +85,7 @@ export const translateText = async (text: string, sourceLang: string, targetLang
     return response.text.trim();
 };
 
-export const analyzeImage = async (imageFile: File, prompt: string): Promise<string> => {
+export const analyzeImage = async (imageFile: File): Promise<string> => {
     if (!process.env.API_KEY) {
         throw new Error("API_KEY environment variable not set");
     }
@@ -100,7 +99,7 @@ export const analyzeImage = async (imageFile: File, prompt: string): Promise<str
         },
     };
 
-    const textPart = { text: prompt };
+    const textPart = { text: "Extract all text visible in this image. Return only the extracted text, without any additional comments, formatting, or explanations." };
 
     // Fix: Use correct method to generate content and specify a model
     const response = await ai.models.generateContent({
