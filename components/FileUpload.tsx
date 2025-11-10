@@ -99,8 +99,21 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, t, isLoading, lan
       setIsRecording(true);
     } catch (err) {
       console.error("Error accessing microphone:", err);
-      if (err instanceof Error && err.name === 'NotAllowedError') {
-        setRecordingError(t.microphonePermissionDenied);
+      if (err instanceof Error) {
+          switch (err.name) {
+              case 'NotAllowedError':
+              case 'PermissionDeniedError': // Some browsers might use this name
+                  setRecordingError(t.microphonePermissionDenied);
+                  break;
+              case 'NotFoundError':
+                  setRecordingError(t.microphoneNotFound);
+                  break;
+              case 'NotReadableError':
+                  setRecordingError(t.microphoneNotReadable);
+                  break;
+              default:
+                  setRecordingError(t.microphoneError);
+          }
       } else {
         setRecordingError(t.microphoneError);
       }

@@ -56,7 +56,9 @@ export const translations: Translations = {
     stopRecording: "Stop Recording",
     recording: "Recording...",
     microphonePermissionDenied: "Microphone access was denied. Please allow access in your browser settings.",
-    microphoneError: "Could not access the microphone.",
+    microphoneError: "Could not access the microphone. Please check your connection and try again.",
+    microphoneNotFound: "No microphone was found. Please ensure a microphone is connected.",
+    microphoneNotReadable: "Microphone is busy or unreadable. Please check if another application is using it.",
     // Translator tool specific
     inputText: "Input Text",
     outputText: "Translated Text",
@@ -124,7 +126,9 @@ export const translations: Translations = {
     stopRecording: "إيقاف التسجيل",
     recording: "جاري التسجيل...",
     microphonePermissionDenied: "تم رفض الوصول إلى الميكروفون. يرجى السماح بالوصول في إعدادات المتصفح.",
-    microphoneError: "تعذر الوصول إلى الميكروفون.",
+    microphoneError: "تعذر الوصول إلى الميكروفون. يرجى التحقق من اتصالك والمحاولة مرة أخرى.",
+    microphoneNotFound: "لم يتم العثور على ميكروفون. يرجى التأكد من توصيل ميكروفون.",
+    microphoneNotReadable: "الميكروفون مشغول أو غير قابل للقراءة. يرجى التحقق مما إذا كان تطبيق آخر يستخدمه.",
     // Translator tool specific
     inputText: "النص المدخل",
     outputText: "النص المترجم",
@@ -192,7 +196,9 @@ export const translations: Translations = {
     stopRecording: "ریکارڈنگ روکیں",
     recording: "ریکارڈنگ جاری ہے...",
     microphonePermissionDenied: "مائیکروفون تک رسائی سے انکار کر دیا گیا۔ براہ کرم اپنے براؤزر کی ترتیبات میں رسائی کی اجازت دیں۔",
-    microphoneError: "مائیکروفون تک رسائی حاصل نہیں ہو سکی۔",
+    microphoneError: "مائیکروفون تک رسائی حاصل نہیں ہو سکی۔ براہ کرم اپنا کنکشن چیک کریں اور دوبارہ کوشش کریں۔",
+    microphoneNotFound: "کوئی مائیکروفون نہیں ملا۔ براہ کرم یقینی بنائیں کہ ایک مائیکروفون منسلک ہے۔",
+    microphoneNotReadable: "مائیکروفون مصروف یا ناقابل مطالعہ ہے۔ براہ کرم چیک کریں کہ آیا کوئی دوسری ایپلیکیشن اسے استعمال کر رہی ہے۔",
     // Translator tool specific
     inputText: "ان پٹ ٹیکسٹ",
     outputText: "ترجمہ شدہ متن",
@@ -260,7 +266,9 @@ export const translations: Translations = {
     stopRecording: "रिकॉर्डिंग रोकें",
     recording: "रिकॉर्डिंग हो रही है...",
     microphonePermissionDenied: "माइक्रोफ़ोन एक्सेस अस्वीकार कर दिया गया था। कृपया अपनी ब्राउज़र सेटिंग्स में एक्सेस की अनुमति दें।",
-    microphoneError: "माइक्रोफ़ोन तक नहीं पहुँच सका।",
+    microphoneError: "माइक्रोफ़ोन तक नहीं पहुँच सका। कृपया अपना कनेक्शन जांचें और पुनः प्रयास करें।",
+    microphoneNotFound: "कोई माइक्रोफ़ोन नहीं मिला। कृपया सुनिश्चित करें कि एक माइक्रोफ़ोन जुड़ा हुआ है।",
+    microphoneNotReadable: "माइक्रोफ़ोन व्यस्त या अपठनीय है। कृपया जांचें कि कोई अन्य एप्लिकेशन इसका उपयोग कर रहा है या नहीं।",
     // Translator tool specific
     inputText: "इनपुट टेक्स्ट",
     outputText: "अनुवादित पाठ",

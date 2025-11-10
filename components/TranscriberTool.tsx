@@ -116,32 +116,14 @@ const TranscriberTool: React.FC<TranscriberToolProps> = ({ t }) => {
       const task = tasks.find(t => t.id === activeSelection.id) as TranscriptionTask | undefined;
       if (!task) return null; // Task might have been dismissed
 
-      switch (task.status) {
-        case 'processing':
-          return <Loader message={t.transcribing} subMessage={t.loadingMessage} duration={90} t={t} />;
-        case 'error':
-          return (
-            <div className="m-auto text-center text-red-400">
-              <h3 className="text-xl font-bold">{t.errorTitle}</h3>
-              <p>{task.error}</p>
-            </div>
-          );
-        case 'completed':
-          if (task.result) {
-            return (
-              <TranscriptionView
-                transcription={task.result}
-                onSave={handleSaveTranscription}
-                onUpdate={handleUpdateTranscription}
-                t={t}
-                isFromHistory={false}
-              />
-            );
-          }
-          return null;
-        default:
-          return null;
-      }
+      return (
+        <TranscriptionView
+          task={task}
+          onSave={handleSaveTranscription}
+          onUpdate={handleUpdateTranscription}
+          t={t}
+        />
+      );
     }
 
     if (activeSelection.type === 'history') {
@@ -153,7 +135,6 @@ const TranscriberTool: React.FC<TranscriberToolProps> = ({ t }) => {
             onSave={handleSaveTranscription}
             onUpdate={handleUpdateTranscription}
             t={t}
-            isFromHistory={true}
           />
         );
       }

@@ -82,6 +82,8 @@ export interface TranslationSet {
   recording: string;
   microphonePermissionDenied: string;
   microphoneError: string;
+  microphoneNotFound: string;
+  microphoneNotReadable: string;
   // Translator tool specific
   inputText: string;
   outputText: string;

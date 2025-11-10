@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import type { Transcription, TranslationSet, TranscriptionSegment, Task, TranslationTask } from '../types';
+import type { Transcription, TranslationSet, TranscriptionSegment, Task, TranslationTask, TranscriptionTask } from '../types';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
 import { EditIcon } from './icons/EditIcon';
@@ -10,18 +11,21 @@ import { useTasks } from '../hooks/useTasks';
 import { LANGUAGES } from '../lib/languages';
 
 interface TranscriptionViewProps {
-  transcription: Transcription;
+  transcription?: Transcription;
+  task?: TranscriptionTask;
   onSave: (transcription: Transcription) => void;
   onUpdate: (id: string, updatedSegments: TranscriptionSegment[]) => void;
   t: TranslationSet;
-  isFromHistory: boolean;
 }
 
 const translationLanguages = LANGUAGES;
 
-const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, onSave, onUpdate, t, isFromHistory }) => {
-  const [showTimestamps, setShowTimestamps] = useState(true);
-  const [showSpeaker, setShowSpeaker] = useState(true);
+const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription: historyTranscription, task, onSave, onUpdate, t }) => {
+  const isFromHistory = !!historyTranscription;
+  const transcription = isFromHistory ? historyTranscription : task?.result;
+
+  const [showTimestamps, setShowTimestamps] = useLocalStorage('transcription.showTimestamps', true);
+  const [showSpeaker, setShowSpeaker] = useLocalStorage('transcription.showSpeaker', true);
   const [isCopied, setIsCopied] = useState(false);
   const [isSaved, setIsSaved] = useState(isFromHistory);
   const [isEditing, setIsEditing] = useState(false);
@@ -30,17 +34,17 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   const [speakerRenames, setSpeakerRenames] = useState<Record<string, string>>({});
   const [currentlyEditingSpeaker, setCurrentlyEditingSpeaker] = useState<string | null>(null);
 
-  // Translation state from context
+  // Translation state
   const [activeView, setActiveView] = useState<'transcription' | 'translation'>('transcription');
   const [targetLanguageCode, setTargetLanguageCode] = useState('es');
 
   const { tasks, startTranslation } = useTasks();
 
-  const relevantTranslationTask = tasks.find(task => 
+  const relevantTranslationTask = transcription ? tasks.find(task => 
     task.type === 'translation' && 
     task.parentId === transcription.id && 
     task.targetLanguageCode === targetLanguageCode
-  ) as TranslationTask | undefined;
+  ) as TranslationTask | undefined : undefined;
 
   const isTranslating = relevantTranslationTask?.status === 'processing';
   const translationError = relevantTranslationTask?.status === 'error' ? relevantTranslationTask.error : null;
@@ -49,13 +53,16 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   const [isTranslationCopied, setIsTranslationCopied] = useState(false);
 
   useEffect(() => {
-    setIsSaved(isFromHistory);
-    setIsEditing(false);
-    setShowExportMenu(false);
-    setActiveView('transcription');
-  }, [transcription.id, isFromHistory]);
+    if (transcription) {
+      setIsSaved(isFromHistory);
+      setIsEditing(false);
+      setShowExportMenu(false);
+      setActiveView('transcription');
+    }
+  }, [transcription?.id, isFromHistory]);
 
   const fullText = useMemo(() => {
+    if (!transcription) return '';
     return transcription.segments
       .map(segment => {
         const parts = [];
@@ -65,7 +72,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
         return parts.join(' ');
       })
       .join('\n');
-  }, [transcription.segments, showTimestamps, showSpeaker]);
+  }, [transcription?.segments, showTimestamps, showSpeaker]);
 
   const fullTranslatedText = useMemo(() => {
     if (!translatedSegments) return '';
@@ -94,11 +101,14 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   };
 
   const handleSave = () => {
-    onSave(transcription);
-    setIsSaved(true);
+    if (transcription) {
+      onSave(transcription);
+      setIsSaved(true);
+    }
   };
 
   const handleEditToggle = () => {
+    if (!transcription) return;
     if (isEditing) {
       // Cancel editing
       setIsEditing(false);
@@ -135,6 +145,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   };
 
   const handleSaveChanges = () => {
+    if (!transcription) return;
     const updatedSegmentsWithSpeakerNames = editedSegments.map(segment => ({
       ...segment,
       speaker: speakerRenames[segment.speaker] || segment.speaker,
@@ -159,6 +170,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   };
 
   const handleExport = (format: 'txt' | 'json' | 'srt') => {
+    if (!transcription) return;
     const baseFilename = transcription.fileName.split('.').slice(0, -1).join('.') || transcription.fileName;
     if (format === 'txt') {
       createDownload(`${baseFilename}.txt`, fullText, 'text/plain;charset=utf-8');
@@ -174,7 +186,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   };
 
   const handleTranslate = async () => {
-    if (isTranslating || translatedSegments) return; // Don't re-translate if already translated or in progress
+    if (!transcription || isTranslating || translatedSegments) return; // Don't re-translate if already translated or in progress
     const targetLanguage = translationLanguages.find(l => l.code === targetLanguageCode);
     if (targetLanguage) {
       startTranslation(transcription.segments, targetLanguage, transcription.id);
@@ -344,6 +356,37 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
       </div>
     </div>
   );
+
+  if (task?.status === 'processing') {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="flex-1">
+          <h2 className="text-xl font-bold text-gray-200 truncate" title={task.fileName}>{task.fileName}</h2>
+        </div>
+        <div className="flex-grow flex items-center justify-center">
+          <Loader message={t.transcribing} subMessage={t.loadingMessage} duration={90} t={t} />
+        </div>
+      </div>
+    );
+  }
+
+  if (task?.status === 'error') {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="flex-1">
+          <h2 className="text-xl font-bold text-gray-200 truncate" title={task.fileName}>{task.fileName}</h2>
+        </div>
+        <div className="m-auto text-center text-red-400">
+          <h3 className="text-xl font-bold">{t.errorTitle}</h3>
+          <p>{task.error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!transcription) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col h-full">
