@@ -19,6 +19,7 @@ interface TranscriptionViewProps {
 }
 
 const translationLanguages = LANGUAGES;
+type ExportFormat = 'txt' | 'json' | 'srt' | 'csv' | 'text-only';
 
 const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription: historyTranscription, task, onSave, onUpdate, t }) => {
   const isFromHistory = !!historyTranscription;
@@ -73,6 +74,13 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription: hi
       })
       .join('\n');
   }, [transcription?.segments, showTimestamps, showSpeaker]);
+  
+  const plainTextOnly = useMemo(() => {
+    if (!transcription) return '';
+    return transcription.segments
+      .map(segment => segment.text)
+      .join('\n');
+  }, [transcription?.segments]);
 
   const fullTranslatedText = useMemo(() => {
     if (!translatedSegments) return '';
@@ -169,7 +177,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription: hi
     setShowExportMenu(false);
   };
 
-  const handleExport = (format: 'txt' | 'json' | 'srt') => {
+  const handleExport = (format: ExportFormat) => {
     if (!transcription) return;
     const baseFilename = transcription.fileName.split('.').slice(0, -1).join('.') || transcription.fileName;
     if (format === 'txt') {
@@ -182,6 +190,15 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription: hi
         `${i + 1}\n${toSrtTime(seg.startTime)} --> ${toSrtTime(seg.endTime)}\n${seg.text}`
       ).join('\n\n');
       createDownload(`${baseFilename}.srt`, srtContent, 'application/x-subrip;charset=utf-8');
+    } else if (format === 'csv') {
+      const escapeCsvField = (field: string) => `"${field.replace(/"/g, '""')}"`;
+      const header = 'startTime,endTime,speaker,text\n';
+      const csvRows = transcription.segments.map(seg => 
+        [seg.startTime, seg.endTime, seg.speaker, escapeCsvField(seg.text)].join(',')
+      ).join('\n');
+      createDownload(`${baseFilename}.csv`, header + csvRows, 'text/csv;charset=utf-8');
+    } else if (format === 'text-only') {
+      createDownload(`${baseFilename}_text_only.txt`, plainTextOnly, 'text/plain;charset=utf-8');
     }
   };
 
@@ -284,7 +301,9 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription: hi
             </button>
             {showExportMenu && (
               <div className="absolute bottom-full mb-2 w-48 bg-gray-600 rounded-lg shadow-xl py-1 z-10">
-                <button onClick={() => handleExport('txt')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">TXT (.txt)</button>
+                <button onClick={() => handleExport('txt')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">Full Transcript (.txt)</button>
+                <button onClick={() => handleExport('text-only')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">Text Only (.txt)</button>
+                <button onClick={() => handleExport('csv')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">CSV (.csv)</button>
                 <button onClick={() => handleExport('json')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">JSON (.json)</button>
                 <button onClick={() => handleExport('srt')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">SRT (.srt)</button>
               </div>
