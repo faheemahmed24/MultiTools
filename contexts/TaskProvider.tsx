@@ -51,7 +51,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const startTranscription = useCallback(async (file: File, languageName?: string, context?: string) => {
     const taskId = `task_trans_${Date.now()}`;
-    // Pre-process the audio file to optimize for speed before getting the base64 data.
+    // Convert the file to base64 to send to the service worker.
     const fileData = await processAudioForTranscription(file);
     
     const newTask: TranscriptionTask = {

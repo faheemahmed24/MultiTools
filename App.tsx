@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import type { Language, Tool, TranslationSet } from './types';
 import { translations } from './lib/i18n';
@@ -20,17 +21,28 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      // Construct an absolute URL to the service worker script to avoid
-      // cross-origin errors in sandboxed or iframe-based environments.
-      // The path is resolved against the current page's origin.
-      const swUrl = new URL('service-worker.js', window.location.origin);
-      navigator.serviceWorker.register(swUrl.href, { type: 'module' })
-        .then(registration => {
-          console.log('Service Worker registered with scope:', registration.scope);
-        })
-        .catch(error => {
-          console.error('Service Worker registration failed:', error);
-        });
+      const registerServiceWorker = () => {
+        // Construct an absolute URL to the service worker script to avoid
+        // cross-origin errors in sandboxed or iframe-based environments.
+        // The path is resolved against the current page's origin.
+        const swUrl = new URL('service-worker.js', window.location.origin);
+        navigator.serviceWorker.register(swUrl.href, { type: 'module' })
+          .then(registration => {
+            console.log('Service Worker registered with scope:', registration.scope);
+          })
+          .catch(error => {
+            console.error('Service Worker registration failed:', error);
+          });
+      };
+      
+      // Delay registration until after the page has fully loaded to prevent
+      // "document is in an invalid state" errors.
+      window.addEventListener('load', registerServiceWorker);
+      
+      // Cleanup the event listener on component unmount
+      return () => {
+        window.removeEventListener('load', registerServiceWorker);
+      };
     }
   }, []);
 
