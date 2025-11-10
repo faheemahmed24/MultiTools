@@ -1,25 +1,30 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { TranscriptionSegment } from "../types";
 
-export const transcribeAudio = async (base64Data: string, mimeType: string, languageName?: string): Promise<{ detectedLanguage: string; segments: TranscriptionSegment[] }> => {
+export const transcribeAudio = async (base64Data: string, mimeType: string, languageName?: string, context?: string): Promise<{ detectedLanguage: string; segments: TranscriptionSegment[] }> => {
   if (!process.env.API_KEY) {
     throw new Error("API_KEY environment variable not set.");
   }
   
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-  const targetLanguage = languageName;
+  const contextInstruction = context ? `
+An additional context has been provided to improve accuracy. Pay close attention to these terms:
+<context>
+${context}
+</context>
+` : '';
 
   const prompt = `You are an expert transcriber. Your task is to:
-1. ${targetLanguage ? `Transcribe the audio in ${targetLanguage}. The detected language should be reported as ${targetLanguage}.` : 'Auto-detect the spoken language.'}
+1. ${languageName ? `Transcribe the audio in ${languageName}. The detected language should be reported as ${languageName}.` : 'Auto-detect the spoken language.'}
 2. Identify different speakers and label them sequentially (e.g., 'Speaker 1', 'Speaker 2').
 3. Provide a precise transcription for each segment.
-4. Include accurate start and end timestamps for each segment in HH:MM:SS format.
+4. Include accurate start and end timestamps for each segment in HH:MM:SS format.${contextInstruction}
 Respond ONLY with a single JSON object that strictly matches the provided schema. Do not include any other text or markdown formatting.`;
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
+      model: "gemini-2.5-flash",
       contents: {
         parts: [
           { text: prompt },

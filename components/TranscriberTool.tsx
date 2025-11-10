@@ -47,6 +47,7 @@ const TranscriberTool: React.FC<TranscriberToolProps> = ({ t }) => {
   const [transcriptions, setTranscriptions] = useLocalStorage<Transcription[]>('transcriptions', []);
   const [activeSelection, setActiveSelection] = useState<ActiveSelection>(null);
   const [transcriptionLanguage, setTranscriptionLanguage] = useState<string>('auto');
+  const [transcriptionContext, setTranscriptionContext] = useState<string>('');
 
   const { tasks, startTranscription, dismissTask } = useTasks();
 
@@ -54,7 +55,7 @@ const TranscriberTool: React.FC<TranscriberToolProps> = ({ t }) => {
     const languageName = transcriptionLanguage === 'auto'
       ? undefined
       : LANGUAGES.find(l => l.code === transcriptionLanguage)?.name;
-    startTranscription(file, languageName);
+    startTranscription(file, languageName, transcriptionContext);
   };
   
   const handleSaveTranscription = useCallback((transcription: Transcription) => {
@@ -192,6 +193,8 @@ const TranscriberTool: React.FC<TranscriberToolProps> = ({ t }) => {
           isLoading={isUploading} 
           language={transcriptionLanguage}
           onLanguageChange={setTranscriptionLanguage}
+          context={transcriptionContext}
+          onContextChange={setTranscriptionContext}
         />
         <NotificationManager t={t} />
         <TasksPanel

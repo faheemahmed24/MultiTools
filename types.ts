@@ -84,6 +84,8 @@ export interface TranslationSet {
   microphoneError: string;
   microphoneNotFound: string;
   microphoneNotReadable: string;
+  transcriptionContextPrompt: string;
+  transcriptionContextPlaceholder: string;
   // Translator tool specific
   inputText: string;
   outputText: string;
@@ -115,6 +117,7 @@ export interface TranscriptionTask extends BaseTask {
   type: 'transcription';
   fileName: string;
   language?: string;
+  context?: string;
   fileData: {
     base64: string;
     mimeType: string;

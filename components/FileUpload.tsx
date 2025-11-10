@@ -11,9 +11,11 @@ interface FileUploadProps {
   isLoading: boolean;
   language: string;
   onLanguageChange: (language: string) => void;
+  context: string;
+  onContextChange: (context: string) => void;
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, t, isLoading, language, onLanguageChange }) => {
+const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, t, isLoading, language, onLanguageChange, context, onContextChange }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingError, setRecordingError] = useState<string | null>(null);
@@ -154,6 +156,20 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, t, isLoading, lan
             </option>
           ))}
         </select>
+      </div>
+      <div className="mb-4">
+        <label htmlFor="context-input" className="block text-sm font-medium text-gray-300 mb-1">
+            {t.transcriptionContextPrompt}
+        </label>
+        <textarea
+          id="context-input"
+          rows={2}
+          value={context}
+          onChange={(e) => onContextChange(e.target.value)}
+          disabled={isDisabled}
+          placeholder={t.transcriptionContextPlaceholder}
+          className="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-purple-500 focus:border-purple-500 block p-2.5 disabled:opacity-50 resize-none"
+        />
       </div>
       <div
         className={`flex flex-col items-center justify-center p-6 sm:p-8 border-2 border-dashed rounded-xl transition-colors duration-300 ${isDragging ? 'border-purple-500 bg-gray-700' : 'border-gray-600'} ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-purple-500'}`}

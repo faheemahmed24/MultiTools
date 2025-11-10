@@ -1,32 +1,17 @@
 import React, { createContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import type { Task, Transcription, TranscriptionSegment, TranscriptionTask, TranslationTask, TextTranslationTask } from '../types';
 import * as db from '../lib/db';
+import { processAudioForTranscription } from '../lib/audioUtils';
 
 interface TaskContextType {
   tasks: Task[];
-  startTranscription: (file: File, languageName?: string) => Promise<void>;
+  startTranscription: (file: File, languageName?: string, context?: string) => Promise<void>;
   startTranslation: (segments: TranscriptionSegment[], targetLanguage: {code: string, name: string}, parentId: string) => Promise<void>;
   startTextTranslation: (sourceText: string, targetLanguage: {code: string, name: string}, sourceLanguage?: {code: string, name: string}) => Promise<void>;
   dismissTask: (taskId: string) => void;
 }
 
 export const TaskContext = createContext<TaskContextType | undefined>(undefined);
-
-const fileToBase64 = (file: File): Promise<{ base64: string, mimeType: string }> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      const base64String = (reader.result as string)?.split(',')[1];
-      if (base64String) {
-        resolve({ base64: base64String, mimeType: file.type });
-      } else {
-        reject(new Error("Failed to read file."));
-      }
-    };
-    reader.onerror = (error) => reject(error);
-  });
-};
 
 const postMessageToServiceWorker = (message: any) => {
   if (navigator.serviceWorker.controller) {
@@ -64,9 +49,10 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, []);
 
-  const startTranscription = useCallback(async (file: File, languageName?: string) => {
+  const startTranscription = useCallback(async (file: File, languageName?: string, context?: string) => {
     const taskId = `task_trans_${Date.now()}`;
-    const fileData = await fileToBase64(file);
+    // Pre-process the audio file to optimize for speed before getting the base64 data.
+    const fileData = await processAudioForTranscription(file);
     
     const newTask: TranscriptionTask = {
       id: taskId,
@@ -75,6 +61,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       createdAt: new Date().toISOString(),
       fileName: file.name,
       language: languageName,
+      context: context,
       fileData,
     };
 
