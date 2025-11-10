@@ -212,3 +212,37 @@ ${sourceText}
     throw new Error("An unknown error occurred while translating the text.");
   }
 };
+
+export const analyzeImage = async (base64Data: string, mimeType: string, prompt: string): Promise<string> => {
+  if (!process.env.API_KEY) {
+    throw new Error("API_KEY environment variable not set.");
+  }
+  
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: {
+        parts: [
+          { text: prompt },
+          {
+            inlineData: {
+              data: base64Data,
+              mimeType: mimeType,
+            },
+          },
+        ],
+      },
+    });
+
+    return response.text;
+
+  } catch (error) {
+    console.error("Error calling Gemini API for image analysis:", error);
+    if (error instanceof Error) {
+        throw new Error(`Gemini API Error: ${error.message}`);
+    }
+    throw new Error("An unknown error occurred while analyzing the image.");
+  }
+};

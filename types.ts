@@ -97,6 +97,15 @@ export interface TranslationSet {
   noTranslationHistory: string;
   welcomeTranslatorTitle: string;
   welcomeTranslatorMessage: string;
+  // OCR / Image Analyzer tool specific
+  uploadImage: string;
+  dropImage: string;
+  analyzing: string;
+  imageAnalysis: string;
+  askAnything: string;
+  analyze: string;
+  welcomeOcrTitle: string;
+  welcomeOcrMessage: string;
 }
 
 export type Translations = Record<Language, TranslationSet>;

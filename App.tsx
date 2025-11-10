@@ -4,6 +4,7 @@ import { translations } from './lib/i18n';
 import Header from './components/Header';
 import TranscriberTool from './components/TranscriberTool';
 import TranslatorTool from './components/TranslatorTool';
+import OcrTool from './components/OcrTool';
 import ComingSoonTool from './components/ComingSoonTool';
 import { TaskProvider } from './contexts/TaskProvider';
 
@@ -51,6 +52,8 @@ const App: React.FC = () => {
         return <TranscriberTool t={t} />;
       case 'translator':
         return <TranslatorTool t={t} />;
+      case 'ocr':
+        return <OcrTool t={t} />;
       default:
         const toolName = t[toolLabels[activeTool]] || activeTool;
         return <ComingSoonTool t={t} toolName={toolName} />;
