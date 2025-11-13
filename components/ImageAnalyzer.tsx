@@ -30,7 +30,7 @@ const ResultBox: React.FC<{
         <div className="bg-gray-900/50 rounded-lg p-4 flex flex-col mt-4">
             <div className="flex justify-between items-center mb-2">
                 <h3 className="font-semibold text-lg text-gray-200">{title}</h3>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 rtl:space-x-reverse">
                     <div className="relative">
                          <button
                             onClick={() => setShowExportMenu(!showExportMenu)}
@@ -40,10 +40,10 @@ const ResultBox: React.FC<{
                             {t.export}
                         </button>
                         {showExportMenu && (
-                          <div onMouseLeave={() => setShowExportMenu(false)} className="absolute top-full mt-2 right-0 w-36 bg-gray-600 rounded-lg shadow-xl py-1 z-10">
-                            <button onClick={() => onExport('txt')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">TXT (.txt)</button>
-                            <button onClick={() => onExport('docx')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">DOCX (.docx)</button>
-                            <button onClick={() => onExport('pdf')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">PDF (.pdf)</button>
+                          <div onMouseLeave={() => setShowExportMenu(false)} className="absolute top-full mt-2 end-0 w-36 bg-gray-600 rounded-lg shadow-xl py-1 z-10">
+                            <button onClick={() => onExport('txt')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">TXT (.txt)</button>
+                            <button onClick={() => onExport('docx')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">DOCX (.docx)</button>
+                            <button onClick={() => onExport('pdf')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">PDF (.pdf)</button>
                           </div>
                         )}
                     </div>
@@ -64,7 +64,7 @@ const ResultBox: React.FC<{
                     className="w-full h-full bg-transparent text-gray-300 p-0 resize-none border-0 focus:ring-0"
                 />
             </div>
-            <div className="text-right text-sm text-gray-400 mt-1 px-1">
+            <div className="text-end text-sm text-gray-400 mt-1 px-1">
                 {charCount} characters
             </div>
         </div>
@@ -221,7 +221,7 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
                 <button
                     onClick={handleReset}
                     title={t.clearImage}
-                    className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-full text-white hover:bg-red-500 transition-colors duration-200"
+                    className="absolute top-2 end-2 p-1.5 bg-black/60 rounded-full text-white hover:bg-red-500 transition-colors duration-200"
                 >
                     <CloseIcon className="w-5 h-5" />
                 </button>

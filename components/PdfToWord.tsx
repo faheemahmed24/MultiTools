@@ -203,9 +203,9 @@ const PdfToWord: React.FC<{ t: TranslationSet }> = ({ t }) => {
                     </button>
                     {showDownloadMenu && (
                          <div className="absolute bottom-full mb-2 w-full bg-gray-600 rounded-lg shadow-xl py-1 z-10">
-                            <button onClick={() => handleDownload('docx')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">Word (.docx)</button>
-                            <button onClick={() => handleDownload('txt')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">Text (.txt)</button>
-                            <button onClick={() => handleDownload('pdf')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">PDF (.pdf)</button>
+                            <button onClick={() => handleDownload('docx')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">Word (.docx)</button>
+                            <button onClick={() => handleDownload('txt')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">Text (.txt)</button>
+                            <button onClick={() => handleDownload('pdf')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">PDF (.pdf)</button>
                          </div>
                     )}
                 </div>

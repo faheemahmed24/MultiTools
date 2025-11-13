@@ -38,6 +38,15 @@ function App() {
 
   const t = useMemo(() => getTranslations(uiLanguage), [uiLanguage]);
 
+  useEffect(() => {
+    document.documentElement.lang = uiLanguage;
+    if (uiLanguage === 'ar') {
+      document.documentElement.dir = 'rtl';
+    } else {
+      document.documentElement.dir = 'ltr';
+    }
+  }, [uiLanguage]);
+
   const currentTranscription = useMemo(() => {
     if (!currentTranscriptionId) return null;
     return transcriptions.find(t => t.id === currentTranscriptionId) || null;

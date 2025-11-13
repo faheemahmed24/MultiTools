@@ -259,20 +259,20 @@ const ImageToPdf: React.FC<{ t: TranslationSet }> = ({ t }) => {
               <button onClick={clearAll} className="flex items-center px-4 py-2 bg-red-600/50 text-white font-semibold rounded-lg hover:bg-red-600/80 transition-colors duration-200">
                   <TrashIcon className="w-5 h-5 me-2"/>{t.clearAll}
               </button>
-              <p className="text-sm text-gray-400 flex-grow text-right">{t.reorderHint}</p>
+              <p className="text-sm text-gray-400 flex-grow text-end">{t.reorderHint}</p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 overflow-y-auto p-1 -m-1 flex-grow mb-6">
               {images.map((img, index) => (
                   <div key={img.id} draggable onDragStart={() => dragItem.current = index} onDragEnter={() => dragOverItem.current = index} onDragEnd={handleDragSort} onDragOver={(e) => e.preventDefault()}
                       className="group relative bg-gray-900/50 p-2 rounded-lg aspect-square cursor-move flex items-center justify-center">
                       <img src={img.preview} alt={img.file.name} className="max-w-full max-h-full object-contain rounded-md transition-transform duration-200" style={{ transform: `rotate(${img.edits.rotate}deg)` }} />
-                      <button onClick={() => removeImage(img.id)} title={t.removeImage} className="absolute top-1 right-1 p-1.5 bg-black/50 rounded-full text-white hover:bg-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      <button onClick={() => removeImage(img.id)} title={t.removeImage} className="absolute top-1 end-1 p-1.5 bg-black/50 rounded-full text-white hover:bg-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                           <CloseIcon className="w-4 h-4" />
                       </button>
-                       <button onClick={() => setEditingImage(img)} title={t.editImage} className="absolute top-1 left-1 p-1.5 bg-black/50 rounded-full text-white hover:bg-purple-500 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                       <button onClick={() => setEditingImage(img)} title={t.editImage} className="absolute top-1 start-1 p-1.5 bg-black/50 rounded-full text-white hover:bg-purple-500 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                           <EditIcon className="w-4 h-4" />
                       </button>
-                      <div className="absolute bottom-1 left-1 px-2 py-0.5 bg-black/50 rounded-full text-white text-xs font-bold">{index + 1}</div>
+                      <div className="absolute bottom-1 start-1 px-2 py-0.5 bg-black/50 rounded-full text-white text-xs font-bold">{index + 1}</div>
                   </div>
               ))}
           </div>

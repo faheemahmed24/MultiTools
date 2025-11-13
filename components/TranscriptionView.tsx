@@ -334,7 +334,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
         </div>
       </div>
       
-      <div className="text-right text-sm text-gray-400 mb-2 px-1">
+      <div className="text-end text-sm text-gray-400 mb-2 px-1">
         {characterCount} characters
       </div>
 
@@ -364,16 +364,16 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
             </button>
             {showExportMenu && (
               <div className="absolute bottom-full mb-2 w-48 bg-gray-600 rounded-lg shadow-xl py-1 z-10" onMouseLeave={() => setShowExportMenu(false)}>
-                <button onClick={() => handleExport('txt')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">TXT (.txt)</button>
-                <button onClick={() => handleExport('json')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">JSON (.json)</button>
-                <button onClick={() => handleExport('srt')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">SRT (.srt)</button>
-                <button onClick={() => handleExport('csv')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">CSV (.csv)</button>
+                <button onClick={() => handleExport('txt')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">TXT (.txt)</button>
+                <button onClick={() => handleExport('json')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">JSON (.json)</button>
+                <button onClick={() => handleExport('srt')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">SRT (.srt)</button>
+                <button onClick={() => handleExport('csv')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">CSV (.csv)</button>
                  <div className="h-px bg-gray-500 my-1"></div>
-                <button onClick={() => handleExport('pdf')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">PDF (.pdf)</button>
-                <button onClick={() => handleExport('docx')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">DOCX (.docx)</button>
+                <button onClick={() => handleExport('pdf')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">PDF (.pdf)</button>
+                <button onClick={() => handleExport('docx')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">DOCX (.docx)</button>
                  <div className="h-px bg-gray-500 my-1"></div>
-                <button onClick={() => handleExport('png')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">PNG (.png)</button>
-                <button onClick={() => handleExport('jpg')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">JPG (.jpeg)</button>
+                <button onClick={() => handleExport('png')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">PNG (.png)</button>
+                <button onClick={() => handleExport('jpg')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">JPG (.jpeg)</button>
               </div>
             )}
           </div>

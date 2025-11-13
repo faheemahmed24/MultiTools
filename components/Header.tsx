@@ -81,7 +81,7 @@ const Header: React.FC<HeaderProps> = ({ uiLanguage, setUiLanguage, activeTool, 
         className="relative flex flex-col space-y-1 flex-grow"
       >
         <div 
-          className="w-1 bg-purple-600 rounded-full absolute left-0 transition-all duration-300 ease-in-out" 
+          className="w-1 bg-purple-600 rounded-full absolute start-0 transition-all duration-300 ease-in-out" 
           style={indicatorStyle}>
         </div>
         {tools.map((tool) => {

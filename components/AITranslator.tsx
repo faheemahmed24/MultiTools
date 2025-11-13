@@ -140,7 +140,7 @@ const AITranslator: React.FC<{ t: TranslationSet }> = ({ t }) => {
             placeholder={t.enterText}
             className="w-full h-64 bg-gray-900/50 rounded-lg p-4 text-gray-200 resize-none focus:ring-2 focus:ring-purple-500 border border-transparent focus:border-purple-500"
           />
-          <div className="text-right text-sm text-gray-400 mt-1 px-1">
+          <div className="text-end text-sm text-gray-400 mt-1 px-1">
             {characterCount} chars / {wordCount} words
           </div>
         </div>
@@ -152,7 +152,7 @@ const AITranslator: React.FC<{ t: TranslationSet }> = ({ t }) => {
             className={`w-full h-64 bg-gray-900/50 rounded-lg p-4 resize-none ${error ? 'text-red-400' : 'text-gray-200'}`}
           />
           {!isLoading && !error && translatedText && (
-            <div className="absolute top-3 right-3 flex items-center space-x-2">
+            <div className="absolute top-3 end-3 flex items-center space-x-2 rtl:space-x-reverse">
                 <button
                     onClick={handleCopy}
                     className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200"
@@ -169,10 +169,10 @@ const AITranslator: React.FC<{ t: TranslationSet }> = ({ t }) => {
                         {t.export}
                     </button>
                     {showExportMenu && (
-                      <div className="absolute top-full mt-2 right-0 w-32 bg-gray-600 rounded-lg shadow-xl py-1 z-10">
-                        <button onClick={() => handleExport('txt')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">TXT (.txt)</button>
-                        <button onClick={() => handleExport('docx')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">DOCX (.docx)</button>
-                        <button onClick={() => handleExport('pdf')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">PDF (.pdf)</button>
+                      <div className="absolute top-full mt-2 end-0 w-32 bg-gray-600 rounded-lg shadow-xl py-1 z-10">
+                        <button onClick={() => handleExport('txt')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">TXT (.txt)</button>
+                        <button onClick={() => handleExport('docx')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">DOCX (.docx)</button>
+                        <button onClick={() => handleExport('pdf')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">PDF (.pdf)</button>
                       </div>
                     )}
                 </div>
