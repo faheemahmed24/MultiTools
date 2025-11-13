@@ -14,6 +14,8 @@ import AITranslator from './components/AITranslator';
 import ImageAnalyzer from './components/ImageAnalyzer';
 import PdfToImage from './components/PdfToImage';
 import ImageToPdf from './components/ImageToPdf';
+import PdfToWord from './components/PdfToWord';
+import WordToPdf from './components/WordToPdf';
 
 function App() {
   const [uiLanguage, setUiLanguage] = useLocalStorage<Language>('uiLanguage', 'en');
@@ -109,6 +111,10 @@ function App() {
         return <PdfToImage t={t} />;
       case 'Image to PDF':
         return <ImageToPdf t={t} />;
+      case 'PDF to Word':
+        return <PdfToWord t={t} />;
+      case 'Word to PDF':
+        return <WordToPdf t={t} />;
       default:
         return <ComingSoon toolName={activeTool} />;
     }

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import { jsPDF } from 'jspdf';
+import * as docx from 'docx';
 import { UploadIcon } from './icons/UploadIcon';
 import { CloseIcon } from './icons/CloseIcon';
 import { PlusIcon } from './icons/PlusIcon';
@@ -32,6 +33,7 @@ const ImageToPdf: React.FC<{ t: TranslationSet }> = ({ t }) => {
   const [images, setImages] = useState<ImageFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
+  const [conversionMessage, setConversionMessage] = useState('');
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [editingImage, setEditingImage] = useState<ImageFile | null>(null);
 
@@ -100,10 +102,40 @@ const ImageToPdf: React.FC<{ t: TranslationSet }> = ({ t }) => {
     );
     setEditingImage(null);
   };
+
+  const applyEditsToImage = (image: ImageFile): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const edits = image.edits;
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject('Could not get canvas context');
+
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = image.preview;
+        img.onload = () => {
+            const isSideways = edits.rotate % 180 !== 0;
+            const canvasWidth = isSideways ? img.height : img.width;
+            const canvasHeight = isSideways ? img.width : img.height;
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+
+            ctx.filter = `brightness(${edits.brightness}%) contrast(${edits.contrast}%) saturate(${edits.saturate}%)`;
+            
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate(edits.rotate * Math.PI / 180);
+            ctx.drawImage(img, -img.width / 2, -img.height / 2);
+            
+            resolve(canvas.toDataURL('image/jpeg'));
+        };
+        img.onerror = () => reject('Image failed to load');
+    });
+  };
   
-  const handleConvert = async () => {
+  const handleConvertToPdf = async () => {
     if (images.length === 0) return;
     setIsConverting(true);
+    setConversionMessage(t.generatingPdf);
     setPdfUrl(null);
 
     const doc = new jsPDF({ orientation, unit: 'mm', format: pageSize });
@@ -116,33 +148,14 @@ const ImageToPdf: React.FC<{ t: TranslationSet }> = ({ t }) => {
         const usableW = pageW - marginValue * 2;
         const usableH = pageH - marginValue * 2;
 
-        const image = images[i];
-        const edits = image.edits;
+        const editedImageDataUrl = await applyEditsToImage(images[i]);
         
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) continue;
+        const tempImg = new Image();
+        tempImg.src = editedImageDataUrl;
+        await new Promise(resolve => { tempImg.onload = resolve; });
 
-        const img = new Image();
-        img.src = image.preview;
-        await new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
-        
-        const isSideways = edits.rotate % 180 !== 0;
-        const canvasWidth = isSideways ? img.height : img.width;
-        const canvasHeight = isSideways ? img.width : img.height;
-        canvas.width = canvasWidth;
-        canvas.height = canvasHeight;
-
-        ctx.filter = `brightness(${edits.brightness}%) contrast(${edits.contrast}%) saturate(${edits.saturate}%)`;
-        
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.rotate(edits.rotate * Math.PI / 180);
-        ctx.drawImage(img, -img.width / 2, -img.height / 2);
-        
-        const editedImageDataUrl = canvas.toDataURL('image/jpeg');
-        
-        const imgW = canvas.width;
-        const imgH = canvas.height;
+        const imgW = tempImg.width;
+        const imgH = tempImg.height;
         const imgRatio = imgW / imgH;
         const pageRatio = usableW / usableH;
 
@@ -175,6 +188,52 @@ const ImageToPdf: React.FC<{ t: TranslationSet }> = ({ t }) => {
     const url = doc.output('bloburl');
     setPdfUrl(url as string);
     setIsConverting(false);
+    setConversionMessage('');
+  };
+
+  const handleConvertToWord = async () => {
+    if (images.length === 0) return;
+    setIsConverting(true);
+    setConversionMessage(t.generatingWord);
+    setPdfUrl(null);
+
+    const imageParagraphs: docx.Paragraph[] = [];
+
+    for (const image of images) {
+        const editedImageDataUrl = await applyEditsToImage(image);
+        const base64Data = editedImageDataUrl.split(',')[1];
+        
+        const tempImg = new Image();
+        tempImg.src = editedImageDataUrl;
+        await new Promise(resolve => { tempImg.onload = resolve; });
+
+        // A4 page dimensions in EMU (English Metric Units)
+        const a4Width = 792 * 12700;
+        
+        const imageRun = new docx.ImageRun({
+            data: base64Data,
+            transformation: {
+                width: a4Width, 
+                height: (a4Width * tempImg.height) / tempImg.width,
+            },
+        });
+        imageParagraphs.push(new docx.Paragraph({ children: [imageRun] }));
+    }
+    
+    const doc = new docx.Document({
+        sections: [{ children: imageParagraphs }],
+    });
+
+    const blob = await docx.Packer.toBlob(doc);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'converted.docx';
+    a.click();
+    URL.revokeObjectURL(url);
+
+    setIsConverting(false);
+    setConversionMessage('');
   };
 
   const OptionButton: React.FC<{label: string, value: any, selectedValue: any, onClick: (value: any) => void}> = ({label, value, selectedValue, onClick}) => (
@@ -238,9 +297,14 @@ const ImageToPdf: React.FC<{ t: TranslationSet }> = ({ t }) => {
           </div>
 
           {!pdfUrl ? (
-            <button onClick={handleConvert} disabled={isConverting} className="w-full px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200">
-                {isConverting ? t.generatingPdf : `${t.convertToPdf} (${images.length} ${images.length === 1 ? 'image' : 'images'})`}
-            </button>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button onClick={handleConvertToPdf} disabled={isConverting} className="flex-1 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200">
+                  {isConverting ? conversionMessage : `${t.convertToPdf} (${images.length} ${images.length === 1 ? 'image' : 'images'})`}
+              </button>
+              <button onClick={handleConvertToWord} disabled={isConverting} className="flex-1 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200">
+                  {isConverting ? conversionMessage : `${t.convertToWord}`}
+              </button>
+            </div>
           ) : (
             <a href={pdfUrl} download="converted.pdf" className="w-full text-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center justify-center">
                 <DownloadIcon className="w-5 h-5 me-2" /> {t.downloadPdf}

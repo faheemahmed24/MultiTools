@@ -61,8 +61,7 @@ const Header: React.FC<HeaderProps> = ({ uiLanguage, setUiLanguage, activeTool, 
         <div className="w-full max-w-6xl">
           <div 
             ref={toolsContainerRef}
-            className="flex justify-between items-center space-x-1 sm:space-x-2 md:space-x-4 overflow-x-auto pb-2" 
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            className="flex justify-between items-center space-x-1 sm:space-x-2 md:space-x-4 overflow-x-auto pb-2"
           >
             {tools.map((tool) => (
               <div key={tool.key} className="flex-shrink-0">

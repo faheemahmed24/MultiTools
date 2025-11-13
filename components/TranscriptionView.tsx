@@ -5,6 +5,11 @@ import { CheckIcon } from './icons/CheckIcon';
 import { EditIcon } from './icons/EditIcon';
 import { SaveIcon } from './icons/SaveIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
+import { UndoIcon } from './icons/UndoIcon';
+import { RedoIcon } from './icons/RedoIcon';
+import { useDebounce } from '../hooks/useDebounce';
+import { jsPDF } from 'jspdf';
+import * as docx from 'docx';
 
 interface TranscriptionViewProps {
   transcription: Transcription;
@@ -22,12 +27,36 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   const [editedSegments, setEditedSegments] = useState<TranscriptionSegment[]>([]);
   const [showExportMenu, setShowExportMenu] = useState(false);
 
+  // State for undo/redo
+  const [editHistory, setEditHistory] = useState<TranscriptionSegment[][]>([]);
+  const [currentHistoryIndex, setCurrentHistoryIndex] = useState(-1);
+  const debouncedEditedSegments = useDebounce(editedSegments, 500);
+
   useEffect(() => {
     // Reset state when a new transcription is loaded
     setIsSaved(false);
     setIsEditing(false);
     setShowExportMenu(false);
+    setEditHistory([]);
+    setCurrentHistoryIndex(-1);
   }, [transcription.id]);
+
+  // Effect to update history on debounced changes
+  useEffect(() => {
+    if (!isEditing || !debouncedEditedSegments.length) return;
+
+    // Avoid adding the same state twice, which can happen after undo/redo
+    if (editHistory[currentHistoryIndex] && JSON.stringify(editHistory[currentHistoryIndex]) === JSON.stringify(debouncedEditedSegments)) {
+        return;
+    }
+    
+    // If we've undone, and then make a new edit, truncate the "future" history
+    const newHistory = editHistory.slice(0, currentHistoryIndex + 1);
+    setEditHistory([...newHistory, debouncedEditedSegments]);
+    setCurrentHistoryIndex(newHistory.length);
+
+  }, [debouncedEditedSegments, isEditing]);
+
 
   const fullText = useMemo(() => {
     return transcription.segments
@@ -59,9 +88,14 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
     if (isEditing) {
       // Cancel editing
       setIsEditing(false);
+      setEditHistory([]);
+      setCurrentHistoryIndex(-1);
     } else {
       // Start editing
-      setEditedSegments(JSON.parse(JSON.stringify(transcription.segments))); // Deep copy
+      const initialSegments = JSON.parse(JSON.stringify(transcription.segments)); // Deep copy
+      setEditedSegments(initialSegments);
+      setEditHistory([initialSegments]);
+      setCurrentHistoryIndex(0);
       setIsEditing(true);
     }
   };
@@ -75,10 +109,32 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   const handleSaveChanges = () => {
     onUpdate(transcription.id, editedSegments);
     setIsEditing(false);
+    setEditHistory([]);
+    setCurrentHistoryIndex(-1);
+  };
+  
+  const canUndo = isEditing && currentHistoryIndex > 0;
+  const canRedo = isEditing && currentHistoryIndex < editHistory.length - 1;
+
+  const handleUndo = () => {
+    if (canUndo) {
+      const newIndex = currentHistoryIndex - 1;
+      setCurrentHistoryIndex(newIndex);
+      setEditedSegments(editHistory[newIndex]);
+    }
   };
 
-  const createDownload = (filename: string, content: string, mime: string) => {
-    const blob = new Blob([content], { type: mime });
+  const handleRedo = () => {
+    if (canRedo) {
+      const newIndex = currentHistoryIndex + 1;
+      setCurrentHistoryIndex(newIndex);
+      setEditedSegments(editHistory[newIndex]);
+    }
+  };
+
+
+  const createDownload = (filename: string, content: string | Blob, mime?: string) => {
+    const blob = content instanceof Blob ? content : new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -89,82 +145,135 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
     URL.revokeObjectURL(url);
     setShowExportMenu(false);
   };
+  
+  const renderTranscriptionToCanvas = (format: 'png' | 'jpeg') => {
+      const PADDING = 25;
+      const LINE_HEIGHT = 28;
+      const FONT_SIZE = 16;
+      const FONT = `${FONT_SIZE}px monospace`;
+      const CANVAS_WIDTH = 1200;
 
-  const handleExport = (format: 'txt' | 'json' | 'srt' | 'png') => {
+      const BG_COLOR = '#111827'; // bg-gray-900
+      const TIMESTAMP_COLOR = '#A78BFA'; // purple-400
+      const SPEAKER_COLOR = '#F472B6'; // pink-400
+      const TEXT_COLOR = '#E5E7EB'; // gray-200
+
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      if (!context) return;
+      
+      context.font = FONT;
+      
+      let totalHeight = PADDING * 2;
+      const lines: {y: number, parts: {text: string, color: string}[]}[] = [];
+
+      transcription.segments.forEach(segment => {
+          let lineParts = [];
+          if (showTimestamps) lineParts.push({ text: `[${segment.startTime} - ${segment.endTime}] `, color: TIMESTAMP_COLOR });
+          if (showSpeaker) lineParts.push({ text: `${segment.speaker}: `, color: SPEAKER_COLOR });
+          lineParts.push({ text: segment.text, color: TEXT_COLOR });
+
+          const textToMeasure = lineParts.map(p => p.text).join('');
+          const textWidth = context.measureText(textToMeasure).width;
+
+          if (textWidth > CANVAS_WIDTH - PADDING * 2) {
+              // Basic wrapping for long lines
+              const words = segment.text.split(' ');
+              let currentLine = (showTimestamps ? `[${segment.startTime} - ${segment.endTime}] ` : '') + (showSpeaker ? `${segment.speaker}: ` : '');
+              
+              for (const word of words) {
+                  const testLine = currentLine + word + ' ';
+                  if (context.measureText(testLine).width > CANVAS_WIDTH - PADDING * 2 && currentLine.length > 0) {
+                      // Fix: The argument to lines.push should be an object, not an array containing an object.
+                      lines.push({y: totalHeight + FONT_SIZE, parts: [{text: currentLine.trim(), color: TEXT_COLOR}] });
+                      totalHeight += LINE_HEIGHT;
+                      currentLine = '  ' + word + ' '; // Indent wrapped line
+                  } else {
+                      currentLine = testLine;
+                  }
+              }
+              // Fix: The argument to lines.push should be an object, not an array containing an object.
+              lines.push({y: totalHeight + FONT_SIZE, parts: [{text: currentLine.trim(), color: TEXT_COLOR}]});
+          } else {
+              // Fix: The argument to lines.push should be an object, not an array containing an object.
+              lines.push({y: totalHeight + FONT_SIZE, parts: lineParts });
+          }
+          totalHeight += LINE_HEIGHT;
+      });
+
+      canvas.width = CANVAS_WIDTH;
+      canvas.height = totalHeight;
+      context.fillStyle = BG_COLOR;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.font = FONT;
+      
+      lines.flat().forEach(line => {
+          let currentX = PADDING;
+          line.parts.forEach(part => {
+              context.fillStyle = part.color;
+              context.fillText(part.text, currentX, line.y);
+              currentX += context.measureText(part.text).width;
+          });
+      });
+      
+      return canvas.toDataURL(`image/${format}`, format === 'jpeg' ? 0.9 : undefined);
+  }
+
+  const handleExport = async (format: 'txt' | 'json' | 'srt' | 'png' | 'jpg' | 'docx' | 'pdf' | 'csv') => {
     const baseFilename = transcription.fileName.split('.').slice(0, -1).join('.') || transcription.fileName;
     if (format === 'txt') {
       createDownload(`${baseFilename}.txt`, fullText, 'text/plain;charset=utf-8');
     } else if (format === 'json') {
       createDownload(`${baseFilename}.json`, JSON.stringify(transcription, null, 2), 'application/json;charset=utf-8');
     } else if (format === 'srt') {
-      const toSrtTime = (time: string) => {
-        const parts = time.split('.');
-        const hms = parts[0];
-        const ms = (parts[1] || '0').padEnd(3, '0').substring(0, 3);
-        return `${hms},${ms}`;
-      };
+      const toSrtTime = (time: string) => time.replace('.', ',');
       const srtContent = transcription.segments.map((seg, i) => 
         `${i + 1}\n${toSrtTime(seg.startTime)} --> ${toSrtTime(seg.endTime)}\n${seg.text}`
       ).join('\n\n');
       createDownload(`${baseFilename}.srt`, srtContent, 'application/x-subrip;charset=utf-8');
-    } else if (format === 'png') {
-        const PADDING = 25;
-        const LINE_HEIGHT = 28;
-        const FONT_SIZE = 16;
-        const FONT = `${FONT_SIZE}px monospace`;
-        const CANVAS_WIDTH = 1200;
-
-        const BG_COLOR = '#111827'; // bg-gray-900
-        const TIMESTAMP_COLOR = '#A78BFA'; // purple-400
-        const SPEAKER_COLOR = '#F472B6'; // pink-400
-        const TEXT_COLOR = '#E5E7EB'; // gray-200
-
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-
-        if (!context) return;
-        
-        context.font = FONT;
-        
-        const canvasHeight = (transcription.segments.length * LINE_HEIGHT) + (2 * PADDING);
-        canvas.width = CANVAS_WIDTH;
-        canvas.height = canvasHeight;
-
-        context.fillStyle = BG_COLOR;
-        context.fillRect(0, 0, canvas.width, canvas.height);
-
-        context.font = FONT;
-
-        transcription.segments.forEach((segment, index) => {
-            let currentX = PADDING;
-            const currentY = PADDING + (index * LINE_HEIGHT) + FONT_SIZE;
-
-            if (showTimestamps) {
-                const timestamp = `[${segment.startTime} - ${segment.endTime}] `;
-                context.fillStyle = TIMESTAMP_COLOR;
-                context.fillText(timestamp, currentX, currentY);
-                currentX += context.measureText(timestamp).width;
-            }
-
-            if (showSpeaker) {
-                const speaker = `${segment.speaker}: `;
-                context.fillStyle = SPEAKER_COLOR;
-                context.fillText(speaker, currentX, currentY);
-                currentX += context.measureText(speaker).width;
-            }
-
-            context.fillStyle = TEXT_COLOR;
-            context.fillText(segment.text, currentX, currentY);
+    // Fix: Changed 'jpeg' to 'jpg' to match the type of format, and pass 'jpeg' to the canvas function.
+    } else if (format === 'png' || format === 'jpg') {
+        const dataUrl = renderTranscriptionToCanvas(format === 'jpg' ? 'jpeg' : 'png');
+        if (dataUrl) {
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = `${baseFilename}.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setShowExportMenu(false);
+        }
+    } else if (format === 'csv') {
+        const header = "startTime,endTime,speaker,text\n";
+        const rows = transcription.segments.map(s => `"${s.startTime}","${s.endTime}","${s.speaker}","${s.text.replace(/"/g, '""')}"`).join('\n');
+        createDownload(`${baseFilename}.csv`, header + rows, 'text/csv;charset=utf-8');
+    } else if (format === 'docx') {
+        const paragraphs = transcription.segments.map(seg => {
+            const parts = [];
+            // Fix: Corrected variable name from 'segment' to 'seg'.
+            if (showTimestamps) parts.push(new docx.TextRun({ text: `[${seg.startTime} - ${seg.endTime}] `, color: "A78BFA" }));
+            if (showSpeaker) parts.push(new docx.TextRun({ text: `${seg.speaker}: `, bold: true, color: "F472B6"}));
+            parts.push(new docx.TextRun(seg.text));
+            return new docx.Paragraph({ children: parts });
         });
-
-        const dataUrl = canvas.toDataURL('image/png');
-        const a = document.createElement('a');
-        a.href = dataUrl;
-        a.download = `${baseFilename}.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setShowExportMenu(false);
+        const doc = new docx.Document({ sections: [{ children: paragraphs }] });
+        const blob = await docx.Packer.toBlob(doc);
+        createDownload(`${baseFilename}.docx`, blob);
+    } else if (format === 'pdf') {
+        const doc = new jsPDF();
+        let y = 10;
+        transcription.segments.forEach(seg => {
+            if (y > 280) {
+                doc.addPage();
+                y = 10;
+            }
+            // Fix: Corrected variable name from 'segment' to 'seg'.
+            const line = (showTimestamps ? `[${seg.startTime} - ${seg.endTime}] ` : '') + (showSpeaker ? `${seg.speaker}: ` : '') + seg.text;
+            const splitLines = doc.splitTextToSize(line, 180);
+            doc.text(splitLines, 10, y);
+            y += splitLines.length * 7;
+        });
+        createDownload(`${baseFilename}.pdf`, doc.output('blob'));
     }
   };
 
@@ -254,23 +363,48 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
               {t.export}
             </button>
             {showExportMenu && (
-              <div className="absolute bottom-full mb-2 w-48 bg-gray-600 rounded-lg shadow-xl py-1 z-10">
+              <div className="absolute bottom-full mb-2 w-48 bg-gray-600 rounded-lg shadow-xl py-1 z-10" onMouseLeave={() => setShowExportMenu(false)}>
                 <button onClick={() => handleExport('txt')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">TXT (.txt)</button>
                 <button onClick={() => handleExport('json')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">JSON (.json)</button>
                 <button onClick={() => handleExport('srt')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">SRT (.srt)</button>
+                <button onClick={() => handleExport('csv')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">CSV (.csv)</button>
+                 <div className="h-px bg-gray-500 my-1"></div>
+                <button onClick={() => handleExport('pdf')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">PDF (.pdf)</button>
+                <button onClick={() => handleExport('docx')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">DOCX (.docx)</button>
+                 <div className="h-px bg-gray-500 my-1"></div>
                 <button onClick={() => handleExport('png')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">PNG (.png)</button>
+                <button onClick={() => handleExport('jpg')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">JPG (.jpeg)</button>
               </div>
             )}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
             {isEditing && (
-              <button
-                onClick={handleSaveChanges}
-                className="flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200"
-              >
-                <SaveIcon className="w-5 h-5 me-2"/> {t.saveChanges}
-              </button>
+              <>
+                <button
+                  onClick={handleUndo}
+                  disabled={!canUndo}
+                  title={t.undo}
+                  className="flex items-center p-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <UndoIcon className="w-5 h-5"/>
+                </button>
+                <button
+                  onClick={handleRedo}
+                  disabled={!canRedo}
+                  title={t.redo}
+                  className="flex items-center p-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <RedoIcon className="w-5 h-5"/>
+                </button>
+                <div className="w-px bg-gray-600 mx-1"></div>
+                <button
+                  onClick={handleSaveChanges}
+                  className="flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200"
+                >
+                  <SaveIcon className="w-5 h-5 me-2"/> {t.saveChanges}
+                </button>
+              </>
             )}
             <button
               onClick={handleEditToggle}

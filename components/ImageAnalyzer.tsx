@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import type { TranslationSet } from '../types';
 import type { LanguageOption } from '../lib/languages';
@@ -10,7 +9,9 @@ import { targetLanguages } from '../lib/languages';
 import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
-
+import { CloseIcon } from './icons/CloseIcon';
+import { jsPDF } from 'jspdf';
+import * as docx from 'docx';
 
 const ResultBox: React.FC<{ 
     title: string; 
@@ -18,26 +19,34 @@ const ResultBox: React.FC<{
     t: TranslationSet; 
     onCopy: () => void; 
     isCopied: boolean; 
-    onExport?: () => void;
+    onExport: (format: 'txt' | 'docx' | 'pdf') => void;
     onChange?: (newValue: string) => void; 
 }> = ({ title, value, t, onCopy, isCopied, onExport, onChange }) => {
     const charCount = value.length;
     const isEditable = !!onChange;
+    const [showExportMenu, setShowExportMenu] = useState(false);
 
     return (
         <div className="bg-gray-900/50 rounded-lg p-4 flex flex-col mt-4">
             <div className="flex justify-between items-center mb-2">
                 <h3 className="font-semibold text-lg text-gray-200">{title}</h3>
                 <div className="flex items-center space-x-2">
-                    {onExport && (
-                        <button
-                            onClick={onExport}
+                    <div className="relative">
+                         <button
+                            onClick={() => setShowExportMenu(!showExportMenu)}
                             className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200"
                         >
                             <DownloadIcon className="w-4 h-4 me-2" />
                             {t.export}
                         </button>
-                    )}
+                        {showExportMenu && (
+                          <div onMouseLeave={() => setShowExportMenu(false)} className="absolute top-full mt-2 right-0 w-36 bg-gray-600 rounded-lg shadow-xl py-1 z-10">
+                            <button onClick={() => onExport('txt')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">TXT (.txt)</button>
+                            <button onClick={() => onExport('docx')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">DOCX (.docx)</button>
+                            <button onClick={() => onExport('pdf')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">PDF (.pdf)</button>
+                          </div>
+                        )}
+                    </div>
                     <button
                         onClick={onCopy}
                         className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200"
@@ -99,6 +108,22 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
     }
   };
   
+  const handleReset = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setAnalysisResult('');
+    setEditedAnalysisResult('');
+    setIsLoading(false);
+    setError(null);
+    setTranslatedText('');
+    setEditedTranslatedText('');
+    setIsTranslating(false);
+    setTranslationError(null);
+    if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+    }
+  };
+
   const handleAnalyze = async () => {
     if (!imageFile) return;
     setIsLoading(true);
@@ -135,8 +160,7 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
     }
   };
 
-  const createDownload = (filename: string, content: string, mime: string) => {
-    const blob = new Blob([content], { type: mime });
+  const createDownload = (filename: string, blob: Blob) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -147,17 +171,29 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
     URL.revokeObjectURL(url);
   };
 
-  const handleExport = () => {
-    if (!editedAnalysisResult || !imageFile) return;
-    const baseFilename = imageFile.name.split('.').slice(0, -1).join('.') || 'image-analysis';
-    createDownload(`${baseFilename}-analysis.txt`, editedAnalysisResult, 'text/plain;charset=utf-8');
-  };
+  const handleExport = async (format: 'txt' | 'docx' | 'pdf', type: 'analysis' | 'translation') => {
+    const content = type === 'analysis' ? editedAnalysisResult : editedTranslatedText;
+    if (!content || !imageFile) return;
+    const baseFilename = imageFile.name.split('.').slice(0, -1).join('.') || 'image-export';
+    const filename = type === 'analysis' ? `${baseFilename}-analysis` : `${baseFilename}-translation-${targetLang.code}`;
 
-  const handleExportTranslation = () => {
-    if (!editedTranslatedText || !imageFile) return;
-    const baseFilename = imageFile.name.split('.').slice(0, -1).join('.') || 'image-analysis';
-    const languageCode = targetLang.code;
-    createDownload(`${baseFilename}-translation-${languageCode}.txt`, editedTranslatedText, 'text/plain;charset=utf-8');
+    if (format === 'txt') {
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      createDownload(`${filename}.txt`, blob);
+    } else if (format === 'docx') {
+       const doc = new docx.Document({
+        sections: [{
+          children: content.split('\n').map(text => new docx.Paragraph(text)),
+        }],
+      });
+      const blob = await docx.Packer.toBlob(doc);
+      createDownload(`${filename}.docx`, blob);
+    } else if (format === 'pdf') {
+      const doc = new jsPDF();
+      doc.text(content, 10, 10);
+      const blob = doc.output('blob');
+      createDownload(`${filename}.pdf`, blob);
+    }
   };
 
   const handleCopy = (type: 'ocr' | 'translation') => {
@@ -182,6 +218,13 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
         {imagePreview ? (
             <div className="relative mb-4 text-center">
                 <img src={imagePreview} alt="Preview" className="w-auto mx-auto rounded-lg max-h-60 object-contain"/>
+                <button
+                    onClick={handleReset}
+                    title={t.clearImage}
+                    className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-full text-white hover:bg-red-500 transition-colors duration-200"
+                >
+                    <CloseIcon className="w-5 h-5" />
+                </button>
             </div>
         ) : (
             <div
@@ -219,7 +262,7 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
                     t={t} 
                     onCopy={() => handleCopy('ocr')} 
                     isCopied={isOcrCopied} 
-                    onExport={handleExport}
+                    onExport={(format) => handleExport(format, 'analysis')}
                     onChange={setEditedAnalysisResult}
                 />
                 
@@ -249,7 +292,7 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
                         t={t} 
                         onCopy={() => handleCopy('translation')} 
                         isCopied={isTranslationCopied} 
-                        onExport={handleExportTranslation}
+                        onExport={(format) => handleExport(format, 'translation')}
                         onChange={setEditedTranslatedText}
                     />
                 )}
