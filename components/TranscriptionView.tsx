@@ -164,42 +164,57 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
       
       context.font = FONT;
       
-      let totalHeight = PADDING * 2;
+      let totalHeight = PADDING;
       const lines: {y: number, parts: {text: string, color: string}[]}[] = [];
 
       transcription.segments.forEach(segment => {
-          let lineParts = [];
-          if (showTimestamps) lineParts.push({ text: `[${segment.startTime} - ${segment.endTime}] `, color: TIMESTAMP_COLOR });
-          if (showSpeaker) lineParts.push({ text: `${segment.speaker}: `, color: SPEAKER_COLOR });
-          lineParts.push({ text: segment.text, color: TEXT_COLOR });
+          const prefixParts: {text: string, color: string}[] = [];
+          if (showTimestamps) prefixParts.push({ text: `[${segment.startTime} - ${segment.endTime}] `, color: TIMESTAMP_COLOR });
+          if (showSpeaker) prefixParts.push({ text: `${segment.speaker}: `, color: SPEAKER_COLOR });
+          
+          const prefixWidth = prefixParts.reduce((acc, part) => acc + context.measureText(part.text).width, 0);
+          const availableWidth = CANVAS_WIDTH - PADDING * 2;
+          
+          const words = segment.text.split(' ');
+          let currentLineText = '';
+          const textLines: string[] = [];
+          
+          words.forEach((word) => {
+              const testLine = currentLineText + word + ' ';
+              const widthLimit = textLines.length === 0 ? availableWidth - prefixWidth : availableWidth;
+              const testWidth = context.measureText(testLine).width;
 
-          const textToMeasure = lineParts.map(p => p.text).join('');
-          const textWidth = context.measureText(textToMeasure).width;
-
-          if (textWidth > CANVAS_WIDTH - PADDING * 2) {
-              // Basic wrapping for long lines
-              const words = segment.text.split(' ');
-              let currentLine = (showTimestamps ? `[${segment.startTime} - ${segment.endTime}] ` : '') + (showSpeaker ? `${segment.speaker}: ` : '');
-              
-              for (const word of words) {
-                  const testLine = currentLine + word + ' ';
-                  if (context.measureText(testLine).width > CANVAS_WIDTH - PADDING * 2 && currentLine.length > 0) {
-                      // Fix: The argument to lines.push should be an object, not an array containing an object.
-                      lines.push({y: totalHeight + FONT_SIZE, parts: [{text: currentLine.trim(), color: TEXT_COLOR}] });
-                      totalHeight += LINE_HEIGHT;
-                      currentLine = '  ' + word + ' '; // Indent wrapped line
-                  } else {
-                      currentLine = testLine;
-                  }
+              if (testWidth > widthLimit && currentLineText) {
+                  textLines.push(currentLineText.trim());
+                  currentLineText = word + ' ';
+              } else {
+                  currentLineText = testLine;
               }
-              // Fix: The argument to lines.push should be an object, not an array containing an object.
-              lines.push({y: totalHeight + FONT_SIZE, parts: [{text: currentLine.trim(), color: TEXT_COLOR}]});
-          } else {
-              // Fix: The argument to lines.push should be an object, not an array containing an object.
-              lines.push({y: totalHeight + FONT_SIZE, parts: lineParts });
+          });
+          if (currentLineText.trim()) {
+              textLines.push(currentLineText.trim());
           }
-          totalHeight += LINE_HEIGHT;
+
+          if(textLines.length === 0) textLines.push('');
+
+          textLines.forEach((lineText, index) => {
+              totalHeight += LINE_HEIGHT;
+              if (index === 0) {
+                  lines.push({
+                      y: totalHeight,
+                      parts: [...prefixParts, { text: lineText, color: TEXT_COLOR }]
+                  });
+              } else {
+                  const indent = '    '; // 4 spaces for indent
+                  lines.push({
+                      y: totalHeight,
+                      parts: [{ text: indent + lineText, color: TEXT_COLOR }]
+                  });
+              }
+          });
       });
+      
+      totalHeight += PADDING;
 
       canvas.width = CANVAS_WIDTH;
       canvas.height = totalHeight;
@@ -207,7 +222,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
       context.fillRect(0, 0, canvas.width, canvas.height);
       context.font = FONT;
       
-      lines.flat().forEach(line => {
+      lines.forEach(line => {
           let currentX = PADDING;
           line.parts.forEach(part => {
               context.fillStyle = part.color;
@@ -231,7 +246,6 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
         `${i + 1}\n${toSrtTime(seg.startTime)} --> ${toSrtTime(seg.endTime)}\n${seg.text}`
       ).join('\n\n');
       createDownload(`${baseFilename}.srt`, srtContent, 'application/x-subrip;charset=utf-8');
-    // Fix: Changed 'jpeg' to 'jpg' to match the type of format, and pass 'jpeg' to the canvas function.
     } else if (format === 'png' || format === 'jpg') {
         const dataUrl = renderTranscriptionToCanvas(format === 'jpg' ? 'jpeg' : 'png');
         if (dataUrl) {
@@ -250,7 +264,6 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
     } else if (format === 'docx') {
         const paragraphs = transcription.segments.map(seg => {
             const parts = [];
-            // Fix: Corrected variable name from 'segment' to 'seg'.
             if (showTimestamps) parts.push(new docx.TextRun({ text: `[${seg.startTime} - ${seg.endTime}] `, color: "A78BFA" }));
             if (showSpeaker) parts.push(new docx.TextRun({ text: `${seg.speaker}: `, bold: true, color: "F472B6"}));
             parts.push(new docx.TextRun(seg.text));
@@ -267,7 +280,6 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
                 doc.addPage();
                 y = 10;
             }
-            // Fix: Corrected variable name from 'segment' to 'seg'.
             const line = (showTimestamps ? `[${seg.startTime} - ${seg.endTime}] ` : '') + (showSpeaker ? `${seg.speaker}: ` : '') + seg.text;
             const splitLines = doc.splitTextToSize(line, 180);
             doc.text(splitLines, 10, y);
