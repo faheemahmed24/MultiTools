@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import type { TranslationSet } from '../types';
 import type { LanguageOption } from '../lib/languages';
@@ -11,8 +12,18 @@ import { CheckIcon } from './icons/CheckIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
 
 
-const ResultBox: React.FC<{ title: string; content: string; t: TranslationSet; onCopy: () => void, isCopied: boolean, onExport?: () => void }> = ({ title, content, t, onCopy, isCopied, onExport }) => {
-    const charCount = content.length;
+const ResultBox: React.FC<{ 
+    title: string; 
+    value: string; 
+    t: TranslationSet; 
+    onCopy: () => void; 
+    isCopied: boolean; 
+    onExport?: () => void;
+    onChange?: (newValue: string) => void; 
+}> = ({ title, value, t, onCopy, isCopied, onExport, onChange }) => {
+    const charCount = value.length;
+    const isEditable = !!onChange;
+
     return (
         <div className="bg-gray-900/50 rounded-lg p-4 flex flex-col mt-4">
             <div className="flex justify-between items-center mb-2">
@@ -36,8 +47,13 @@ const ResultBox: React.FC<{ title: string; content: string; t: TranslationSet; o
                     </button>
                 </div>
             </div>
-            <div className="overflow-y-auto flex-grow bg-gray-800/50 p-3 rounded-md">
-                <div className="text-gray-300 whitespace-pre-wrap">{content}</div>
+            <div className="overflow-y-auto flex-grow bg-gray-800/50 p-3 rounded-md min-h-[120px]">
+                <textarea
+                    value={value}
+                    readOnly={!isEditable}
+                    onChange={(e) => onChange?.(e.target.value)}
+                    className="w-full h-full bg-transparent text-gray-300 p-0 resize-none border-0 focus:ring-0"
+                />
             </div>
             <div className="text-right text-sm text-gray-400 mt-1 px-1">
                 {charCount} characters
@@ -51,12 +67,14 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState('');
+  const [editedAnalysisResult, setEditedAnalysisResult] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [targetLang, setTargetLang] = useState<LanguageOption>(targetLanguages[0]);
   const [translatedText, setTranslatedText] = useState('');
+  const [editedTranslatedText, setEditedTranslatedText] = useState('');
   const [isTranslating, setIsTranslating] = useState(false);
   const [translationError, setTranslationError] = useState<string | null>(null);
 
@@ -73,7 +91,9 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
       };
       reader.readAsDataURL(file);
       setAnalysisResult('');
+      setEditedAnalysisResult('');
       setTranslatedText('');
+      setEditedTranslatedText('');
       setError(null);
       setTranslationError(null);
     }
@@ -84,10 +104,13 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
     setIsLoading(true);
     setError(null);
     setAnalysisResult('');
+    setEditedAnalysisResult('');
     setTranslatedText('');
+    setEditedTranslatedText('');
     try {
       const result = await analyzeImage(imageFile);
       setAnalysisResult(result);
+      setEditedAnalysisResult(result);
     } catch (err: any) {
       setError(err.message || 'An error occurred during analysis.');
     } finally {
@@ -96,13 +119,15 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
   };
 
   const handleTranslate = async () => {
-    if (!analysisResult) return;
+    if (!editedAnalysisResult) return;
     setIsTranslating(true);
     setTranslationError(null);
     setTranslatedText('');
+    setEditedTranslatedText('');
     try {
-        const result = await translateText(analysisResult, 'auto', targetLang.name);
+        const result = await translateText(editedAnalysisResult, 'auto', targetLang.name);
         setTranslatedText(result);
+        setEditedTranslatedText(result);
     } catch (err: any) {
         setTranslationError(err.message || 'An error occurred during translation.');
     } finally {
@@ -123,20 +148,20 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
   };
 
   const handleExport = () => {
-    if (!analysisResult || !imageFile) return;
+    if (!editedAnalysisResult || !imageFile) return;
     const baseFilename = imageFile.name.split('.').slice(0, -1).join('.') || 'image-analysis';
-    createDownload(`${baseFilename}-analysis.txt`, analysisResult, 'text/plain;charset=utf-8');
+    createDownload(`${baseFilename}-analysis.txt`, editedAnalysisResult, 'text/plain;charset=utf-8');
   };
 
   const handleExportTranslation = () => {
-    if (!translatedText || !imageFile) return;
+    if (!editedTranslatedText || !imageFile) return;
     const baseFilename = imageFile.name.split('.').slice(0, -1).join('.') || 'image-analysis';
     const languageCode = targetLang.code;
-    createDownload(`${baseFilename}-translation-${languageCode}.txt`, translatedText, 'text/plain;charset=utf-8');
+    createDownload(`${baseFilename}-translation-${languageCode}.txt`, editedTranslatedText, 'text/plain;charset=utf-8');
   };
 
   const handleCopy = (type: 'ocr' | 'translation') => {
-    const textToCopy = type === 'ocr' ? analysisResult : translatedText;
+    const textToCopy = type === 'ocr' ? editedAnalysisResult : editedTranslatedText;
     navigator.clipboard.writeText(textToCopy);
     if (type === 'ocr') {
         setIsOcrCopied(true);
@@ -188,7 +213,15 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
         
         {analysisResult && (
             <>
-                <ResultBox title={t.imageAnalysisResult} content={analysisResult} t={t} onCopy={() => handleCopy('ocr')} isCopied={isOcrCopied} onExport={handleExport} />
+                <ResultBox 
+                    title={t.imageAnalysisResult} 
+                    value={editedAnalysisResult} 
+                    t={t} 
+                    onCopy={() => handleCopy('ocr')} 
+                    isCopied={isOcrCopied} 
+                    onExport={handleExport}
+                    onChange={setEditedAnalysisResult}
+                />
                 
                 <div className="flex flex-col sm:flex-row items-center gap-4 mt-6">
                     <LanguageDropdown
@@ -210,7 +243,15 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
                 {isTranslating && <div className="mt-4"><Loader t={{transcribing: t.translating, loadingMessage: ''}}/></div>}
                 {translationError && <div className="text-red-400 mt-4 text-center">{translationError}</div>}
                 {translatedText && (
-                    <ResultBox title={t.translationResult} content={translatedText} t={t} onCopy={() => handleCopy('translation')} isCopied={isTranslationCopied} onExport={handleExportTranslation} />
+                    <ResultBox 
+                        title={t.translationResult} 
+                        value={editedTranslatedText} 
+                        t={t} 
+                        onCopy={() => handleCopy('translation')} 
+                        isCopied={isTranslationCopied} 
+                        onExport={handleExportTranslation}
+                        onChange={setEditedTranslatedText}
+                    />
                 )}
             </>
         )}

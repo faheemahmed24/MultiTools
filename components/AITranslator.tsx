@@ -6,6 +6,8 @@ import { sourceLanguages, targetLanguages } from '../lib/languages';
 import type { LanguageOption } from '../lib/languages';
 import LanguageDropdown from './LanguageDropdown';
 import { SwapIcon } from './icons/SwapIcon';
+import { CopyIcon } from './icons/CopyIcon';
+import { CheckIcon } from './icons/CheckIcon';
 import { translateText } from '../services/geminiService';
 
 const AITranslator: React.FC<{ t: TranslationSet }> = ({ t }) => {
@@ -13,14 +15,17 @@ const AITranslator: React.FC<{ t: TranslationSet }> = ({ t }) => {
   const [targetLang, setTargetLang] = useState<LanguageOption>(targetLanguages[0]);
   const [inputText, setInputText] = useState('');
   const [translatedText, setTranslatedText] = useState('');
+  const [editedTranslatedText, setEditedTranslatedText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
 
   const debouncedInputText = useDebounce(inputText, 500);
 
   const handleTranslate = async () => {
     if (!debouncedInputText.trim()) {
       setTranslatedText('');
+      setEditedTranslatedText('');
       return;
     }
     setIsLoading(true);
@@ -28,6 +33,7 @@ const AITranslator: React.FC<{ t: TranslationSet }> = ({ t }) => {
     try {
       const result = await translateText(debouncedInputText, sourceLang.name, targetLang.name);
       setTranslatedText(result);
+      setEditedTranslatedText(result);
     } catch (err: any) {
       setError(err.message || 'An error occurred during translation.');
     } finally {
@@ -45,7 +51,6 @@ const AITranslator: React.FC<{ t: TranslationSet }> = ({ t }) => {
     const currentSource = sourceLang;
     const currentTarget = targetLang;
     
-    // Find the corresponding language options in the other list
     const newSourceInTargetList = targetLanguages.find(l => l.code === currentTarget.code);
     const newTargetInSourceList = sourceLanguages.find(l => l.code === currentSource.code);
 
@@ -54,7 +59,12 @@ const AITranslator: React.FC<{ t: TranslationSet }> = ({ t }) => {
         setTargetLang(newTargetInSourceList);
     }
   };
-
+  
+  const handleCopy = () => {
+    navigator.clipboard.writeText(editedTranslatedText);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
 
   const characterCount = inputText.length;
   const wordCount = inputText.trim().split(/\s+/).filter(Boolean).length;
@@ -99,11 +109,20 @@ const AITranslator: React.FC<{ t: TranslationSet }> = ({ t }) => {
         </div>
         <div className="relative">
           <textarea
-            value={isLoading ? `${t.translating}...` : (error || translatedText)}
-            readOnly
+            value={isLoading ? `${t.translating}...` : (error || editedTranslatedText)}
+            onChange={(e) => !isLoading && !error && setEditedTranslatedText(e.target.value)}
             placeholder={t.translationResult}
             className={`w-full h-64 bg-gray-900/50 rounded-lg p-4 resize-none ${error ? 'text-red-400' : 'text-gray-200'}`}
           />
+          {!isLoading && !error && translatedText && (
+             <button
+                onClick={handleCopy}
+                className="absolute top-3 right-3 flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200"
+            >
+                {isCopied ? <CheckIcon className="w-4 h-4 me-2" /> : <CopyIcon className="w-4 h-4 me-2" />}
+                {isCopied ? t.copied : t.copy}
+            </button>
+          )}
         </div>
       </div>
     </div>
