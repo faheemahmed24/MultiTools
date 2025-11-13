@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { Language } from '../types';
+import { GlobeIcon } from './icons/GlobeIcon';
+import { ChevronDownIcon } from './icons/ChevronDownIcon';
 
 interface LanguageSelectorProps {
   selectedLanguage: Language;
@@ -14,21 +16,55 @@ const languages: { code: Language; name: string }[] = [
 ];
 
 const LanguageSelector: React.FC<LanguageSelectorProps> = ({ selectedLanguage, onSelectLanguage }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelect = (langCode: Language) => {
+    onSelectLanguage(langCode);
+    setIsOpen(false);
+  };
+  
+  const currentLanguage = languages.find(lang => lang.code === selectedLanguage);
+
   return (
-    <div className="bg-gray-800/80 rounded-full p-2 flex items-center space-x-3 rtl:space-x-reverse">
-      {languages.map((lang) => (
-        <button
-          key={lang.code}
-          onClick={() => onSelectLanguage(lang.code)}
-          className={`px-4 py-1 text-md font-semibold rounded-full transition-colors duration-200 ${
-            selectedLanguage === lang.code
-              ? 'bg-purple-600 text-white'
-              : 'text-gray-300 hover:bg-gray-700'
-          }`}
-        >
-          {lang.name}
-        </button>
-      ))}
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between bg-gray-700/50 px-4 py-2 rounded-lg text-gray-200 hover:bg-gray-700 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <GlobeIcon className="w-5 h-5 text-gray-400" />
+          <span className="font-semibold">{currentLanguage?.name || 'Select Language'}</span>
+        </div>
+        <ChevronDownIcon className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-10 bottom-full mb-2 w-full bg-gray-700 border border-gray-600 rounded-lg shadow-xl py-1">
+          <ul className="max-h-60 overflow-y-auto">
+            {languages.map(lang => (
+              <li key={lang.code}>
+                <button
+                  onClick={() => handleSelect(lang.code)}
+                  className={`w-full text-start px-4 py-2 text-sm ${selectedLanguage === lang.code ? 'bg-purple-600 text-white' : 'text-gray-300 hover:bg-purple-600/50'}`}
+                >
+                  {lang.name}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };

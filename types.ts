@@ -18,3 +18,9 @@ export interface Transcription {
   detectedLanguage: string;
   segments: TranscriptionSegment[];
 }
+
+export interface User {
+  id: string;
+  email: string;
+  password?: string; // Stored locally for this example
+}

@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
+import { useUserLocalStorage } from './hooks/useUserLocalStorage';
 import { getTranslations } from './lib/i18n';
-import type { Language, Transcription, TranscriptionSegment } from './types';
+import type { Language, Transcription, TranscriptionSegment, User } from './types';
 import { transcribeAudio } from './services/geminiService';
 
 import Header from './components/Header';
@@ -15,6 +16,7 @@ import PdfToImage from './components/PdfToImage';
 import ImageToPdf from './components/ImageToPdf';
 import PdfToWord from './components/PdfToWord';
 import WordToPdf from './components/WordToPdf';
+import AuthModal from './components/AuthModal';
 import { ClockIcon } from './components/icons/ClockIcon';
 import { CheckCircleIcon } from './components/icons/CheckCircleIcon';
 import { XCircleIcon } from './components/icons/XCircleIcon';
@@ -28,10 +30,13 @@ interface ProcessingFile {
 
 function App() {
   const [uiLanguage, setUiLanguage] = useLocalStorage<Language>('uiLanguage', 'en');
-  const [activeTool, setActiveTool] = useLocalStorage<string>('activeTool', 'AI Transcriber');
+  const [currentUser, setCurrentUser] = useLocalStorage<User | null>('currentUser', null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   
-  const [transcriptions, setTranscriptions] = useLocalStorage<Transcription[]>('transcriptions', []);
-  const [currentTranscriptionId, setCurrentTranscriptionId] = useLocalStorage<string | null>('currentTranscriptionId', null);
+  // User-specific data
+  const [activeTool, setActiveTool] = useUserLocalStorage<string>(currentUser?.id, 'activeTool', 'AI Transcriber');
+  const [transcriptions, setTranscriptions] = useUserLocalStorage<Transcription[]>(currentUser?.id, 'transcriptions', []);
+  const [currentTranscriptionId, setCurrentTranscriptionId] = useUserLocalStorage<string | null>(currentUser?.id, 'currentTranscriptionId', null);
   
   const [processingFiles, setProcessingFiles] = useState<ProcessingFile[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useLocalStorage<boolean>('isSidebarOpen', true);
@@ -46,6 +51,15 @@ function App() {
       document.documentElement.dir = 'ltr';
     }
   }, [uiLanguage]);
+  
+  // When user logs out, clear sensitive current state
+  useEffect(() => {
+    if (!currentUser) {
+      setCurrentTranscriptionId(null);
+      setProcessingFiles([]);
+    }
+  }, [currentUser, setCurrentTranscriptionId]);
+
 
   const currentTranscription = useMemo(() => {
     if (!currentTranscriptionId) return null;
@@ -117,6 +131,15 @@ function App() {
     setActiveTool('AI Transcriber');
     setCurrentTranscriptionId(transcription.id);
   }, [setActiveTool, setCurrentTranscriptionId]);
+
+  const handleLoginSuccess = (user: User) => {
+    setCurrentUser(user);
+    setIsAuthModalOpen(false);
+  };
+  
+  const handleLogout = () => {
+    setCurrentUser(null);
+  };
 
   const renderActiveTool = () => {
     switch (activeTool) {
@@ -209,6 +232,9 @@ function App() {
         t={t}
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
+        currentUser={currentUser}
+        onLoginClick={() => setIsAuthModalOpen(true)}
+        onLogoutClick={handleLogout}
       />
       <main className="flex-grow p-4 md:p-6 overflow-y-auto">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
@@ -226,6 +252,12 @@ function App() {
           </div>
         </div>
       </main>
+      <AuthModal 
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+        t={t}
+      />
     </div>
   );
 }
