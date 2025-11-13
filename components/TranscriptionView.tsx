@@ -90,14 +90,13 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
     setShowExportMenu(false);
   };
 
-  const handleExport = (format: 'txt' | 'json' | 'srt') => {
+  const handleExport = (format: 'txt' | 'json' | 'srt' | 'png') => {
     const baseFilename = transcription.fileName.split('.').slice(0, -1).join('.') || transcription.fileName;
     if (format === 'txt') {
       createDownload(`${baseFilename}.txt`, fullText, 'text/plain;charset=utf-8');
     } else if (format === 'json') {
       createDownload(`${baseFilename}.json`, JSON.stringify(transcription, null, 2), 'application/json;charset=utf-8');
     } else if (format === 'srt') {
-      // Fix: Improved SRT timestamp generation to correctly handle milliseconds.
       const toSrtTime = (time: string) => {
         const parts = time.split('.');
         const hms = parts[0];
@@ -108,6 +107,64 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
         `${i + 1}\n${toSrtTime(seg.startTime)} --> ${toSrtTime(seg.endTime)}\n${seg.text}`
       ).join('\n\n');
       createDownload(`${baseFilename}.srt`, srtContent, 'application/x-subrip;charset=utf-8');
+    } else if (format === 'png') {
+        const PADDING = 25;
+        const LINE_HEIGHT = 28;
+        const FONT_SIZE = 16;
+        const FONT = `${FONT_SIZE}px monospace`;
+        const CANVAS_WIDTH = 1200;
+
+        const BG_COLOR = '#111827'; // bg-gray-900
+        const TIMESTAMP_COLOR = '#A78BFA'; // purple-400
+        const SPEAKER_COLOR = '#F472B6'; // pink-400
+        const TEXT_COLOR = '#E5E7EB'; // gray-200
+
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+
+        if (!context) return;
+        
+        context.font = FONT;
+        
+        const canvasHeight = (transcription.segments.length * LINE_HEIGHT) + (2 * PADDING);
+        canvas.width = CANVAS_WIDTH;
+        canvas.height = canvasHeight;
+
+        context.fillStyle = BG_COLOR;
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        context.font = FONT;
+
+        transcription.segments.forEach((segment, index) => {
+            let currentX = PADDING;
+            const currentY = PADDING + (index * LINE_HEIGHT) + FONT_SIZE;
+
+            if (showTimestamps) {
+                const timestamp = `[${segment.startTime} - ${segment.endTime}] `;
+                context.fillStyle = TIMESTAMP_COLOR;
+                context.fillText(timestamp, currentX, currentY);
+                currentX += context.measureText(timestamp).width;
+            }
+
+            if (showSpeaker) {
+                const speaker = `${segment.speaker}: `;
+                context.fillStyle = SPEAKER_COLOR;
+                context.fillText(speaker, currentX, currentY);
+                currentX += context.measureText(speaker).width;
+            }
+
+            context.fillStyle = TEXT_COLOR;
+            context.fillText(segment.text, currentX, currentY);
+        });
+
+        const dataUrl = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = `${baseFilename}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setShowExportMenu(false);
     }
   };
 
@@ -201,6 +258,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
                 <button onClick={() => handleExport('txt')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">TXT (.txt)</button>
                 <button onClick={() => handleExport('json')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">JSON (.json)</button>
                 <button onClick={() => handleExport('srt')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">SRT (.srt)</button>
+                <button onClick={() => handleExport('png')} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">PNG (.png)</button>
               </div>
             )}
           </div>

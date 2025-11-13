@@ -10,17 +10,6 @@ interface HeaderProps {
   t: TranslationSet;
 }
 
-const toolKeys = {
-  'AI Transcriber': 'aiTranscriber',
-  'AI Translator': 'aiTranslatorTitle',
-  'Image Analyzer': 'imageAnalyzerTitle',
-  'PDF to Image': 'pdfToImage',
-  'Image to PDF': 'imageToPdf',
-  'PDF to Word': 'pdfToWord',
-  'Word to PD': 'wordToPdf'
-};
-
-
 const Header: React.FC<HeaderProps> = ({ uiLanguage, setUiLanguage, activeTool, setActiveTool, t }) => {
   const [indicatorStyle, setIndicatorStyle] = useState({});
   const toolsContainerRef = useRef<HTMLDivElement>(null);
@@ -28,13 +17,13 @@ const Header: React.FC<HeaderProps> = ({ uiLanguage, setUiLanguage, activeTool, 
 
   // Define tools inside the component to access `t`
   const tools = [
-    { key: 'AI Transcriber', label: t.transcription },
+    { key: 'AI Transcriber', label: t.aiTranscriber },
     { key: 'AI Translator', label: t.aiTranslatorTitle },
     { key: 'Image Analyzer', label: t.imageAnalyzerTitle },
-    { key: 'PDF to Image', label: 'PDF to Image' }, // Placeholder, add translation keys
-    { key: 'Image to PDF', label: 'Image to PDF' },
-    { key: 'PDF to Word', label: 'PDF to Word' },
-    { key: 'Word to PD', label: 'Word to PDF' }
+    { key: 'PDF to Image', label: t.pdfToImage },
+    { key: 'Image to PDF', label: t.imageToPdf },
+    { key: 'PDF to Word', label: t.pdfToWord },
+    { key: 'Word to PDF', label: t.wordToPdf }
   ];
 
 

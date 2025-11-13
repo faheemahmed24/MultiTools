@@ -12,6 +12,7 @@ import Loader from './components/Loader';
 import ComingSoon from './components/ComingSoon';
 import AITranslator from './components/AITranslator';
 import ImageAnalyzer from './components/ImageAnalyzer';
+import PdfToImage from './components/PdfToImage';
 
 function App() {
   const [uiLanguage, setUiLanguage] = useLocalStorage<Language>('uiLanguage', 'en');
@@ -103,6 +104,8 @@ function App() {
         return <AITranslator t={t} />;
       case 'Image Analyzer':
         return <ImageAnalyzer t={t} />;
+      case 'PDF to Image':
+        return <PdfToImage t={t} />;
       default:
         return <ComingSoon toolName={activeTool} />;
     }

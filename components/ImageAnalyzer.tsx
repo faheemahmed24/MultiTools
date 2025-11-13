@@ -8,21 +8,33 @@ import LanguageDropdown from './LanguageDropdown';
 import { targetLanguages } from '../lib/languages';
 import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
+import { DownloadIcon } from './icons/DownloadIcon';
 
 
-const ResultBox: React.FC<{ title: string; content: string; t: TranslationSet; onCopy: () => void, isCopied: boolean }> = ({ title, content, t, onCopy, isCopied }) => {
+const ResultBox: React.FC<{ title: string; content: string; t: TranslationSet; onCopy: () => void, isCopied: boolean, onExport?: () => void }> = ({ title, content, t, onCopy, isCopied, onExport }) => {
     const charCount = content.length;
     return (
         <div className="bg-gray-900/50 rounded-lg p-4 flex flex-col mt-4">
             <div className="flex justify-between items-center mb-2">
                 <h3 className="font-semibold text-lg text-gray-200">{title}</h3>
-                <button
-                    onClick={onCopy}
-                    className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200"
-                >
-                    {isCopied ? <CheckIcon className="w-4 h-4 me-2" /> : <CopyIcon className="w-4 h-4 me-2" />}
-                    {isCopied ? t.copied : t.copy}
-                </button>
+                <div className="flex items-center space-x-2">
+                    {onExport && (
+                        <button
+                            onClick={onExport}
+                            className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200"
+                        >
+                            <DownloadIcon className="w-4 h-4 me-2" />
+                            {t.export}
+                        </button>
+                    )}
+                    <button
+                        onClick={onCopy}
+                        className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200"
+                    >
+                        {isCopied ? <CheckIcon className="w-4 h-4 me-2" /> : <CopyIcon className="w-4 h-4 me-2" />}
+                        {isCopied ? t.copied : t.copy}
+                    </button>
+                </div>
             </div>
             <div className="overflow-y-auto flex-grow bg-gray-800/50 p-3 rounded-md">
                 <div className="text-gray-300 whitespace-pre-wrap">{content}</div>
@@ -98,6 +110,31 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
     }
   };
 
+  const createDownload = (filename: string, content: string, mime: string) => {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExport = () => {
+    if (!analysisResult || !imageFile) return;
+    const baseFilename = imageFile.name.split('.').slice(0, -1).join('.') || 'image-analysis';
+    createDownload(`${baseFilename}-analysis.txt`, analysisResult, 'text/plain;charset=utf-8');
+  };
+
+  const handleExportTranslation = () => {
+    if (!translatedText || !imageFile) return;
+    const baseFilename = imageFile.name.split('.').slice(0, -1).join('.') || 'image-analysis';
+    const languageCode = targetLang.code;
+    createDownload(`${baseFilename}-translation-${languageCode}.txt`, translatedText, 'text/plain;charset=utf-8');
+  };
+
   const handleCopy = (type: 'ocr' | 'translation') => {
     const textToCopy = type === 'ocr' ? analysisResult : translatedText;
     navigator.clipboard.writeText(textToCopy);
@@ -151,7 +188,7 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
         
         {analysisResult && (
             <>
-                <ResultBox title={t.imageAnalysisResult} content={analysisResult} t={t} onCopy={() => handleCopy('ocr')} isCopied={isOcrCopied} />
+                <ResultBox title={t.imageAnalysisResult} content={analysisResult} t={t} onCopy={() => handleCopy('ocr')} isCopied={isOcrCopied} onExport={handleExport} />
                 
                 <div className="flex flex-col sm:flex-row items-center gap-4 mt-6">
                     <LanguageDropdown
@@ -173,7 +210,7 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
                 {isTranslating && <div className="mt-4"><Loader t={{transcribing: t.translating, loadingMessage: ''}}/></div>}
                 {translationError && <div className="text-red-400 mt-4 text-center">{translationError}</div>}
                 {translatedText && (
-                    <ResultBox title={t.translationResult} content={translatedText} t={t} onCopy={() => handleCopy('translation')} isCopied={isTranslationCopied} />
+                    <ResultBox title={t.translationResult} content={translatedText} t={t} onCopy={() => handleCopy('translation')} isCopied={isTranslationCopied} onExport={handleExportTranslation} />
                 )}
             </>
         )}
