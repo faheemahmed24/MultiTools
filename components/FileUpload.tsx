@@ -4,20 +4,22 @@ import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';
 
 interface FileUploadProps {
-  onFileSelect: (file: File) => void;
+  onFilesSelect: (files: File[]) => void;
   t: TranslationSet;
-  isLoading: boolean;
+  isProcessing: boolean;
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, t, isLoading }) => {
+const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing }) => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragging(true);
-  }, []);
+    if (!isProcessing) {
+      setIsDragging(true);
+    }
+  }, [isProcessing]);
 
   const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -34,14 +36,14 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, t, isLoading }) =
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      onFileSelect(e.dataTransfer.files[0]);
+    if (!isProcessing && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      onFilesSelect(Array.from(e.dataTransfer.files));
     }
-  }, [onFileSelect]);
+  }, [onFilesSelect, isProcessing]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      onFileSelect(e.target.files[0]);
+      onFilesSelect(Array.from(e.target.files));
     }
   };
 
@@ -52,7 +54,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, t, isLoading }) =
   return (
     <div className="bg-gray-800 rounded-2xl shadow-lg p-6">
       <div
-        className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 ${isDragging ? 'border-purple-500 bg-gray-700' : 'border-gray-600 hover:border-purple-500'}`}
+        className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 ${isProcessing ? 'border-gray-600' : (isDragging ? 'border-purple-500 bg-gray-700' : 'border-gray-600 hover:border-purple-500')}`}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
@@ -65,14 +67,15 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, t, isLoading }) =
           onChange={handleFileChange}
           accept="audio/*,video/*"
           className="hidden"
-          disabled={isLoading}
+          multiple
+          disabled={isProcessing}
         />
         <button
           onClick={handleClick}
-          disabled={isLoading}
+          disabled={isProcessing}
           className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200"
         >
-          {isLoading ? t.transcribing : t.uploadFile}
+          {isProcessing ? t.transcribing : t.uploadFile}
         </button>
         <p className="mt-2 text-sm text-gray-400">{t.dropFile}</p>
       </div>
