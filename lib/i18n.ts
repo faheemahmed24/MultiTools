@@ -113,6 +113,12 @@ const translations: Record<Language, TranslationSet> = {
     signupSuccess: 'Account created successfully!',
     continueWithGoogle: 'Continue with Google',
     orSeparator: 'OR',
+    chooseAnAccount: 'Choose an account',
+    useAnotherAccount: 'Use another account',
+    signIn: 'Sign in',
+    enterYourEmail: 'Enter your email',
+    back: 'Back',
+    invalidEmail: 'Please enter a valid email address.',
   },
   hi: {
     transcription: 'प्रतिलेखन',
@@ -226,6 +232,12 @@ const translations: Record<Language, TranslationSet> = {
     signupSuccess: 'खाता सफलतापूर्वक बनाया गया!',
     continueWithGoogle: 'Google के साथ जारी रखें',
     orSeparator: 'या',
+    chooseAnAccount: 'एक खाता चुनें',
+    useAnotherAccount: 'दूसरा खाता उपयोग करें',
+    signIn: 'साइन इन करें',
+    enterYourEmail: 'अपना ईमेल दर्ज करें',
+    back: 'वापस',
+    invalidEmail: 'कृपया एक वैध ईमेल पता दर्ज करें।',
   },
   ur: {
     transcription: 'نقل حرفی',
@@ -339,6 +351,12 @@ const translations: Record<Language, TranslationSet> = {
     signupSuccess: 'اکاؤنٹ کامیابی سے بن گیا۔',
     continueWithGoogle: 'گوگل کے ساتھ جاری رکھیں',
     orSeparator: 'یا',
+    chooseAnAccount: 'ایک اکاؤنٹ منتخب کریں',
+    useAnotherAccount: 'دوسرا اکاؤنٹ استعمال کریں',
+    signIn: 'سائن ان کریں',
+    enterYourEmail: 'اپنا ای میل درج کریں',
+    back: 'واپس',
+    invalidEmail: 'براہ کرم ایک درست ای میل ایڈریس درج کریں۔',
   },
   ar: {
     transcription: 'النسخ الصوتي',
@@ -452,6 +470,12 @@ const translations: Record<Language, TranslationSet> = {
     signupSuccess: 'تم إنشاء الحساب بنجاح!',
     continueWithGoogle: 'متابعة باستخدام جوجل',
     orSeparator: 'أو',
+    chooseAnAccount: 'اختر حسابًا',
+    useAnotherAccount: 'استخدام حساب آخر',
+    signIn: 'تسجيل الدخول',
+    enterYourEmail: 'أدخل بريدك الإلكتروني',
+    back: 'رجوع',
+    invalidEmail: 'الرجاء إدخال عنوان بريد إلكتروني صالح.',
   }
 };
 
