@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { TranslationSet, User } from '../types';
 import { CloseIcon } from './icons/CloseIcon';
+import { GoogleIcon } from './icons/GoogleIcon';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -62,12 +63,51 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess, 
         id: new Date().toISOString() + Math.random(),
         email,
         password,
+        authMethod: 'password',
       };
       saveUsers([...users, newUser]);
       onLoginSuccess(newUser);
     }
   };
   
+  const handleGoogleSignIn = () => {
+    // Simulate Google Sign-In with a prompt
+    const googleEmail = prompt("Please enter your email address to continue:");
+    if (!googleEmail) {
+      // User cancelled the prompt
+      return;
+    }
+    
+    // Simple email validation
+    if (!/\S+@\S+\.\S+/.test(googleEmail)) {
+        setError("Please enter a valid email address.");
+        return;
+    }
+
+    setError('');
+    const users = getUsers();
+    let user = users.find(u => u.email === googleEmail);
+
+    if (user) {
+      // User exists, log them in
+      if (user.authMethod === 'password') {
+        // In a real app, you might ask for a password or show an error.
+        // Here, we'll just log them in to keep it simple.
+        console.warn('User with this email signed up with a password. Logging in...');
+      }
+      onLoginSuccess(user);
+    } else {
+      // User does not exist, create a new one
+      const newUser: User = {
+        id: new Date().toISOString() + Math.random(),
+        email: googleEmail,
+        authMethod: 'google',
+      };
+      saveUsers([...users, newUser]);
+      onLoginSuccess(newUser);
+    }
+  };
+
   const handleToggleMode = () => {
     setIsLoginMode(!isLoginMode);
     setError('');
@@ -87,7 +127,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess, 
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-300">{t.email}</label>
             <input
@@ -120,6 +160,24 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess, 
             {isLoginMode ? t.login : t.signup}
           </button>
         </form>
+
+        <div className="relative flex items-center justify-center my-6">
+          <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-full border-t border-gray-600" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="bg-gray-800 px-2 text-gray-400">{t.orSeparator}</span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleGoogleSignIn}
+          className="w-full flex items-center justify-center py-2.5 px-4 bg-white text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors"
+        >
+          <GoogleIcon className="w-5 h-5 me-3" />
+          {t.continueWithGoogle}
+        </button>
 
         <p className="mt-6 text-center text-sm text-gray-400">
           {isLoginMode ? t.loginPrompt : t.signupPrompt}{' '}

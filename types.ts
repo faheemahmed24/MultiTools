@@ -22,5 +22,6 @@ export interface Transcription {
 export interface User {
   id: string;
   email: string;
-  password?: string; // Stored locally for this example
+  password?: string; // Stored locally, only for 'password' authMethod
+  authMethod?: 'password' | 'google';
 }

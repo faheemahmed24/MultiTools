@@ -111,6 +111,8 @@ const translations: Record<Language, TranslationSet> = {
     fillAllFields: 'Please fill in all fields.',
     loginSuccess: 'Login successful!',
     signupSuccess: 'Account created successfully!',
+    continueWithGoogle: 'Continue with Google',
+    orSeparator: 'OR',
   },
   hi: {
     transcription: 'प्रतिलेखन',
@@ -222,6 +224,8 @@ const translations: Record<Language, TranslationSet> = {
     fillAllFields: 'कृपया सभी फ़ील्ड भरें।',
     loginSuccess: 'लॉगिन सफल!',
     signupSuccess: 'खाता सफलतापूर्वक बनाया गया!',
+    continueWithGoogle: 'Google के साथ जारी रखें',
+    orSeparator: 'या',
   },
   ur: {
     transcription: 'نقل حرفی',
@@ -333,6 +337,8 @@ const translations: Record<Language, TranslationSet> = {
     fillAllFields: 'براہ کرم تمام خانے پر کریں۔',
     loginSuccess: 'لاگ ان کامیاب!',
     signupSuccess: 'اکاؤنٹ کامیابی سے بن گیا۔',
+    continueWithGoogle: 'گوگل کے ساتھ جاری رکھیں',
+    orSeparator: 'یا',
   },
   ar: {
     transcription: 'النسخ الصوتي',
@@ -444,6 +450,8 @@ const translations: Record<Language, TranslationSet> = {
     fillAllFields: 'يرجى ملء جميع الحقول.',
     loginSuccess: 'تم تسجيل الدخول بنجاح!',
     signupSuccess: 'تم إنشاء الحساب بنجاح!',
+    continueWithGoogle: 'متابعة باستخدام جوجل',
+    orSeparator: 'أو',
   }
 };
 
