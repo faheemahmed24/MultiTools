@@ -3,7 +3,6 @@ import type { TranslationSet } from '../types';
 import type { LanguageOption } from '../lib/languages';
 import { UploadIcon } from './icons/UploadIcon';
 import { analyzeImage, translateText } from '../services/geminiService';
-import Loader from './Loader';
 import LanguageDropdown from './LanguageDropdown';
 import { targetLanguages } from '../lib/languages';
 import { CopyIcon } from './icons/CopyIcon';
@@ -13,6 +12,14 @@ import { CloseIcon } from './icons/CloseIcon';
 import { jsPDF } from 'jspdf';
 import * as docx from 'docx';
 
+const SkeletonLoader: React.FC = () => (
+    <div className="space-y-3 animate-pulse">
+        <div className="h-4 bg-gray-700 rounded w-3/4"></div>
+        <div className="h-4 bg-gray-700 rounded w-full"></div>
+        <div className="h-4 bg-gray-700 rounded w-5/6"></div>
+    </div>
+);
+
 const ResultBox: React.FC<{ 
     title: string; 
     value: string; 
@@ -20,8 +27,9 @@ const ResultBox: React.FC<{
     onCopy: () => void; 
     isCopied: boolean; 
     onExport: (format: 'txt' | 'docx' | 'pdf') => void;
-    onChange?: (newValue: string) => void; 
-}> = ({ title, value, t, onCopy, isCopied, onExport, onChange }) => {
+    onChange?: (newValue: string) => void;
+    isLoading?: boolean;
+}> = ({ title, value, t, onCopy, isCopied, onExport, onChange, isLoading = false }) => {
     const charCount = value.length;
     const isEditable = !!onChange;
     const [showExportMenu, setShowExportMenu] = useState(false);
@@ -34,7 +42,8 @@ const ResultBox: React.FC<{
                     <div className="relative">
                          <button
                             onClick={() => setShowExportMenu(!showExportMenu)}
-                            className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200"
+                            disabled={isLoading}
+                            className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50"
                         >
                             <DownloadIcon className="w-4 h-4 me-2" />
                             {t.export}
@@ -49,7 +58,8 @@ const ResultBox: React.FC<{
                     </div>
                     <button
                         onClick={onCopy}
-                        className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200"
+                        disabled={isLoading}
+                        className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50"
                     >
                         {isCopied ? <CheckIcon className="w-4 h-4 me-2" /> : <CopyIcon className="w-4 h-4 me-2" />}
                         {isCopied ? t.copied : t.copy}
@@ -57,22 +67,30 @@ const ResultBox: React.FC<{
                 </div>
             </div>
             <div className="overflow-y-auto flex-grow bg-gray-800/50 p-3 rounded-md min-h-[120px]">
-                <textarea
-                    value={value}
-                    readOnly={!isEditable}
-                    onChange={(e) => onChange?.(e.target.value)}
-                    className="w-full h-full bg-transparent text-gray-300 p-0 resize-none border-0 focus:ring-0"
-                />
+                {isLoading ? (
+                    <SkeletonLoader />
+                ) : (
+                    <textarea
+                        value={value}
+                        readOnly={!isEditable}
+                        onChange={(e) => onChange?.(e.target.value)}
+                        className="w-full h-full bg-transparent text-gray-300 p-0 resize-none border-0 focus:ring-0"
+                    />
+                )}
             </div>
             <div className="text-end text-sm text-gray-400 mt-1 px-1">
-                {charCount} characters
+                {!isLoading && `${charCount} characters`}
             </div>
         </div>
     );
 };
 
+interface ImageConverterOcrProps {
+    t: TranslationSet;
+    onAnalysisComplete: (data: { fileName: string; resultText: string; }) => void;
+}
 
-const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
+const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComplete }) => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState('');
@@ -89,6 +107,9 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
 
   const [isOcrCopied, setIsOcrCopied] = useState(false);
   const [isTranslationCopied, setIsTranslationCopied] = useState(false);
+
+  const [targetFormat, setTargetFormat] = useState<'png' | 'jpeg'>('png');
+  const [quality, setQuality] = useState(90);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -136,6 +157,7 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
       const result = await analyzeImage(imageFile);
       setAnalysisResult(result);
       setEditedAnalysisResult(result);
+      onAnalysisComplete({ fileName: imageFile.name, resultText: result });
     } catch (err: any) {
       setError(err.message || 'An error occurred during analysis.');
     } finally {
@@ -169,6 +191,31 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadImage = () => {
+    if (!imagePreview || !imageFile) return;
+  
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    const img = new Image();
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      const mimeType = `image/${targetFormat}`;
+      const qualityValue = targetFormat === 'jpeg' ? quality / 100 : undefined;
+      
+      canvas.toBlob((blob) => {
+          if (blob) {
+            const fileName = `${imageFile.name.split('.').slice(0, -1).join('.') || 'image'}.${targetFormat}`;
+            createDownload(fileName, blob);
+          }
+      }, mimeType, qualityValue);
+    };
+    img.src = imagePreview;
   };
 
   const handleExport = async (format: 'txt' | 'docx' | 'pdf', type: 'analysis' | 'translation') => {
@@ -217,7 +264,13 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
       <div className="flex-grow">
         {imagePreview ? (
             <div className="relative mb-4 text-center">
-                <img src={imagePreview} alt="Preview" className="w-auto mx-auto rounded-lg max-h-60 object-contain"/>
+                <img src={imagePreview} alt="Preview" className={`w-auto mx-auto rounded-lg max-h-60 object-contain transition-opacity duration-300 ${isLoading ? 'opacity-30' : ''}`}/>
+                 {isLoading && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-lg">
+                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-400"></div>
+                        <p className="mt-3 text-white font-semibold">{t.analyzing}</p>
+                    </div>
+                )}
                 <button
                     onClick={handleReset}
                     title={t.clearImage}
@@ -243,15 +296,49 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
           accept="image/*"
           className="hidden"
         />
-        <button
-            onClick={handleAnalyze}
-            disabled={isLoading || !imageFile}
-            className="w-full px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200"
-        >
-            {isLoading ? t.analyzing : t.analyze}
-        </button>
+        {imageFile && (
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">{t.imageFormat}</label>
+                    <div className="flex bg-gray-700 rounded-lg p-1">
+                        <button onClick={() => setTargetFormat('png')} className={`w-full py-2 rounded-md transition-colors ${targetFormat === 'png' ? 'bg-purple-600 text-white' : 'hover:bg-gray-600'}`}>PNG</button>
+                        <button onClick={() => setTargetFormat('jpeg')} className={`w-full py-2 rounded-md transition-colors ${targetFormat === 'jpeg' ? 'bg-purple-600 text-white' : 'hover:bg-gray-600'}`}>JPEG</button>
+                    </div>
+                </div>
+                {targetFormat === 'jpeg' && (
+                    <div>
+                    <label htmlFor="quality" className="block text-sm font-medium text-gray-300 mb-2">{t.qualityScale} ({quality}%)</label>
+                    <input
+                        id="quality"
+                        type="range"
+                        min="1"
+                        max="100"
+                        value={quality}
+                        onChange={(e) => setQuality(parseInt(e.target.value, 10))}
+                        className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                    />
+                    </div>
+                )}
+            </div>
+        )}
+        <div className="flex flex-col sm:flex-row gap-4">
+            <button
+                onClick={handleDownloadImage}
+                disabled={!imageFile}
+                className="w-full sm:w-1/2 px-6 py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200"
+            >
+                {t.downloadImage}
+            </button>
+            <button
+                onClick={handleAnalyze}
+                disabled={isLoading || !imageFile}
+                className="w-full sm:w-1/2 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200"
+            >
+                {isLoading ? t.analyzing : t.analyze}
+            </button>
+        </div>
 
-        {isLoading && <div className="mt-4"><Loader t={t} /></div>}
+
         {error && <div className="text-red-400 mt-4 text-center">{error}</div>}
         
         {analysisResult && (
@@ -283,9 +370,9 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
                     </button>
                 </div>
 
-                {isTranslating && <div className="mt-4"><Loader t={{transcribing: t.translating, loadingMessage: ''}}/></div>}
                 {translationError && <div className="text-red-400 mt-4 text-center">{translationError}</div>}
-                {translatedText && (
+                
+                {(isTranslating || translatedText) && (
                     <ResultBox 
                         title={t.translationResult} 
                         value={editedTranslatedText} 
@@ -294,6 +381,7 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
                         isCopied={isTranslationCopied} 
                         onExport={(format) => handleExport(format, 'translation')}
                         onChange={setEditedTranslatedText}
+                        isLoading={isTranslating}
                     />
                 )}
             </>
@@ -302,4 +390,4 @@ const ImageAnalyzer: React.FC<{ t: TranslationSet }> = ({ t }) => {
   );
 };
 
-export default ImageAnalyzer;
+export default ImageConverterOcr;

@@ -6,33 +6,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MultiTools</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+      :root {
+        --bg-dark-gray: #111827; /* gray-900 */
+        --bg-med-gray: #1f2937;  /* gray-800 */
+        --bg-light-gray: #374151; /* gray-700 */
+        --border-gray: #4b5563; /* gray-600 */
+        --text-light: #f3f4f6; /* gray-100 */
+        --text-med: #9ca3af; /* gray-400 */
+        --text-dark: #6b7280; /* gray-500 */
+        --accent-purple: #8b5cf6; /* purple-500 */
+        --accent-purple-hover: #7c3aed; /* purple-600 */
+        --accent-pink: #ec4899; /* pink-500 */
+        --font-sans: 'Inter', sans-serif;
+      }
+
+      body {
+        font-family: var(--font-sans);
+        background-color: var(--bg-dark-gray);
+        background-image: radial-gradient(circle at 1px 1px, rgba(139, 92, 246, 0.1) 1px, transparent 0);
+        background-size: 2rem 2rem;
+      }
+
       /* Custom scrollbar for webkit browsers */
       ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+        width: 10px;
+        height: 10px;
       }
       ::-webkit-scrollbar-track {
-        background: #1f2937; /* bg-gray-800 */
+        background: var(--bg-dark-gray);
       }
       ::-webkit-scrollbar-thumb {
-        background: #4b5563; /* bg-gray-600 */
-        border-radius: 4px;
+        background: var(--border-gray);
+        border-radius: 5px;
+        border: 2px solid var(--bg-dark-gray);
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #6b7280; /* bg-gray-500 */
+        background: #6b7280;
       }
+
+      /* Custom input styles */
+      .custom-input {
+          background-color: var(--bg-med-gray);
+          border: 1px solid var(--border-gray);
+          color: var(--text-light);
+          border-radius: 0.5rem;
+          padding: 0.75rem 1rem;
+          transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+      }
+      .custom-input:focus {
+          outline: none;
+          border-color: var(--accent-purple);
+          box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
+      }
+      
       /* Custom animation for 'Coming Soon' icon */
       @keyframes spin-slow {
-        from {
-          transform: rotate(0deg);
-        }
-        to {
-          transform: rotate(360deg);
-        }
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
       }
       .animate-spin-slow {
         animation: spin-slow 3s linear infinite;
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fadeIn {
+        animation: fadeIn 0.3s ease-in-out forwards;
+      }
+
+      @keyframes shimmer {
+        0% { background-position: -1000px 0; }
+        100% { background-position: 1000px 0; }
+      }
+      .progress-bar-shimmer {
+        background: linear-gradient(to right, var(--accent-purple) 4%, #a855f7 25%, var(--accent-purple) 36%);
+        background-size: 1000px 100%;
+        animation: shimmer 2s infinite linear;
       }
     </style>
   <script type="importmap">

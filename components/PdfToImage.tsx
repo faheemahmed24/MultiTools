@@ -4,6 +4,10 @@ import { UploadIcon } from './icons/UploadIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
 import JSZip from 'jszip';
+import { analyzeImage } from '../services/geminiService';
+import { CopyIcon } from './icons/CopyIcon';
+import { CheckIcon } from './icons/CheckIcon';
+
 
 // Configure the worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://aistudiocdn.com/pdfjs-dist@^4.5.136/build/pdf.worker.mjs`;
@@ -41,8 +45,26 @@ const parsePageRange = (rangeStr: string, maxPage: number): number[] => {
   return Array.from(pages).sort((a, b) => a - b);
 };
 
+const dataURLtoFile = (dataurl: string, filename: string): File => {
+    const arr = dataurl.split(',');
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    if (!mimeMatch) throw new Error("Invalid data URL");
+    const mime = mimeMatch[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+};
 
-const PdfToImage: React.FC<{ t: TranslationSet }> = ({ t }) => {
+interface PdfToImageProps {
+    t: TranslationSet;
+    onConversionComplete: (data: { fileName: string, pageCount: number }) => void;
+}
+
+const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
@@ -54,6 +76,11 @@ const PdfToImage: React.FC<{ t: TranslationSet }> = ({ t }) => {
   const [pageRange, setPageRange] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [extractedText, setExtractedText] = useState('');
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [isTextCopied, setIsTextCopied] = useState(false);
+  const [extractionError, setExtractionError] = useState('');
+
   const resetState = () => {
     setPdfFile(null);
     setIsConverting(false);
@@ -61,6 +88,9 @@ const PdfToImage: React.FC<{ t: TranslationSet }> = ({ t }) => {
     setGeneratedImages([]);
     setPageRange('');
     setPageSelectionMode('all');
+    setExtractedText('');
+    setExtractionError('');
+    setIsExtracting(false);
   };
 
   const handleFileChange = (file: File | null) => {
@@ -92,6 +122,8 @@ const PdfToImage: React.FC<{ t: TranslationSet }> = ({ t }) => {
 
     setIsConverting(true);
     setGeneratedImages([]);
+    setExtractedText('');
+    setExtractionError('');
     setProgress(t.converting);
 
     const reader = new FileReader();
@@ -147,6 +179,8 @@ const PdfToImage: React.FC<{ t: TranslationSet }> = ({ t }) => {
         }
         setGeneratedImages(images);
         setProgress(t.conversionComplete);
+        onConversionComplete({fileName: pdfFile.name, pageCount: totalPagesToConvert });
+
       } catch (error) {
         console.error('Error converting PDF:', error);
         setProgress('Error during conversion.');
@@ -177,6 +211,35 @@ const PdfToImage: React.FC<{ t: TranslationSet }> = ({ t }) => {
     URL.revokeObjectURL(url);
   };
 
+  const handleExtractText = async () => {
+    if (generatedImages.length === 0) return;
+    setIsExtracting(true);
+    setExtractedText('');
+    setExtractionError('');
+    let allText = '';
+    
+    try {
+        for (let i = 0; i < generatedImages.length; i++) {
+            const img = generatedImages[i];
+            setProgress(`Extracting text from page ${img.pageNumber}...`);
+            const file = dataURLtoFile(img.src, `page-${img.pageNumber}.${imageFormat}`);
+            const text = await analyzeImage(file);
+            allText += `--- Page ${img.pageNumber} ---\n${text}\n\n`;
+        }
+        setExtractedText(allText.trim());
+    } catch (err: any) {
+        setExtractionError(err.message || 'An error occurred during text extraction.');
+    } finally {
+        setIsExtracting(false);
+        setProgress('');
+    }
+  };
+
+  const handleCopyText = () => {
+    navigator.clipboard.writeText(extractedText);
+    setIsTextCopied(true);
+    setTimeout(() => setIsTextCopied(false), 2000);
+  };
 
   return (
     <div className="bg-gray-800 rounded-2xl shadow-lg p-6 min-h-[60vh] lg:h-full flex flex-col">
@@ -256,12 +319,17 @@ const PdfToImage: React.FC<{ t: TranslationSet }> = ({ t }) => {
 
           {generatedImages.length > 0 && (
             <div className="mt-6 flex-grow flex flex-col min-h-0">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-wrap gap-4 justify-between items-center mb-4">
                 <h3 className="text-lg font-bold text-gray-200">Results ({generatedImages.length} images)</h3>
-                <button onClick={handleDownloadAll} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
-                  <DownloadIcon className="w-5 h-5 me-2" />
-                  {t.downloadAll}
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={handleExtractText} disabled={isExtracting} className="flex items-center px-4 py-2 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 disabled:bg-gray-500 transition-colors duration-200">
+                    {isExtracting ? (isConverting ? progress : t.analyzing) : t.extractText}
+                  </button>
+                  <button onClick={handleDownloadAll} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
+                    <DownloadIcon className="w-5 h-5 me-2" />
+                    {t.downloadAll}
+                  </button>
+                </div>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 overflow-y-auto p-1 -m-1 flex-grow">
                 {generatedImages.map((img) => (
@@ -281,6 +349,21 @@ const PdfToImage: React.FC<{ t: TranslationSet }> = ({ t }) => {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {extractionError && <p className="text-center mt-4 font-semibold text-red-400">{extractionError}</p>}
+
+          {extractedText && (
+            <div className="mt-4 bg-gray-900/50 p-4 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                <h4 className="font-semibold text-gray-200">{t.imageAnalysisResult}</h4>
+                <button onClick={handleCopyText} className="flex items-center px-3 py-1 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm">
+                    {isTextCopied ? <CheckIcon className="w-4 h-4 me-2"/> : <CopyIcon className="w-4 h-4 me-2" />}
+                    {isTextCopied ? t.copied : t.copy}
+                </button>
+                </div>
+                <textarea readOnly value={extractedText} className="w-full h-48 bg-gray-800 text-gray-300 p-2 rounded-md resize-y border-gray-700 focus:ring-purple-500 focus:border-purple-500"/>
             </div>
           )}
         </>

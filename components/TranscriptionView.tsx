@@ -10,6 +10,14 @@ import { RedoIcon } from './icons/RedoIcon';
 import { useDebounce } from '../hooks/useDebounce';
 import { jsPDF } from 'jspdf';
 import * as docx from 'docx';
+import { TxtIcon } from './icons/TxtIcon';
+import { JsonIcon } from './icons/JsonIcon';
+import { SrtIcon } from './icons/SrtIcon';
+import { CsvIcon } from './icons/CsvIcon';
+import { PdfIcon } from './icons/PdfIcon';
+import { DocxIcon } from './icons/DocxIcon';
+import { PngIcon } from './icons/PngIcon';
+import { JpgIcon } from './icons/JpgIcon';
 
 interface TranscriptionViewProps {
   transcription: Transcription;
@@ -17,6 +25,17 @@ interface TranscriptionViewProps {
   onUpdate: (id: string, updatedSegments: TranscriptionSegment[]) => void;
   t: TranslationSet;
 }
+
+const Switch: React.FC<{ checked: boolean; onChange: (checked: boolean) => void; label: string; }> = ({ checked, onChange, label }) => (
+    <label className="flex items-center cursor-pointer">
+        <div className="relative">
+            <input type="checkbox" className="sr-only" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+            <div className="block bg-gray-600 w-10 h-6 rounded-full"></div>
+            <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${checked ? 'translate-x-full bg-purple-400' : ''}`}></div>
+        </div>
+        <div className="ms-3 text-sm font-medium text-gray-300">{label}</div>
+    </label>
+);
 
 const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, onSave, onUpdate, t }) => {
   const [showTimestamps, setShowTimestamps] = useState(true);
@@ -45,12 +64,10 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   useEffect(() => {
     if (!isEditing || !debouncedEditedSegments.length) return;
 
-    // Avoid adding the same state twice, which can happen after undo/redo
     if (editHistory[currentHistoryIndex] && JSON.stringify(editHistory[currentHistoryIndex]) === JSON.stringify(debouncedEditedSegments)) {
         return;
     }
     
-    // If we've undone, and then make a new edit, truncate the "future" history
     const newHistory = editHistory.slice(0, currentHistoryIndex + 1);
     setEditHistory([...newHistory, debouncedEditedSegments]);
     setCurrentHistoryIndex(newHistory.length);
@@ -86,13 +103,11 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
 
   const handleEditToggle = () => {
     if (isEditing) {
-      // Cancel editing
       setIsEditing(false);
       setEditHistory([]);
       setCurrentHistoryIndex(-1);
     } else {
-      // Start editing
-      const initialSegments = JSON.parse(JSON.stringify(transcription.segments)); // Deep copy
+      const initialSegments = JSON.parse(JSON.stringify(transcription.segments));
       setEditedSegments(initialSegments);
       setEditHistory([initialSegments]);
       setCurrentHistoryIndex(0);
@@ -132,7 +147,6 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
     }
   };
 
-
   const createDownload = (filename: string, content: string | Blob, mime?: string) => {
     const blob = content instanceof Blob ? content : new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
@@ -153,10 +167,10 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
       const FONT = `${FONT_SIZE}px monospace`;
       const CANVAS_WIDTH = 1200;
 
-      const BG_COLOR = '#111827'; // bg-gray-900
-      const TIMESTAMP_COLOR = '#A78BFA'; // purple-400
-      const SPEAKER_COLOR = '#F472B6'; // pink-400
-      const TEXT_COLOR = '#E5E7EB'; // gray-200
+      const BG_COLOR = '#1f2937';
+      const TIMESTAMP_COLOR = '#A78BFA';
+      const SPEAKER_COLOR = '#F472B6';
+      const TEXT_COLOR = '#E5E7EB';
 
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d');
@@ -200,16 +214,9 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
           textLines.forEach((lineText, index) => {
               totalHeight += LINE_HEIGHT;
               if (index === 0) {
-                  lines.push({
-                      y: totalHeight,
-                      parts: [...prefixParts, { text: lineText, color: TEXT_COLOR }]
-                  });
+                  lines.push({ y: totalHeight, parts: [...prefixParts, { text: lineText, color: TEXT_COLOR }] });
               } else {
-                  const indent = '    '; // 4 spaces for indent
-                  lines.push({
-                      y: totalHeight,
-                      parts: [{ text: indent + lineText, color: TEXT_COLOR }]
-                  });
+                  lines.push({ y: totalHeight, parts: [{ text: '    ' + lineText, color: TEXT_COLOR }] });
               }
           });
       });
@@ -236,26 +243,17 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
 
   const handleExport = async (format: 'txt' | 'json' | 'srt' | 'png' | 'jpg' | 'docx' | 'pdf' | 'csv') => {
     const baseFilename = transcription.fileName.split('.').slice(0, -1).join('.') || transcription.fileName;
-    if (format === 'txt') {
-      createDownload(`${baseFilename}.txt`, fullText, 'text/plain;charset=utf-8');
-    } else if (format === 'json') {
-      createDownload(`${baseFilename}.json`, JSON.stringify(transcription, null, 2), 'application/json;charset=utf-8');
-    } else if (format === 'srt') {
+    if (format === 'txt') createDownload(`${baseFilename}.txt`, fullText, 'text/plain;charset=utf-8');
+    else if (format === 'json') createDownload(`${baseFilename}.json`, JSON.stringify(transcription, null, 2), 'application/json;charset=utf-8');
+    else if (format === 'srt') {
       const toSrtTime = (time: string) => time.replace('.', ',');
-      const srtContent = transcription.segments.map((seg, i) => 
-        `${i + 1}\n${toSrtTime(seg.startTime)} --> ${toSrtTime(seg.endTime)}\n${seg.text}`
-      ).join('\n\n');
+      const srtContent = transcription.segments.map((seg, i) => `${i + 1}\n${toSrtTime(seg.startTime)} --> ${toSrtTime(seg.endTime)}\n${seg.text}`).join('\n\n');
       createDownload(`${baseFilename}.srt`, srtContent, 'application/x-subrip;charset=utf-8');
     } else if (format === 'png' || format === 'jpg') {
         const dataUrl = renderTranscriptionToCanvas(format === 'jpg' ? 'jpeg' : 'png');
         if (dataUrl) {
-            const a = document.createElement('a');
-            a.href = dataUrl;
-            a.download = `${baseFilename}.${format}`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            setShowExportMenu(false);
+            const a = document.createElement('a'); a.href = dataUrl; a.download = `${baseFilename}.${format}`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); setShowExportMenu(false);
         }
     } else if (format === 'csv') {
         const header = "startTime,endTime,speaker,text\n";
@@ -276,10 +274,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
         const doc = new jsPDF();
         let y = 10;
         transcription.segments.forEach(seg => {
-            if (y > 280) {
-                doc.addPage();
-                y = 10;
-            }
+            if (y > 280) { doc.addPage(); y = 10; }
             const line = (showTimestamps ? `[${seg.startTime} - ${seg.endTime}] ` : '') + (showSpeaker ? `${seg.speaker}: ` : '') + seg.text;
             const splitLines = doc.splitTextToSize(line, 180);
             doc.text(splitLines, 10, y);
@@ -288,6 +283,13 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
         createDownload(`${baseFilename}.pdf`, doc.output('blob'));
     }
   };
+
+  const exportOptions = [
+    { format: 'txt', icon: TxtIcon }, { format: 'json', icon: JsonIcon }, 
+    { format: 'srt', icon: SrtIcon }, { format: 'csv', icon: CsvIcon },
+    { format: 'pdf', icon: PdfIcon, separator: true }, { format: 'docx', icon: DocxIcon },
+    { format: 'png', icon: PngIcon, separator: true }, { format: 'jpg', icon: JpgIcon }
+  ];
 
   return (
     <div className="flex flex-col h-full">
@@ -298,26 +300,12 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
             <p className="text-xs text-purple-400 mt-1">{t.detectedLanguage}: <span className="font-semibold">{transcription.detectedLanguage}</span></p>
         </div>
         <div className="flex items-center space-x-4 rtl:space-x-reverse">
-          <label className="flex items-center cursor-pointer">
-            <div className="relative">
-              <input type="checkbox" className="sr-only" checked={showTimestamps} onChange={() => setShowTimestamps(!showTimestamps)} />
-              <div className="block bg-gray-600 w-10 h-6 rounded-full"></div>
-              <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${showTimestamps ? 'translate-x-full bg-purple-400' : ''}`}></div>
-            </div>
-            <div className="ms-3 text-sm font-medium text-gray-300">{showTimestamps ? t.hideTimestamps : t.showTimestamps}</div>
-          </label>
-           <label className="flex items-center cursor-pointer">
-            <div className="relative">
-              <input type="checkbox" className="sr-only" checked={showSpeaker} onChange={() => setShowSpeaker(!showSpeaker)} />
-              <div className="block bg-gray-600 w-10 h-6 rounded-full"></div>
-              <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${showSpeaker ? 'translate-x-full bg-purple-400' : ''}`}></div>
-            </div>
-            <div className="ms-3 text-sm font-medium text-gray-300">{showSpeaker ? t.hideSpeaker : t.showSpeaker}</div>
-          </label>
+          <Switch checked={showTimestamps} onChange={setShowTimestamps} label={showTimestamps ? t.hideTimestamps : t.showTimestamps} />
+          <Switch checked={showSpeaker} onChange={setShowSpeaker} label={showSpeaker ? t.hideSpeaker : t.showSpeaker} />
         </div>
       </div>
 
-      <div className="flex-grow bg-gray-900/50 rounded-lg p-4 overflow-y-auto mb-4">
+      <div className="flex-grow bg-gray-900/50 rounded-lg p-4 overflow-y-auto mb-4 min-h-[200px]">
         <div className="text-gray-200 whitespace-pre-wrap leading-relaxed font-mono text-sm">
           {isEditing ? (
             editedSegments.map((segment, index) => (
@@ -327,7 +315,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
                 <textarea
                   value={segment.text}
                   onChange={(e) => handleSegmentChange(index, e.target.value)}
-                  className="w-full bg-gray-700 text-gray-200 border border-gray-600 rounded-md p-1 focus:ring-purple-500 focus:border-purple-500 resize-none"
+                  className="w-full bg-gray-700/80 text-gray-200 border border-gray-600 rounded-md p-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-y"
                   rows={Math.max(1, segment.text.split('\n').length)}
                 />
               </div>
@@ -346,46 +334,31 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
         </div>
       </div>
       
-      <div className="text-end text-sm text-gray-400 mb-2 px-1">
+      <div className="text-end text-sm text-gray-400 mb-4 px-1">
         {characterCount} characters
       </div>
 
       <div className="flex flex-wrap gap-2 justify-between">
         <div className="flex flex-wrap gap-2">
-           <button 
-            onClick={handleCopy}
-            className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200"
-          >
+           <button onClick={handleCopy} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
             {isCopied ? <CheckIcon className="w-5 h-5 me-2"/> : <CopyIcon className="w-5 h-5 me-2" />}
             {isCopied ? t.copied : t.copy}
           </button>
-          <button
-            onClick={handleSave}
-            disabled={isSaved}
-            className="px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-purple-800 disabled:cursor-not-allowed transition-colors duration-200"
-          >
-            {isSaved ? t.saved : t.save}
-          </button>
           <div className="relative">
-            <button
-              onClick={() => setShowExportMenu(!showExportMenu)}
-              className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200"
-            >
+            <button onClick={() => setShowExportMenu(!showExportMenu)} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
               <DownloadIcon className="w-5 h-5 me-2" />
               {t.export}
             </button>
             {showExportMenu && (
-              <div className="absolute bottom-full mb-2 w-48 bg-gray-600 rounded-lg shadow-xl py-1 z-10" onMouseLeave={() => setShowExportMenu(false)}>
-                <button onClick={() => handleExport('txt')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">TXT (.txt)</button>
-                <button onClick={() => handleExport('json')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">JSON (.json)</button>
-                <button onClick={() => handleExport('srt')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">SRT (.srt)</button>
-                <button onClick={() => handleExport('csv')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">CSV (.csv)</button>
-                 <div className="h-px bg-gray-500 my-1"></div>
-                <button onClick={() => handleExport('pdf')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">PDF (.pdf)</button>
-                <button onClick={() => handleExport('docx')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">DOCX (.docx)</button>
-                 <div className="h-px bg-gray-500 my-1"></div>
-                <button onClick={() => handleExport('png')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">PNG (.png)</button>
-                <button onClick={() => handleExport('jpg')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">JPG (.jpeg)</button>
+              <div className="absolute bottom-full mb-2 w-48 bg-gray-700 border border-gray-600 rounded-lg shadow-xl py-1 z-10" onMouseLeave={() => setShowExportMenu(false)}>
+                {exportOptions.map(({ format, icon: Icon, separator }) => (
+                  <React.Fragment key={format}>
+                    {separator && <div className="h-px bg-gray-600 my-1"></div>}
+                    <button onClick={() => handleExport(format as any)} className="flex items-center gap-3 w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600 rounded-md mx-1 w-[calc(100%-0.5rem)]">
+                      <Icon className="w-5 h-5 text-gray-400" /> {format.toUpperCase()}
+                    </button>
+                  </React.Fragment>
+                ))}
               </div>
             )}
           </div>
@@ -393,35 +366,13 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
         <div className="flex flex-wrap gap-2">
             {isEditing && (
               <>
-                <button
-                  onClick={handleUndo}
-                  disabled={!canUndo}
-                  title={t.undo}
-                  className="flex items-center p-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <UndoIcon className="w-5 h-5"/>
-                </button>
-                <button
-                  onClick={handleRedo}
-                  disabled={!canRedo}
-                  title={t.redo}
-                  className="flex items-center p-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <RedoIcon className="w-5 h-5"/>
-                </button>
+                <button onClick={handleUndo} disabled={!canUndo} title={t.undo} className="flex items-center p-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><UndoIcon className="w-5 h-5"/></button>
+                <button onClick={handleRedo} disabled={!canRedo} title={t.redo} className="flex items-center p-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><RedoIcon className="w-5 h-5"/></button>
                 <div className="w-px bg-gray-600 mx-1"></div>
-                <button
-                  onClick={handleSaveChanges}
-                  className="flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200"
-                >
-                  <SaveIcon className="w-5 h-5 me-2"/> {t.saveChanges}
-                </button>
+                <button onClick={handleSaveChanges} className="flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200"><SaveIcon className="w-5 h-5 me-2"/> {t.saveChanges}</button>
               </>
             )}
-            <button
-              onClick={handleEditToggle}
-              className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200"
-            >
+            <button onClick={handleEditToggle} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
               <EditIcon className="w-5 h-5 me-2"/> {isEditing ? t.cancel : t.edit}
             </button>
         </div>

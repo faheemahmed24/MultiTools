@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';
@@ -5,7 +6,12 @@ import { DownloadIcon } from './icons/DownloadIcon';
 import * as mammoth from 'mammoth';
 import { jsPDF } from 'jspdf';
 
-const WordToPdf: React.FC<{ t: TranslationSet }> = ({ t }) => {
+interface WordToPdfProps {
+    t: TranslationSet;
+    onConversionComplete: (data: { fileName: string }) => void;
+}
+
+const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
   const [wordFile, setWordFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
@@ -22,7 +28,7 @@ const WordToPdf: React.FC<{ t: TranslationSet }> = ({ t }) => {
 
   const handleFileChange = (file: File | null) => {
     const validTypes = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'];
-    if (file && validTypes.includes(file.type)) {
+    if (file && (validTypes.includes(file.type) || file.name.endsWith('.docx') || file.name.endsWith('.doc'))) {
       resetState();
       setWordFile(file);
     } else if (file) {
@@ -73,38 +79,33 @@ const WordToPdf: React.FC<{ t: TranslationSet }> = ({ t }) => {
             format: 'a4'
         });
         
-        // This is a workaround for jspdf's html method which can be tricky with complex styles.
-        // We create a temporary iframe to render the HTML, then use html2canvas via jspdf.
-        const iframe = document.createElement('iframe');
-        iframe.style.position = 'absolute';
-        iframe.style.width = '210mm'; // A4 width
-        iframe.style.visibility = 'hidden';
-        document.body.appendChild(iframe);
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        tempDiv.style.width = '595px'; // A4 width in points
+        tempDiv.style.padding = '15px';
+        tempDiv.style.fontFamily = 'sans-serif';
+        tempDiv.style.lineHeight = '1.5';
         
-        const iframeDoc = iframe.contentWindow?.document;
-        if (!iframeDoc) {
-          throw new Error("Could not create iframe for rendering.");
-        }
+        // Hide it
+        tempDiv.style.position = 'absolute';
+        tempDiv.style.left = '-9999px';
+        document.body.appendChild(tempDiv);
 
-        iframeDoc.open();
-        iframeDoc.write('<html><head><style>body { font-family: sans-serif; line-height: 1.5; } img { max-width: 100%; height: auto; } table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid #ddd; padding: 8px; } </style></head><body>' + html + '</body></html>');
-        iframeDoc.close();
 
-        await new Promise(resolve => setTimeout(resolve, 100)); // Allow rendering time
-
-        await doc.html(iframeDoc.body, {
+        await doc.html(tempDiv, {
             callback: (doc) => {
                 const url = doc.output('bloburl');
                 setPdfUrl(url as string);
                 setProgress(t.conversionComplete);
+                onConversionComplete({fileName: wordFile.name});
             },
             x: 15,
             y: 15,
             width: 565, // A4 width in points minus margins
-            windowWidth: iframeDoc.documentElement.scrollWidth
+            windowWidth: 595
         });
 
-        document.body.removeChild(iframe);
+        document.body.removeChild(tempDiv);
 
       } catch (error) {
         console.error('Error converting Word to PDF:', error);

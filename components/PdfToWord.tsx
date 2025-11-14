@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';
@@ -10,7 +11,12 @@ import { ChevronDownIcon } from './icons/ChevronDownIcon';
 // Configure the worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://aistudiocdn.com/pdfjs-dist@^4.5.136/build/pdf.worker.mjs`;
 
-const PdfToWord: React.FC<{ t: TranslationSet }> = ({ t }) => {
+interface PdfToWordProps {
+    t: TranslationSet;
+    onConversionComplete: (data: { fileName: string }) => void;
+}
+
+const PdfToWord: React.FC<PdfToWordProps> = ({ t, onConversionComplete }) => {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
@@ -116,6 +122,7 @@ const PdfToWord: React.FC<{ t: TranslationSet }> = ({ t }) => {
         const blob = await docx.Packer.toBlob(doc);
         setDocxBlob(blob);
         setProgress(t.conversionComplete);
+        onConversionComplete({fileName: pdfFile.name});
         
       } catch (error) {
         console.error('Error converting PDF to Word:', error);

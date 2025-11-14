@@ -73,15 +73,36 @@ export const translateText = async (text: string, sourceLang: string, targetLang
         throw new Error("API_KEY environment variable not set");
     }
 
-    const prompt = `Translate the following text from ${sourceLang} to ${targetLang}. Return only the translated text, without any additional explanation or context.\n\nText: "${text}"`;
+    const systemInstruction = `You are an expert translator. Your task is to translate the given text from ${sourceLang === 'auto' ? 'the auto-detected language' : sourceLang} to ${targetLang}.
+You must provide only the translated text as a response. Do not include any extra information, context, or explanations. Do not wrap the response in quotes or any other formatting.`;
 
-    // Fix: Use correct method to generate content and specify a model
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash', // Flash is good for quick text tasks
-        contents: prompt,
+        model: 'gemini-2.5-flash',
+        contents: text,
+        config: {
+            systemInstruction,
+        },
     });
-    
-    // Fix: Access text directly from response.text
+
+    return response.text.trim();
+};
+
+export const correctGrammar = async (text: string): Promise<string> => {
+    if (!process.env.API_KEY) {
+        throw new Error("API_KEY environment variable not set");
+    }
+
+    const systemInstruction = `You are a grammar correction expert. Your task is to correct the grammar, spelling, and punctuation of the given text.
+You must provide only the corrected text as a response. Do not include any extra information, context, or explanations. Do not wrap the response in quotes or any other formatting. Just return the corrected text directly.`;
+
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: text,
+        config: {
+            systemInstruction,
+        },
+    });
+
     return response.text.trim();
 };
 

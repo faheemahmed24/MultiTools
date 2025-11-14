@@ -9,6 +9,10 @@ import { TrashIcon } from './icons/TrashIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
 import ImageEditModal, { type ImageEditState, defaultEdits } from './ImageEditModal';
 import { EditIcon } from './icons/EditIcon';
+import { analyzeImage } from '../services/geminiService';
+import { CopyIcon } from './icons/CopyIcon';
+import { CheckIcon } from './icons/CheckIcon';
+
 
 interface ImageFile {
   id: string;
@@ -29,7 +33,12 @@ const MARGIN_VALUES: Record<Margin, number> = {
   large: 30,
 };
 
-const ImageToPdf: React.FC<{ t: TranslationSet }> = ({ t }) => {
+interface ImageToPdfProps {
+    t: TranslationSet;
+    onConversionComplete: (data: { fileName: string, imageCount: number }) => void;
+}
+
+const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
   const [images, setImages] = useState<ImageFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
@@ -42,12 +51,24 @@ const ImageToPdf: React.FC<{ t: TranslationSet }> = ({ t }) => {
   const [margin, setMargin] = useState<Margin>('small');
   const [imageFit, setImageFit] = useState<ImageFit>('contain');
 
+  const [extractedText, setExtractedText] = useState('');
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [isTextCopied, setIsTextCopied] = useState(false);
+  const [extractionError, setExtractionError] = useState('');
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
 
+  const resetBeforeNewUpload = () => {
+      setPdfUrl(null);
+      setExtractedText('');
+      setExtractionError('');
+  }
+
   const handleFileChange = (selectedFiles: FileList | null) => {
     if (selectedFiles) {
+      resetBeforeNewUpload();
       const newImages: ImageFile[] = Array.from(selectedFiles)
         .filter(file => file.type.startsWith('image/'))
         .map(file => ({
@@ -57,7 +78,6 @@ const ImageToPdf: React.FC<{ t: TranslationSet }> = ({ t }) => {
           edits: { ...defaultEdits },
         }));
       setImages(prev => [...prev, ...newImages]);
-      setPdfUrl(null);
     }
   };
 
@@ -91,6 +111,8 @@ const ImageToPdf: React.FC<{ t: TranslationSet }> = ({ t }) => {
     images.forEach(img => URL.revokeObjectURL(img.preview));
     setImages([]);
     setPdfUrl(null);
+    setExtractedText('');
+    setExtractionError('');
   };
 
   const handleSaveEdits = (newEdits: ImageEditState) => {
@@ -137,6 +159,8 @@ const ImageToPdf: React.FC<{ t: TranslationSet }> = ({ t }) => {
     setIsConverting(true);
     setConversionMessage(t.generatingPdf);
     setPdfUrl(null);
+    setExtractedText('');
+    setExtractionError('');
 
     const doc = new jsPDF({ orientation, unit: 'mm', format: pageSize });
     const marginValue = MARGIN_VALUES[margin];
@@ -189,6 +213,7 @@ const ImageToPdf: React.FC<{ t: TranslationSet }> = ({ t }) => {
     setPdfUrl(url as string);
     setIsConverting(false);
     setConversionMessage('');
+    onConversionComplete({ fileName: 'converted.pdf', imageCount: images.length });
   };
 
   const handleConvertToWord = async () => {
@@ -234,6 +259,35 @@ const ImageToPdf: React.FC<{ t: TranslationSet }> = ({ t }) => {
 
     setIsConverting(false);
     setConversionMessage('');
+  };
+
+  const handleExtractText = async () => {
+    if (images.length === 0) return;
+    setIsExtracting(true);
+    setExtractedText('');
+    setExtractionError('');
+    let allText = '';
+    
+    try {
+        for (let i = 0; i < images.length; i++) {
+            const img = images[i];
+            setConversionMessage(`Extracting text from image ${i + 1}...`);
+            const text = await analyzeImage(img.file);
+            allText += `--- Image ${i + 1} (${img.file.name}) ---\n${text}\n\n`;
+        }
+        setExtractedText(allText.trim());
+    } catch (err: any) {
+        setExtractionError(err.message || 'An error occurred during text extraction.');
+    } finally {
+        setIsExtracting(false);
+        setConversionMessage('');
+    }
+  };
+
+  const handleCopyText = () => {
+    navigator.clipboard.writeText(extractedText);
+    setIsTextCopied(true);
+    setTimeout(() => setIsTextCopied(false), 2000);
   };
 
   const OptionButton: React.FC<{label: string, value: any, selectedValue: any, onClick: (value: any) => void}> = ({label, value, selectedValue, onClick}) => (
@@ -306,9 +360,29 @@ const ImageToPdf: React.FC<{ t: TranslationSet }> = ({ t }) => {
               </button>
             </div>
           ) : (
-            <a href={pdfUrl} download="converted.pdf" className="w-full text-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center justify-center">
-                <DownloadIcon className="w-5 h-5 me-2" /> {t.downloadPdf}
-            </a>
+             <div className="flex flex-col gap-4">
+                <a href={pdfUrl} download="converted.pdf" className="w-full text-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center justify-center">
+                    <DownloadIcon className="w-5 h-5 me-2" /> {t.downloadPdf}
+                </a>
+                <button onClick={handleExtractText} disabled={isExtracting} className="w-full px-6 py-3 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 disabled:bg-gray-500 transition-colors duration-200">
+                    {isExtracting ? conversionMessage || t.analyzing : t.extractText}
+                </button>
+             </div>
+          )}
+
+          {extractionError && <p className="text-center mt-4 font-semibold text-red-400">{extractionError}</p>}
+          
+          {extractedText && (
+            <div className="mt-4 bg-gray-900/50 p-4 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                <h4 className="font-semibold text-gray-200">{t.imageAnalysisResult}</h4>
+                <button onClick={handleCopyText} className="flex items-center px-3 py-1 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm">
+                    {isTextCopied ? <CheckIcon className="w-4 h-4 me-2"/> : <CopyIcon className="w-4 h-4 me-2" />}
+                    {isTextCopied ? t.copied : t.copy}
+                </button>
+                </div>
+                <textarea readOnly value={extractedText} className="w-full h-48 bg-gray-800 text-gray-300 p-2 rounded-md resize-y border-gray-700 focus:ring-purple-500 focus:border-purple-500"/>
+            </div>
           )}
         </div>
       )}

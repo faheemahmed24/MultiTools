@@ -1,3 +1,4 @@
+
 export type Language = 'en' | 'hi' | 'ur' | 'ar';
 
 export interface TranslationSet {
@@ -24,4 +25,54 @@ export interface User {
   email: string;
   password?: string; // Stored locally, only for 'password' authMethod
   authMethod?: 'password' | 'google';
+}
+
+// History Item Types
+export interface TranslationHistoryItem {
+    id: string;
+    date: string;
+    inputText: string;
+    translatedText: string;
+    sourceLang: string;
+    targetLang: string;
+}
+
+export interface GrammarHistoryItem {
+    id: string;
+    date: string;
+    originalText: string;
+    correctedText: string;
+}
+
+export interface AnalysisHistoryItem {
+    id: string;
+    date: string;
+    fileName: string;
+    resultText: string;
+}
+
+export interface PdfImageHistoryItem {
+    id: string;
+    date: string;
+    fileName: string;
+    pageCount: number;
+}
+
+export interface ImagePdfHistoryItem {
+    id: string;
+    date: string;
+    imageCount: number;
+    fileName: string;
+}
+
+export interface PdfWordHistoryItem {
+    id: string;
+    date: string;
+    fileName: string;
+}
+
+export interface WordPdfHistoryItem {
+    id: string;
+    date: string;
+    fileName: string;
 }

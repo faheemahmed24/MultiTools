@@ -10,8 +10,10 @@ import { PdfToImageIcon } from './icons/PdfToImageIcon';
 import { ImageToPdfIcon } from './icons/ImageToPdfIcon';
 import { PdfToWordIcon } from './icons/PdfToWordIcon';
 import { WordToPdfIcon } from './icons/WordToPdfIcon';
+import { SheetIcon } from './icons/SheetIcon';
 import { UserIcon } from './icons/UserIcon';
 import { LogoutIcon } from './icons/LogoutIcon';
+import { GrammarIcon } from './icons/GrammarIcon';
 
 interface HeaderProps {
   uiLanguage: Language;
@@ -46,11 +48,13 @@ const Header: React.FC<HeaderProps> = ({
   const tools = [
     { key: 'AI Transcriber', label: t.aiTranscriber, icon: TranscriberIcon },
     { key: 'AI Translator', label: t.aiTranslatorTitle, icon: TranslatorIcon },
-    { key: 'Image Analyzer', label: t.imageAnalyzerTitle, icon: AnalyzerIcon },
+    { key: 'Grammar Corrector', label: t.grammarCorrector, icon: GrammarIcon },
+    { key: 'Image Converter & OCR', label: t.imageConverterOcrTitle, icon: AnalyzerIcon },
     { key: 'PDF to Image', label: t.pdfToImage, icon: PdfToImageIcon },
     { key: 'Image to PDF', label: t.imageToPdf, icon: ImageToPdfIcon },
     { key: 'PDF to Word', label: t.pdfToWord, icon: PdfToWordIcon },
-    { key: 'Word to PDF', label: t.wordToPdf, icon: WordToPdfIcon }
+    { key: 'Word to PDF', label: t.wordToPdf, icon: WordToPdfIcon },
+    { key: 'Export to Sheets', label: t.exportToSheets, icon: SheetIcon }
   ];
 
   useEffect(() => {
@@ -78,26 +82,30 @@ const Header: React.FC<HeaderProps> = ({
   }, [activeTool, t, isSidebarOpen]); // Rerun when sidebar state or language changes
 
   return (
-    <aside className={`bg-gray-800 border-r border-gray-700/50 flex flex-col p-4 flex-shrink-0 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-64' : 'w-20'}`}>
-      <div className="flex items-center justify-between mb-10 mt-4">
+    <aside className={`bg-gray-800/50 backdrop-blur-sm border-r border-gray-700/50 flex flex-col p-4 flex-shrink-0 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-64' : 'w-20'}`}>
+      <div className="flex items-center justify-between mb-6 mt-2">
         <h1 className={`text-3xl font-bold whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out ${isSidebarOpen ? 'max-w-full opacity-100' : 'max-w-0 opacity-0'}`}>
           <span className="text-purple-400">Multi</span><span className="text-pink-500">Tools</span>
         </h1>
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className={`p-1 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-colors ${!isSidebarOpen && 'w-full'}`}
+          className={`p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 transition-colors ${!isSidebarOpen && 'w-full'}`}
           aria-label={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
         >
           {isSidebarOpen ? <SidebarCollapseIcon className="w-6 h-6" /> : <SidebarExpandIcon className="w-6 h-6 mx-auto" />}
         </button>
       </div>
       
+      {isSidebarOpen && (
+          <h2 className="text-xs font-semibold uppercase text-gray-500 tracking-wider px-4 mb-2">{t.tools}</h2>
+      )}
+      
       <nav 
         ref={toolsContainerRef}
-        className="relative flex flex-col space-y-1 flex-grow"
+        className="relative flex flex-col space-y-2 flex-grow overflow-y-auto -me-2 pe-2"
       >
         <div 
-          className="w-1 bg-purple-600 rounded-full absolute start-0 transition-all duration-300 ease-in-out" 
+          className="w-1 bg-purple-500 rounded-full absolute start-0 transition-all duration-300 ease-in-out" 
           style={indicatorStyle}>
         </div>
         {tools.map((tool) => {
@@ -108,14 +116,17 @@ const Header: React.FC<HeaderProps> = ({
               data-tool-key={tool.key}
               onClick={() => setActiveTool(tool.key)}
               title={!isSidebarOpen ? tool.label : ''}
-              className={`w-full flex items-center h-12 pe-4 text-sm rounded-lg whitespace-nowrap transition-all duration-300 ${ isSidebarOpen ? 'ps-6 justify-start' : 'ps-0 justify-center' } ${
+              className={`w-full flex items-center h-12 pe-4 text-sm font-semibold rounded-lg whitespace-nowrap transition-all duration-300 transform hover:scale-105 active:scale-100 ${ isSidebarOpen ? 'ps-6 justify-start' : 'ps-0 justify-center' } ${
                 activeTool === tool.key
-                  ? 'bg-purple-600/20 text-white font-semibold' 
-                  : 'text-gray-400 font-medium hover:text-white hover:bg-gray-700/50'
+                  ? 'bg-purple-600/20 text-white' 
+                  : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
               }`}
             >
               {isSidebarOpen ? (
-                <span>{tool.label}</span>
+                <span className="flex items-center gap-3">
+                    <Icon className="w-5 h-5" />
+                    {tool.label}
+                </span>
               ) : (
                 <Icon className="w-6 h-6" />
               )}
@@ -133,7 +144,7 @@ const Header: React.FC<HeaderProps> = ({
             <div className={`flex-grow overflow-hidden transition-all duration-300 ${isSidebarOpen ? 'max-w-full opacity-100' : 'max-w-0 opacity-0'}`}>
               <p className="text-sm font-semibold text-gray-200 truncate">{currentUser.email}</p>
             </div>
-            <button onClick={onLogoutClick} title={t.logout} className={`p-2 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-colors ${isSidebarOpen ? '' : 'hidden'}`}>
+            <button onClick={onLogoutClick} title={t.logout} className={`p-2 rounded-full text-gray-400 hover:text-white hover:bg-red-500/20 hover:text-red-400 transition-colors ${isSidebarOpen ? '' : 'hidden'}`}>
               <LogoutIcon className="w-5 h-5" />
             </button>
           </div>
@@ -143,13 +154,16 @@ const Header: React.FC<HeaderProps> = ({
                 className={`w-full flex items-center h-12 pe-4 text-sm rounded-lg whitespace-nowrap transition-all duration-300 text-gray-400 font-medium hover:text-white hover:bg-gray-700/50 ${ isSidebarOpen ? 'ps-6 justify-start' : 'ps-0 justify-center' }`}
             >
                  {isSidebarOpen ? (
-                    <span>{t.login}</span>
+                    <span className="flex items-center gap-3">
+                        <UserIcon className="w-5 h-5" />
+                        {t.login}
+                    </span>
                  ) : (
                     <UserIcon className="w-6 h-6" />
                  )}
             </button>
         )}
-        <div className={`mt-4 transition-opacity duration-300 ease-in-out ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div className={`mt-4 transition-opacity duration-300 ease-in-out ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none h-auto'}`}>
             <LanguageSelector selectedLanguage={uiLanguage} onSelectLanguage={setUiLanguage} />
         </div>
       </div>

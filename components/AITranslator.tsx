@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import type { TranslationSet } from '../types';
 import { useDebounce } from '../hooks/useDebounce';
@@ -12,7 +13,22 @@ import { translateText } from '../services/geminiService';
 import { jsPDF } from 'jspdf';
 import * as docx from 'docx';
 
-const AITranslator: React.FC<{ t: TranslationSet }> = ({ t }) => {
+interface AITranslatorProps {
+    t: TranslationSet;
+    onTranslationComplete: (data: { inputText: string, translatedText: string, sourceLang: string, targetLang: string }) => void;
+}
+
+const SkeletonLoader = () => (
+    <div className="space-y-3 animate-pulse p-4">
+        <div className="h-4 bg-gray-700 rounded w-3/4"></div>
+        <div className="h-4 bg-gray-700 rounded w-full"></div>
+        <div className="h-4 bg-gray-700 rounded w-5/6"></div>
+        <div className="h-4 bg-gray-700 rounded w-1/2"></div>
+    </div>
+);
+
+
+const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete }) => {
   const [sourceLang, setSourceLang] = useState<LanguageOption>(sourceLanguages[0]);
   const [targetLang, setTargetLang] = useState<LanguageOption>(targetLanguages[0]);
   const [inputText, setInputText] = useState('');
@@ -37,6 +53,12 @@ const AITranslator: React.FC<{ t: TranslationSet }> = ({ t }) => {
       const result = await translateText(debouncedInputText, sourceLang.name, targetLang.name);
       setTranslatedText(result);
       setEditedTranslatedText(result);
+      onTranslationComplete({
+        inputText: debouncedInputText,
+        translatedText: result,
+        sourceLang: sourceLang.name,
+        targetLang: targetLang.name
+      });
     } catch (err: any) {
       setError(err.message || 'An error occurred during translation.');
     } finally {
@@ -118,7 +140,7 @@ const AITranslator: React.FC<{ t: TranslationSet }> = ({ t }) => {
         />
         <button
           onClick={handleSwapLanguages}
-          disabled={sourceLang.code === 'auto'}
+          disabled={sourceLang.code === 'auto' || isLoading}
           className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <SwapIcon className="w-6 h-6 text-gray-300" />
@@ -138,19 +160,28 @@ const AITranslator: React.FC<{ t: TranslationSet }> = ({ t }) => {
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             placeholder={t.enterText}
-            className="w-full h-64 bg-gray-900/50 rounded-lg p-4 text-gray-200 resize-none focus:ring-2 focus:ring-purple-500 border border-transparent focus:border-purple-500"
+            disabled={isLoading}
+            className="w-full h-64 bg-gray-900/50 rounded-lg p-4 text-gray-200 resize-none focus:ring-2 focus:ring-purple-500 border border-transparent focus:border-purple-500 disabled:opacity-70"
           />
           <div className="text-end text-sm text-gray-400 mt-1 px-1">
             {characterCount} chars / {wordCount} words
           </div>
         </div>
         <div className="relative">
-          <textarea
-            value={isLoading ? `${t.translating}...` : (error || editedTranslatedText)}
-            onChange={(e) => !isLoading && !error && setEditedTranslatedText(e.target.value)}
-            placeholder={t.translationResult}
-            className={`w-full h-64 bg-gray-900/50 rounded-lg p-4 resize-none ${error ? 'text-red-400' : 'text-gray-200'}`}
-          />
+           <div className={`w-full h-64 bg-gray-900/50 rounded-lg overflow-y-auto ${error ? 'text-red-400 p-4' : ''}`}>
+             {isLoading ? (
+                <SkeletonLoader />
+             ) : error ? (
+                <p>{error}</p>
+             ) : (
+                <textarea
+                    value={editedTranslatedText}
+                    onChange={(e) => setEditedTranslatedText(e.target.value)}
+                    placeholder={t.translationResult}
+                    className="w-full h-full bg-transparent rounded-lg p-4 text-gray-200 resize-none focus:ring-0 border-0"
+                />
+             )}
+          </div>
           {!isLoading && !error && translatedText && (
             <div className="absolute top-3 end-3 flex items-center space-x-2 rtl:space-x-reverse">
                 <button
