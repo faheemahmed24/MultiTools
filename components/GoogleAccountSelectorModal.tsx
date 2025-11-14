@@ -66,25 +66,25 @@ const GoogleAccountSelectorModal: React.FC<GoogleAccountSelectorModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4" onClick={onClose}>
       <div 
-        className="bg-gray-800 border border-gray-700 rounded-lg shadow-xl w-full max-w-md p-6 transform transition-all"
+        className="bg-gray-800 border border-gray-700 rounded-lg shadow-xl w-full max-w-md p-6 sm:p-8 transform transition-all"
         onClick={e => e.stopPropagation()}
       >
-        <div className="text-center mb-4">
-          <GoogleIcon className="w-8 h-8 mx-auto mb-2" />
-          <h2 className="text-2xl font-semibold text-gray-100">{t.chooseAnAccount}</h2>
-          <p className="text-sm text-gray-400">to continue to MultiTools</p>
+        <div className="text-center mb-6">
+          <GoogleIcon className="w-10 h-10 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-100">{t.chooseAnAccount}</h2>
+          <p className="text-base text-gray-400">{t.continueToAppName}</p>
         </div>
 
         {!showNewAccountForm ? (
-          <ul className="space-y-2">
+          <ul className="space-y-1">
             {accounts.map(email => (
               <li key={email}>
                 <button
                   onClick={() => handleSelectExisting(email)}
                   className="w-full flex items-center gap-4 p-3 rounded-lg hover:bg-gray-700/50 transition-colors text-left"
                 >
-                  <UserCircleIcon className="w-8 h-8 text-gray-400 flex-shrink-0" />
-                  <span className="font-medium text-gray-200 truncate">{email}</span>
+                  <UserCircleIcon className="w-10 h-10 text-gray-400 flex-shrink-0" />
+                  <span className="font-semibold text-gray-200 text-lg truncate">{email}</span>
                 </button>
               </li>
             ))}
@@ -93,8 +93,8 @@ const GoogleAccountSelectorModal: React.FC<GoogleAccountSelectorModalProps> = ({
                 onClick={() => setShowNewAccountForm(true)}
                 className="w-full flex items-center gap-4 p-3 rounded-lg hover:bg-gray-700/50 transition-colors text-left"
               >
-                <UserCircleIcon className="w-8 h-8 text-gray-400 flex-shrink-0" />
-                <span className="font-medium text-gray-200">{t.useAnotherAccount}</span>
+                <UserCircleIcon className="w-10 h-10 text-gray-400 flex-shrink-0" />
+                <span className="font-semibold text-gray-200 text-lg">{t.useAnotherAccount}</span>
               </button>
             </li>
           </ul>
