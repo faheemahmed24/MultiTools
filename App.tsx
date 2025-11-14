@@ -17,6 +17,7 @@ import PdfToImage from './components/PdfToImage';
 import ImageToPdf from './components/ImageToPdf';
 import PdfToWord from './components/PdfToWord';
 import WordToPdf from './components/WordToPdf';
+import ExportToSheets from './components/ExportToSheets';
 import AuthModal from './components/AuthModal';
 import Panel from './components/Panel';
 import { LanguageOption, targetLanguages } from './lib/languages';
@@ -381,16 +382,18 @@ function App() {
         return (
             <div className={`${mainContentClass} animate-fadeIn`}>
                 <ImageConverterOcr t={t} onAnalysisComplete={(data) => handleAddToHistory('Image Converter & OCR', data)}/>
-                <div className={panelGridClass}>
-                     <Panel title={t.imageAnalysisResult} defaultOpen={true} className="md:col-span-2 lg:col-span-1">
+                <div className="mt-8 flex flex-col gap-6">
+                    <Panel title={t.imageAnalysisResult} defaultOpen={true}>
                          <EmptyPanel message="Analysis results will appear in the main tool above once an image is processed." />
                     </Panel>
-                    <Panel title={t.translationResult} defaultOpen={true}>
-                         <EmptyPanel message="Translation will appear in the main tool above." />
-                    </Panel>
-                    <Panel title={t.history} defaultOpen={true}>
-                        <HistoryPanel items={analysisHistory} onSelect={() => {}} onDelete={(id) => setAnalysisHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderAnalysisHistoryItem} />
-                    </Panel>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <Panel title={t.translationResult} defaultOpen={true}>
+                             <EmptyPanel message="Translation will appear in the main tool above." />
+                        </Panel>
+                        <Panel title={t.history} defaultOpen={true}>
+                            <HistoryPanel items={analysisHistory} onSelect={() => {}} onDelete={(id) => setAnalysisHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderAnalysisHistoryItem} />
+                        </Panel>
+                    </div>
                 </div>
             </div>
         );
@@ -435,6 +438,17 @@ function App() {
                     <Panel title="Result" defaultOpen={true} className="md:col-span-2 lg:col-span-1"><EmptyPanel message="The PDF download link will appear in the tool above." /></Panel>
                     <Panel title="Translation" defaultOpen={true}><EmptyPanel message="Not applicable for this tool." /></Panel>
                     <Panel title="History" defaultOpen={true}><EmptyPanel message="History coming soon for this tool." /></Panel>
+                </div>
+            </div>
+        );
+      case 'Export to Sheets':
+        return (
+             <div className={`${mainContentClass} animate-fadeIn`}>
+                <ExportToSheets t={t} />
+                 <div className={panelGridClass}>
+                    <Panel title="Result" defaultOpen={true} className="md:col-span-2 lg:col-span-3">
+                        <EmptyPanel message="The CSV file will be downloaded directly to your device." />
+                    </Panel>
                 </div>
             </div>
         );

@@ -272,13 +272,26 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
         createDownload(`${baseFilename}.docx`, blob);
     } else if (format === 'pdf') {
         const doc = new jsPDF();
-        let y = 10;
+        const margin = 15;
+        const usableWidth = doc.internal.pageSize.getWidth() - margin * 2;
+        const lineHeight = 6;
+        let y = margin;
+
+        doc.setFontSize(11);
+        
         transcription.segments.forEach(seg => {
-            if (y > 280) { doc.addPage(); y = 10; }
             const line = (showTimestamps ? `[${seg.startTime} - ${seg.endTime}] ` : '') + (showSpeaker ? `${seg.speaker}: ` : '') + seg.text;
-            const splitLines = doc.splitTextToSize(line, 180);
-            doc.text(splitLines, 10, y);
-            y += splitLines.length * 7;
+            
+            const splitLines = doc.splitTextToSize(line, usableWidth);
+            const segmentHeight = splitLines.length * lineHeight;
+
+            if (y + segmentHeight > doc.internal.pageSize.getHeight() - margin) {
+                doc.addPage();
+                y = margin;
+            }
+            
+            doc.text(splitLines, margin, y);
+            y += segmentHeight + 4; // Add a small gap between segments
         });
         createDownload(`${baseFilename}.pdf`, doc.output('blob'));
     }
