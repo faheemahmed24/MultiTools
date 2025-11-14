@@ -42,6 +42,7 @@ export interface GrammarHistoryItem {
     date: string;
     originalText: string;
     correctedText: string;
+    language: string;
 }
 
 export interface AnalysisHistoryItem {

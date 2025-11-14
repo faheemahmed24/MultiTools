@@ -7,10 +7,13 @@ import { DownloadIcon } from './icons/DownloadIcon';
 import { GrammarIcon } from './icons/GrammarIcon';
 import { jsPDF } from 'jspdf';
 import * as docx from 'docx';
+import LanguageDropdown from './LanguageDropdown';
+import { sourceLanguages } from '../lib/languages';
+import type { LanguageOption } from '../lib/languages';
 
 interface GrammarCorrectorProps {
     t: TranslationSet;
-    onCorrectionComplete: (data: { originalText: string, correctedText: string }) => void;
+    onCorrectionComplete: (data: { originalText: string, correctedText: string, language: string }) => void;
 }
 
 const SkeletonLoader = () => (
@@ -25,6 +28,7 @@ const SkeletonLoader = () => (
 const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComplete }) => {
   const [inputText, setInputText] = useState('');
   const [correctedText, setCorrectedText] = useState('');
+  const [language, setLanguage] = useState<LanguageOption>(sourceLanguages[0]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
@@ -39,11 +43,12 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
     setIsLoading(true);
     setError(null);
     try {
-      const result = await correctGrammar(inputText);
+      const result = await correctGrammar(inputText, language.name);
       setCorrectedText(result);
       onCorrectionComplete({
         originalText: inputText,
         correctedText: result,
+        language: language.name,
       });
     } catch (err: any) {
       setError(err.message || 'An error occurred during grammar correction.');
@@ -96,6 +101,15 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
 
   return (
     <div className="bg-gray-800 rounded-2xl shadow-lg p-6">
+        <div className="mb-4">
+             <LanguageDropdown
+                languages={sourceLanguages}
+                selectedLang={language}
+                onSelectLang={setLanguage}
+                title={t.language}
+                searchPlaceholder="Search language"
+            />
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <h3 className="font-semibold mb-2 text-gray-300">{t.originalText}</h3>

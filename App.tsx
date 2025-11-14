@@ -276,7 +276,12 @@ function App() {
     const renderGrammarHistoryItem = (item: GrammarHistoryItem, isActive: boolean) => (
         <div className="flex-grow overflow-hidden">
             <p className="font-semibold truncate text-gray-200" title={item.originalText}>{item.originalText}</p>
-            <p className="text-sm text-gray-400 mt-1">Corrected on {item.date}</p>
+            <div className="flex items-center gap-2 mt-1">
+                <p className="text-xs text-gray-400">{item.date}</p>
+                <span className="bg-gray-600 text-purple-300 text-[10px] font-medium px-1.5 py-0.5 rounded">
+                    {item.language}
+                </span>
+            </div>
         </div>
     );
     

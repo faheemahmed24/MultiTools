@@ -138,6 +138,7 @@ const translations: Record<Language, TranslationSet> = {
     dataPreview: 'Data Preview',
     downloadCsv: 'Download CSV',
     noDataToPreview: 'Paste data above to see a preview.',
+    language: 'Language',
   },
   hi: {
     transcription: 'प्रतिलेखन',
@@ -276,6 +277,7 @@ const translations: Record<Language, TranslationSet> = {
     dataPreview: 'डेटा पूर्वावलोकन',
     downloadCsv: 'सीएसवी डाउनलोड करें',
     noDataToPreview: 'पूर्वावलोकन देखने के लिए ऊपर डेटा पेस्ट करें।',
+    language: 'भाषा',
   },
   ur: {
     transcription: 'نقل حرفی',
@@ -414,6 +416,7 @@ const translations: Record<Language, TranslationSet> = {
     dataPreview: 'ڈیٹا کا پیش نظارہ',
     downloadCsv: 'CSV ڈاؤن لوڈ کریں',
     noDataToPreview: 'پیش نظارہ دیکھنے کے لیے اوپر ڈیٹا پیسٹ کریں۔',
+    language: 'زبان',
   },
   ar: {
     transcription: 'النسخ الصوتي',
@@ -552,6 +555,7 @@ const translations: Record<Language, TranslationSet> = {
     dataPreview: 'معاينة البيانات',
     downloadCsv: 'تنزيل CSV',
     noDataToPreview: 'الصق البيانات أعلاه لرؤية معاينة.',
+    language: 'اللغة',
   }
 };
 

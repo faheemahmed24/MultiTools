@@ -87,12 +87,12 @@ You must provide only the translated text as a response. Do not include any extr
     return response.text.trim();
 };
 
-export const correctGrammar = async (text: string): Promise<string> => {
+export const correctGrammar = async (text: string, language: string): Promise<string> => {
     if (!process.env.API_KEY) {
         throw new Error("API_KEY environment variable not set");
     }
 
-    const systemInstruction = `You are a grammar correction expert. Your task is to correct the grammar, spelling, and punctuation of the given text.
+    const systemInstruction = `You are a grammar correction expert. Your task is to correct the grammar, spelling, and punctuation of the given text. The text is in ${language === 'Auto-detect' ? 'an auto-detected language' : language}.
 You must provide only the corrected text as a response. Do not include any extra information, context, or explanations. Do not wrap the response in quotes or any other formatting. Just return the corrected text directly.`;
 
     const response = await ai.models.generateContent({
