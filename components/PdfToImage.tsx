@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';
@@ -7,6 +8,7 @@ import JSZip from 'jszip';
 import { analyzeImage } from '../services/geminiService';
 import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
+import * as docx from 'docx';
 
 
 // Configure the worker
@@ -80,6 +82,7 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
   const [isExtracting, setIsExtracting] = useState(false);
   const [isTextCopied, setIsTextCopied] = useState(false);
   const [extractionError, setExtractionError] = useState('');
+  const [showTextExportMenu, setShowTextExportMenu] = useState(false);
 
   const resetState = () => {
     setPdfFile(null);
@@ -241,6 +244,31 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
     setTimeout(() => setIsTextCopied(false), 2000);
   };
 
+  const handleExportText = async (format: 'txt' | 'docx') => {
+    if (!extractedText || !pdfFile) return;
+    const baseFilename = pdfFile.name.replace('.pdf', '') || 'pdf-text-extract';
+    
+    const download = async (filename: string, blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    };
+
+    if (format === 'txt') {
+        const blob = new Blob([extractedText], { type: 'text/plain;charset=utf-8' });
+        await download(`${baseFilename}.txt`, blob);
+    } else if (format === 'docx') {
+        const doc = new docx.Document({
+            sections: [{
+                children: extractedText.split('\n').map(line => new docx.Paragraph(line)),
+            }],
+        });
+        const blob = await docx.Packer.toBlob(doc);
+        await download(`${baseFilename}.docx`, blob);
+    }
+    setShowTextExportMenu(false);
+  };
+
   return (
     <div className="bg-gray-800 rounded-2xl shadow-lg p-6 min-h-[60vh] lg:h-full flex flex-col">
       {!pdfFile ? (
@@ -358,10 +386,23 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
             <div className="mt-4 bg-gray-900/50 p-4 rounded-lg">
                 <div className="flex justify-between items-center mb-2">
                 <h4 className="font-semibold text-gray-200">{t.imageAnalysisResult}</h4>
-                <button onClick={handleCopyText} className="flex items-center px-3 py-1 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm">
-                    {isTextCopied ? <CheckIcon className="w-4 h-4 me-2"/> : <CopyIcon className="w-4 h-4 me-2" />}
-                    {isTextCopied ? t.copied : t.copy}
-                </button>
+                <div className="flex items-center gap-2">
+                    <div className="relative">
+                        <button onClick={() => setShowTextExportMenu(!showTextExportMenu)} className="flex items-center px-3 py-1 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm">
+                            <DownloadIcon className="w-4 h-4 me-2" /> {t.export}
+                        </button>
+                        {showTextExportMenu && (
+                            <div onMouseLeave={() => setShowTextExportMenu(false)} className="absolute top-full mt-2 end-0 w-36 bg-gray-600 rounded-lg shadow-xl py-1 z-10">
+                                <button onClick={() => handleExportText('txt')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">TXT (.txt)</button>
+                                <button onClick={() => handleExportText('docx')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">DOCX (.docx)</button>
+                            </div>
+                        )}
+                    </div>
+                    <button onClick={handleCopyText} className="flex items-center px-3 py-1 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm">
+                        {isTextCopied ? <CheckIcon className="w-4 h-4 me-2"/> : <CopyIcon className="w-4 h-4 me-2" />}
+                        {isTextCopied ? t.copied : t.copy}
+                    </button>
+                </div>
                 </div>
                 <textarea readOnly value={extractedText} className="w-full h-48 bg-gray-800 text-gray-300 p-2 rounded-md resize-y border-gray-700 focus:ring-purple-500 focus:border-purple-500"/>
             </div>
