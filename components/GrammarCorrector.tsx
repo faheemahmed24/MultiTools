@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { TranslationSet } from '../types';
+import type { TranslationSet, DiffPart } from '../types';
 import { correctGrammar } from '../services/geminiService';
 import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
@@ -12,9 +12,57 @@ import { sourceLanguages } from '../lib/languages';
 import type { LanguageOption } from '../lib/languages';
 import { XCircleIcon } from './icons/XCircleIcon';
 
+// Simple diffing function
+const createDiff = (original: string, corrected: string): DiffPart[] => {
+    const originalWords = original.split(/(\s+)/);
+    const correctedWords = corrected.split(/(\s+)/);
+    const dp = Array(originalWords.length + 1).fill(null).map(() => Array(correctedWords.length + 1).fill(0));
+
+    for (let i = 0; i <= originalWords.length; i++) {
+        for (let j = 0; j <= correctedWords.length; j++) {
+            if (i === 0 || j === 0) continue;
+            if (originalWords[i - 1] === correctedWords[j - 1]) {
+                dp[i][j] = 1 + dp[i - 1][j - 1];
+            } else {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+            }
+        }
+    }
+
+    const diff: DiffPart[] = [];
+    let i = originalWords.length;
+    let j = correctedWords.length;
+    while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && originalWords[i - 1] === correctedWords[j - 1]) {
+            diff.unshift({ value: originalWords[i - 1] });
+            i--; j--;
+        } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+            diff.unshift({ value: correctedWords[j - 1], added: true });
+            j--;
+        } else if (i > 0 && (j === 0 || dp[i][j - 1] < dp[i - 1][j])) {
+            diff.unshift({ value: originalWords[i - 1], removed: true });
+            i--;
+        }
+    }
+    return diff;
+};
+
+const DiffView: React.FC<{ diff: DiffPart[] }> = ({ diff }) => (
+    <p className="whitespace-pre-wrap">
+        {diff.map((part, index) => (
+            <span key={index} className={
+                part.added ? "bg-green-500/20 text-green-300 rounded" :
+                part.removed ? "bg-red-500/20 text-red-300 line-through rounded" : ""
+            }>
+                {part.value}
+            </span>
+        ))}
+    </p>
+);
+
 interface GrammarCorrectorProps {
     t: TranslationSet;
-    onCorrectionComplete: (data: { originalText: string, correctedText: string, language: string }) => void;
+    onCorrectionComplete: (data: { originalText: string, correctedText: string, language: string, diff: DiffPart[] }) => void;
 }
 
 const SkeletonLoader = () => (
@@ -29,6 +77,7 @@ const SkeletonLoader = () => (
 const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComplete }) => {
   const [inputText, setInputText] = useState('');
   const [correctedText, setCorrectedText] = useState('');
+  const [diff, setDiff] = useState<DiffPart[]>([]);
   const [language, setLanguage] = useState<LanguageOption>(sourceLanguages[0]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +87,7 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
   const handleCorrectGrammar = async () => {
     if (!inputText.trim()) {
       setCorrectedText('');
+      setDiff([]);
       setError(null);
       return;
     }
@@ -46,10 +96,14 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
     try {
       const result = await correctGrammar(inputText, language.name);
       setCorrectedText(result);
+      const newDiff = createDiff(inputText, result);
+      setDiff(newDiff);
+
       onCorrectionComplete({
         originalText: inputText,
         correctedText: result,
         language: language.name,
+        diff: newDiff
       });
     } catch (err: any) {
       setError(err.message || 'An error occurred during grammar correction.');
@@ -100,6 +154,7 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
   const handleClear = () => {
     setInputText('');
     setCorrectedText('');
+    setDiff([]);
     setError(null);
   };
 
@@ -144,7 +199,7 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
                     ) : error ? (
                         <p>{error}</p>
                     ) : (
-                        <p className="whitespace-pre-wrap">{correctedText}</p>
+                        <DiffView diff={diff} />
                     )}
                 </div>
                 {!isLoading && !error && correctedText && (
@@ -165,7 +220,7 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
                             {t.export}
                         </button>
                         {showExportMenu && (
-                        <div onMouseLeave={() => setShowExportMenu(false)} className="absolute top-full mt-2 end-0 w-32 bg-gray-600 rounded-lg shadow-xl py-1 z-10">
+                        <div onMouseLeave={() => setShowExportMenu(false)} className="absolute top-full mt-2 end-0 w-32 bg-gray-600 rounded-lg shadow-xl py-1 z-10 animate-slide-in-up">
                             <button onClick={() => handleExport('txt')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">TXT (.txt)</button>
                             <button onClick={() => handleExport('docx')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">DOCX (.docx)</button>
                             <button onClick={() => handleExport('pdf')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">PDF (.pdf)</button>

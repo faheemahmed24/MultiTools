@@ -363,8 +363,12 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
                 </div>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 overflow-y-auto p-1 -m-1 flex-grow">
-                {generatedImages.map((img) => (
-                  <div key={img.pageNumber} className="group relative bg-gray-900/50 p-2 rounded-lg">
+                {generatedImages.map((img, index) => (
+                  <div
+                    key={img.pageNumber}
+                    className="group relative bg-gray-900/50 p-2 rounded-lg animate-pop-in"
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
                     <img src={img.src} alt={`Page ${img.pageNumber}`} className="w-full h-auto rounded-md" />
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2">
                        <a
@@ -395,7 +399,7 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
                             <DownloadIcon className="w-4 h-4 me-2" /> {t.export}
                         </button>
                         {showTextExportMenu && (
-                            <div onMouseLeave={() => setShowTextExportMenu(false)} className="absolute top-full mt-2 end-0 w-36 bg-gray-600 rounded-lg shadow-xl py-1 z-10">
+                            <div onMouseLeave={() => setShowTextExportMenu(false)} className="absolute top-full mt-2 end-0 w-36 bg-gray-600 rounded-lg shadow-xl py-1 z-10 animate-slide-in-up">
                                 <button onClick={() => handleExportText('txt')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">TXT (.txt)</button>
                                 <button onClick={() => handleExportText('docx')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">DOCX (.docx)</button>
                             </div>

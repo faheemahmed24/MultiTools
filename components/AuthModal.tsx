@@ -17,9 +17,21 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess, 
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isGoogleAccountSelectorOpen, setIsGoogleAccountSelectorOpen] = useState(false);
+  const [isRendered, setIsRendered] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
+        setIsRendered(true);
+    }
+  }, [isOpen]);
+
+  const handleClose = () => {
+      setIsRendered(false);
+      setTimeout(onClose, 200); // match animation duration
+  };
+
+  useEffect(() => {
+    if (isRendered) {
       // Reset form on open
       setEmail('');
       setPassword('');
@@ -27,7 +39,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess, 
       setIsLoginMode(true);
       setIsGoogleAccountSelectorOpen(false);
     }
-  }, [isOpen]);
+  }, [isRendered]);
 
   const getUsers = (): User[] => {
     const usersJson = localStorage.getItem('users');
@@ -104,79 +116,93 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess, 
     setError('');
   }
 
-  if (!isOpen) return null;
+  if (!isOpen && !isRendered) return null;
+
+  const backdropClasses = [
+      "fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4",
+      "transition-opacity duration-200 ease-out",
+      isRendered && isOpen ? "opacity-100" : "opacity-0",
+  ].join(' ');
+
+  const modalClasses = [
+      "bg-gray-800 rounded-2xl shadow-lg w-full max-w-sm p-8",
+      "transition-all duration-200 ease-out",
+      isRendered && isOpen ? "opacity-100 scale-100" : "opacity-0 scale-95",
+  ].join(' ');
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={onClose}>
-        <div className="bg-gray-800 rounded-2xl shadow-lg w-full max-w-sm p-8" onClick={e => e.stopPropagation()}>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-100">
-              {isLoginMode ? t.login : t.signup}
-            </h2>
-            <button onClick={onClose} className="p-1 rounded-full text-gray-400 hover:bg-gray-700">
-              <CloseIcon className="w-6 h-6" />
-            </button>
+      <div className={backdropClasses} onClick={handleClose}>
+        <div className={modalClasses} onClick={e => e.stopPropagation()}>
+            <div key={isLoginMode ? 'login' : 'signup'} className="animate-slide-in-right">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-100">
+                  {isLoginMode ? t.login : t.signup}
+                </h2>
+                <button onClick={handleClose} className="p-1 rounded-full text-gray-400 hover:bg-gray-700">
+                  <CloseIcon className="w-6 h-6" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-300">{t.email}</label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    required
+                    className="mt-1 block w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="password">{t.password}</label>
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    required
+                    className="mt-1 block w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
+                  />
+                </div>
+                
+                {error && <p className="text-sm text-red-400 text-center">{error}</p>}
+
+                <button
+                  type="submit"
+                  className="w-full py-3 px-4 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  {isLoginMode ? t.login : t.signup}
+                </button>
+              </form>
+
+              <div className="relative flex items-center justify-center my-6">
+                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                  <div className="w-full border-t border-gray-600" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="bg-gray-800 px-2 text-gray-400">{t.orSeparator}</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsGoogleAccountSelectorOpen(true)}
+                className="w-full flex items-center justify-center py-2.5 px-4 bg-white text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <GoogleIcon className="w-5 h-5 me-3" />
+                {t.continueWithGoogle}
+              </button>
+
+              <p className="mt-6 text-center text-sm text-gray-400">
+                {isLoginMode ? t.loginPrompt : t.signupPrompt}{' '}
+                <button onClick={handleToggleMode} className="font-medium text-purple-400 hover:underline">
+                  {isLoginMode ? t.signup : t.login}
+                </button>
+              </p>
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300">{t.email}</label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                className="mt-1 block w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
-              />
-            </div>
-            <div>
-              <label htmlFor="password">{t.password}</label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                className="mt-1 block w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
-              />
-            </div>
-            
-            {error && <p className="text-sm text-red-400 text-center">{error}</p>}
-
-            <button
-              type="submit"
-              className="w-full py-3 px-4 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
-            >
-              {isLoginMode ? t.login : t.signup}
-            </button>
-          </form>
-
-          <div className="relative flex items-center justify-center my-6">
-            <div className="absolute inset-0 flex items-center" aria-hidden="true">
-              <div className="w-full border-t border-gray-600" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-gray-800 px-2 text-gray-400">{t.orSeparator}</span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setIsGoogleAccountSelectorOpen(true)}
-            className="w-full flex items-center justify-center py-2.5 px-4 bg-white text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            <GoogleIcon className="w-5 h-5 me-3" />
-            {t.continueWithGoogle}
-          </button>
-
-          <p className="mt-6 text-center text-sm text-gray-400">
-            {isLoginMode ? t.loginPrompt : t.signupPrompt}{' '}
-            <button onClick={handleToggleMode} className="font-medium text-purple-400 hover:underline">
-              {isLoginMode ? t.signup : t.login}
-            </button>
-          </p>
         </div>
       </div>
       <GoogleAccountSelectorModal

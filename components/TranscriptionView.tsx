@@ -46,6 +46,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   const [editedSegments, setEditedSegments] = useState<TranscriptionSegment[]>([]);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
 
   // State for undo/redo
   const [editHistory, setEditHistory] = useState<TranscriptionSegment[][]>([]);
@@ -64,6 +65,17 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
         containerRef.current.scrollTop = 0;
     }
   }, [transcription.id]);
+
+  // Click outside listener for export menu
+   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Effect to update history on debounced changes
   useEffect(() => {
@@ -267,6 +279,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
     } else if (format === 'docx') {
         const paragraphs = transcription.segments.map(seg => {
             const parts = [];
+            // Fix: Correct variable name from 'segment' to 'seg' to match map parameter.
             if (showTimestamps) parts.push(new docx.TextRun({ text: `[${seg.startTime} - ${seg.endTime}] `, color: "A78BFA" }));
             if (showSpeaker) parts.push(new docx.TextRun({ text: `${seg.speaker}: `, bold: true, color: "F472B6"}));
             parts.push(new docx.TextRun(seg.text));
@@ -285,6 +298,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
         doc.setFontSize(11);
         
         transcription.segments.forEach(seg => {
+            // Fix: Correct variable name from 'segment' to 'seg' to match forEach parameter.
             const line = (showTimestamps ? `[${seg.startTime} - ${seg.endTime}] ` : '') + (showSpeaker ? `${seg.speaker}: ` : '') + seg.text;
             
             const splitLines = doc.splitTextToSize(line, usableWidth);
@@ -362,13 +376,13 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
             {isCopied ? <CheckIcon className="w-5 h-5 me-2"/> : <CopyIcon className="w-5 h-5 me-2" />}
             {isCopied ? t.copied : t.copy}
           </button>
-          <div className="relative">
+          <div className="relative" ref={exportMenuRef}>
             <button onClick={() => setShowExportMenu(!showExportMenu)} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
               <DownloadIcon className="w-5 h-5 me-2" />
               {t.export}
             </button>
             {showExportMenu && (
-              <div className="absolute bottom-full mb-2 w-48 bg-gray-700 border border-gray-600 rounded-lg shadow-xl py-1 z-10" onMouseLeave={() => setShowExportMenu(false)}>
+              <div className="absolute bottom-full mb-2 w-48 bg-gray-700 border border-gray-600 rounded-lg shadow-xl py-1 z-10 animate-slide-in-up">
                 {exportOptions.map(({ format, icon: Icon, separator }) => (
                   <React.Fragment key={format}>
                     {separator && <div className="h-px bg-gray-600 my-1"></div>}

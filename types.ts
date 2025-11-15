@@ -37,12 +37,19 @@ export interface TranslationHistoryItem {
     targetLang: string;
 }
 
+export type DiffPart = {
+    value: string;
+    added?: boolean;
+    removed?: boolean;
+};
+  
 export interface GrammarHistoryItem {
     id: string;
     date: string;
     originalText: string;
     correctedText: string;
     language: string;
+    diff: DiffPart[];
 }
 
 export interface AnalysisHistoryItem {
