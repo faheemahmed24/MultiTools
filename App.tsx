@@ -25,7 +25,14 @@ import LanguageDropdown from './components/LanguageDropdown';
 import { ClockIcon } from './components/icons/ClockIcon';
 import { CheckCircleIcon } from './components/icons/CheckCircleIcon';
 import { XCircleIcon } from './components/icons/XCircleIcon';
+import { UserIcon } from './components/icons/UserIcon';
 
+
+const HamburgerIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+    </svg>
+);
 interface ProcessingFile {
   id: string;
   file: File;
@@ -122,7 +129,8 @@ function App() {
   const [pdfWordHistory, setPdfWordHistory] = useUserLocalStorage<PdfWordHistoryItem[]>(currentUser?.id, 'pdfWordHistory', []);
   const [wordPdfHistory, setWordPdfHistory] = useUserLocalStorage<WordPdfHistoryItem[]>(currentUser?.id, 'wordPdfHistory', []);
 
-  const [isSidebarOpen, setIsSidebarOpen] = useLocalStorage<boolean>('isSidebarOpen', true);
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
+  const [isSidebarOpen, setIsSidebarOpen] = useLocalStorage<boolean>('isSidebarOpen', window.innerWidth >= 768);
 
   const t = useMemo(() => getTranslations(uiLanguage), [uiLanguage]);
 
@@ -137,6 +145,22 @@ function App() {
       setProcessingFiles([]);
     }
   }, [currentUser, setCurrentTranscriptionId]);
+
+   useEffect(() => {
+    const handleResize = () => {
+      const newIsDesktop = window.innerWidth >= 768;
+      if (newIsDesktop !== isDesktop) {
+        setIsDesktop(newIsDesktop);
+        if (!newIsDesktop) {
+          setIsSidebarOpen(false); // Close sidebar when switching to mobile
+        } else {
+          setIsSidebarOpen(true); // Open sidebar when switching to desktop
+        }
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isDesktop, setIsSidebarOpen]);
 
 
   const currentTranscription = useMemo(() => {
@@ -476,9 +500,39 @@ function App() {
         onLoginClick={() => setIsAuthModalOpen(true)}
         onLogoutClick={handleLogout}
       />
-      <main className="flex-grow p-6 md:p-8 overflow-y-auto">
+      {isSidebarOpen && !isDesktop && (
+        <div 
+          onClick={() => setIsSidebarOpen(false)} 
+          className="fixed inset-0 bg-black/60 z-30 md:hidden"
+          aria-hidden="true"
+        />
+      )}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="md:hidden flex items-center justify-between p-4 bg-gray-800/80 backdrop-blur-sm border-b border-gray-700/50 sticky top-0 z-20 h-16">
+          <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2 -ms-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+              aria-label="Open menu"
+          >
+              <HamburgerIcon className="w-6 h-6" />
+          </button>
+          <h1 className="text-xl font-bold">
+            <span className="text-purple-400">Multi</span><span className="text-pink-500">Tools</span>
+          </h1>
+          {currentUser ? (
+             <div className="p-1 bg-gray-700 rounded-full">
+                <UserIcon className="w-6 h-6 text-purple-400"/>
+              </div>
+          ) : (
+            <button onClick={() => setIsAuthModalOpen(true)} className="p-1">
+               <UserIcon className="w-6 h-6 text-gray-400" />
+            </button>
+          )}
+        </div>
+        <main className="flex-grow p-4 sm:p-6 md:p-8 overflow-y-auto">
          {renderActiveTool()}
-      </main>
+        </main>
+      </div>
       <AuthModal 
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}

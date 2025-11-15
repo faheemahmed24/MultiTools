@@ -81,9 +81,22 @@ const Header: React.FC<HeaderProps> = ({
 
   }, [activeTool, t, isSidebarOpen]); // Rerun when sidebar state or language changes
 
+  const sidebarClasses = [
+    'bg-gray-800/50 backdrop-blur-sm border-r border-gray-700/50',
+    'flex flex-col p-4',
+    'duration-300 ease-in-out',
+    // Mobile: fixed off-canvas
+    'fixed inset-y-0 left-0 z-40 w-64 transition-transform',
+    // Desktop: relative in-flow
+    'md:relative md:inset-auto md:z-auto md:transition-all',
+    isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+    isSidebarOpen ? 'md:w-64' : 'md:w-20',
+  ].join(' ');
+
+
   return (
-    <aside className={`bg-gray-800/50 backdrop-blur-sm border-r border-gray-700/50 flex flex-col p-4 flex-shrink-0 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-64' : 'w-20'}`}>
-      <div className="flex items-center justify-between mb-6 mt-2">
+    <aside className={sidebarClasses}>
+      <div className="hidden md:flex items-center justify-between mb-6 mt-2">
         <h1 className={`text-3xl font-bold whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out ${isSidebarOpen ? 'max-w-full opacity-100' : 'max-w-0 opacity-0'}`}>
           <span className="text-purple-400">Multi</span><span className="text-pink-500">Tools</span>
         </h1>
@@ -96,13 +109,13 @@ const Header: React.FC<HeaderProps> = ({
         </button>
       </div>
       
-      {isSidebarOpen && (
+      {(isSidebarOpen) && (
           <h2 className="text-xs font-semibold uppercase text-gray-500 tracking-wider px-4 mb-2">{t.tools}</h2>
       )}
       
       <nav 
         ref={toolsContainerRef}
-        className="relative flex flex-col space-y-2 flex-grow overflow-y-auto -me-2 pe-2"
+        className="relative flex flex-col space-y-2 flex-grow overflow-y-auto -me-2 pe-2 mt-8 md:mt-0"
       >
         <div 
           className="w-1 bg-purple-500 rounded-full absolute start-0 transition-all duration-300 ease-in-out" 
@@ -114,9 +127,15 @@ const Header: React.FC<HeaderProps> = ({
             <button 
               key={tool.key}
               data-tool-key={tool.key}
-              onClick={() => setActiveTool(tool.key)}
+              onClick={() => {
+                  setActiveTool(tool.key);
+                  // On mobile, close sidebar on selection
+                  if (window.innerWidth < 768) {
+                      setIsSidebarOpen(false);
+                  }
+              }}
               title={!isSidebarOpen ? tool.label : ''}
-              className={`w-full flex items-center h-12 pe-4 text-sm font-semibold rounded-lg whitespace-nowrap transition-all duration-300 transform hover:scale-105 active:scale-100 ${ isSidebarOpen ? 'ps-6 justify-start' : 'ps-0 justify-center' } ${
+              className={`w-full flex items-center h-12 pe-4 text-sm font-semibold rounded-lg whitespace-nowrap transition-all duration-300 transform hover:scale-105 active:scale-100 ${ isSidebarOpen ? 'ps-6 justify-start' : 'md:ps-0 md:justify-center' } ${
                 activeTool === tool.key
                   ? 'bg-purple-600/20 text-white' 
                   : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
@@ -138,7 +157,7 @@ const Header: React.FC<HeaderProps> = ({
       <div className="mt-auto pt-6 border-t border-gray-700/50">
         {currentUser ? (
           <div className="flex items-center gap-3">
-             <div className={`p-2 bg-gray-700 rounded-full transition-all duration-300 ${isSidebarOpen ? '' : 'w-full'}`}>
+             <div className={`p-2 bg-gray-700 rounded-full transition-all duration-300 ${isSidebarOpen ? '' : 'md:w-full'}`}>
               <UserIcon className="w-6 h-6 text-purple-400 mx-auto" />
             </div>
             <div className={`flex-grow overflow-hidden transition-all duration-300 ${isSidebarOpen ? 'max-w-full opacity-100' : 'max-w-0 opacity-0'}`}>
@@ -151,7 +170,7 @@ const Header: React.FC<HeaderProps> = ({
         ) : (
            <button 
                 onClick={onLoginClick}
-                className={`w-full flex items-center h-12 pe-4 text-sm rounded-lg whitespace-nowrap transition-all duration-300 text-gray-400 font-medium hover:text-white hover:bg-gray-700/50 ${ isSidebarOpen ? 'ps-6 justify-start' : 'ps-0 justify-center' }`}
+                className={`w-full flex items-center h-12 pe-4 text-sm rounded-lg whitespace-nowrap transition-all duration-300 text-gray-400 font-medium hover:text-white hover:bg-gray-700/50 ${ isSidebarOpen ? 'ps-6 justify-start' : 'md:ps-0 md:justify-center' }`}
             >
                  {isSidebarOpen ? (
                     <span className="flex items-center gap-3">
