@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import type { TranslationSet } from '../types';
 import { useDebounce } from '../hooks/useDebounce';
@@ -12,6 +11,7 @@ import { DownloadIcon } from './icons/DownloadIcon';
 import { translateText } from '../services/geminiService';
 import { jsPDF } from 'jspdf';
 import * as docx from 'docx';
+import { XCircleIcon } from './icons/XCircleIcon';
 
 interface AITranslatorProps {
     t: TranslationSet;
@@ -124,6 +124,12 @@ const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete })
     }
   };
 
+  const handleClear = () => {
+    setInputText('');
+    setTranslatedText('');
+    setEditedTranslatedText('');
+    setError(null);
+  };
 
   const characterCount = inputText.length;
   const wordCount = inputText.trim().split(/\s+/).filter(Boolean).length;
@@ -163,8 +169,13 @@ const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete })
             disabled={isLoading}
             className="w-full h-64 bg-gray-900/50 rounded-lg p-4 text-gray-200 resize-none focus:ring-2 focus:ring-purple-500 border border-transparent focus:border-purple-500 disabled:opacity-70"
           />
-          <div className="text-end text-sm text-gray-400 mt-1 px-1">
-            {characterCount} chars / {wordCount} words
+          <div className="flex justify-end items-center gap-2 text-sm text-gray-400 mt-1 px-1">
+            <span>{characterCount} chars / {wordCount} words</span>
+            {inputText && (
+                <button onClick={handleClear} title="Clear text" className="text-gray-500 hover:text-white transition-colors">
+                    <XCircleIcon className="w-5 h-5"/>
+                </button>
+            )}
           </div>
         </div>
         <div className="relative">

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import { jsPDF } from 'jspdf';
@@ -46,6 +45,7 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
   const [conversionMessage, setConversionMessage] = useState('');
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [editingImage, setEditingImage] = useState<ImageFile | null>(null);
+  const [outputFilename, setOutputFilename] = useState('converted');
 
   const [pageSize, setPageSize] = useState<PageSize>('a4');
   const [orientation, setOrientation] = useState<Orientation>('p');
@@ -79,6 +79,12 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
           preview: URL.createObjectURL(file),
           edits: { ...defaultEdits },
         }));
+
+      if (images.length === 0 && newImages.length > 0) {
+        const firstFileName = newImages[0].file.name;
+        setOutputFilename(firstFileName.split('.').slice(0, -1).join('.') || 'converted');
+      }
+
       setImages(prev => [...prev, ...newImages]);
     }
   };
@@ -113,6 +119,7 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
     images.forEach(img => URL.revokeObjectURL(img.preview));
     setImages([]);
     setPdfUrl(null);
+    setOutputFilename('converted');
     setExtractedText('');
     setExtractionError('');
   };
@@ -150,7 +157,7 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
             ctx.rotate(edits.rotate * Math.PI / 180);
             ctx.drawImage(img, -img.width / 2, -img.height / 2);
             
-            resolve(canvas.toDataURL('image/jpeg'));
+            resolve(canvas.toDataURL('image/png'));
         };
         img.onerror = () => reject('Image failed to load');
     });
@@ -208,14 +215,14 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
         finalX = marginValue + (usableW - finalW) / 2;
         finalY = marginValue + (usableH - finalH) / 2;
 
-        doc.addImage(editedImageDataUrl, 'JPEG', finalX, finalY, finalW, finalH);
+        doc.addImage(editedImageDataUrl, 'PNG', finalX, finalY, finalW, finalH);
     }
     
     const url = doc.output('bloburl');
     setPdfUrl(url as string);
     setIsConverting(false);
     setConversionMessage('');
-    onConversionComplete({ fileName: 'converted.pdf', imageCount: images.length });
+    onConversionComplete({ fileName: `${outputFilename || 'converted'}.pdf`, imageCount: images.length });
   };
 
   const handleConvertToWord = async () => {
@@ -255,7 +262,7 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'converted.docx';
+    a.download = `${outputFilename || 'converted'}.docx`;
     a.click();
     URL.revokeObjectURL(url);
 
@@ -358,7 +365,7 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
               ))}
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-2">
               <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">{t.pageSize}</label>
                   <div className="flex bg-gray-700 rounded-lg p-1"><OptionButton label="A4" value="a4" selectedValue={pageSize} onClick={setPageSize} /><OptionButton label="Letter" value="letter" selectedValue={pageSize} onClick={setPageSize} /></div>
@@ -375,10 +382,23 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
                   <label className="block text-sm font-medium text-gray-300 mb-2">{t.imageFit}</label>
                   <div className="flex bg-gray-700 rounded-lg p-1"><OptionButton label={t.contain} value="contain" selectedValue={imageFit} onClick={setImageFit} /><OptionButton label={t.cover} value="cover" selectedValue={imageFit} onClick={setImageFit} /></div>
               </div>
+              <div className="sm:col-span-2 lg:col-span-2">
+                <label htmlFor="filename" className="block text-sm font-medium text-gray-300 mb-2">{t.outputFilename}</label>
+                <div className='flex items-center bg-gray-700/50 rounded-lg border border-gray-600 focus-within:ring-2 focus-within:ring-purple-500'>
+                    <input
+                        type="text"
+                        id="filename"
+                        value={outputFilename}
+                        onChange={(e) => setOutputFilename(e.target.value)}
+                        className="w-full bg-transparent rounded-lg p-2 text-sm text-gray-200 focus:ring-0 border-0"
+                    />
+                    <span className='p-2 text-sm text-gray-400'>.pdf</span>
+                </div>
+              </div>
           </div>
 
           {!pdfUrl ? (
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 mt-4">
               <button onClick={handleConvertToPdf} disabled={isConverting} className="flex-1 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200">
                   {isConverting ? conversionMessage : `${t.convertToPdf} (${images.length} ${images.length === 1 ? 'image' : 'images'})`}
               </button>
@@ -387,8 +407,8 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
               </button>
             </div>
           ) : (
-             <div className="flex flex-col gap-4">
-                <a href={pdfUrl} download="converted.pdf" className="w-full text-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center justify-center">
+             <div className="flex flex-col gap-4 mt-4">
+                <a href={pdfUrl} download={`${outputFilename || 'converted'}.pdf`} className="w-full text-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center justify-center">
                     <DownloadIcon className="w-5 h-5 me-2" /> {t.downloadPdf}
                 </a>
                 <button onClick={handleExtractText} disabled={isExtracting} className="w-full px-6 py-3 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 disabled:bg-gray-500 transition-colors duration-200">

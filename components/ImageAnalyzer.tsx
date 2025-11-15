@@ -1,5 +1,5 @@
-
-import React, { useState, useRef } from 'react';
+// Fix: Import useCallback from React to resolve 'Cannot find name' errors.
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import type { LanguageOption } from '../lib/languages';
 import { UploadIcon } from './icons/UploadIcon';
@@ -112,6 +112,56 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
   const [targetFormat, setTargetFormat] = useState<'png' | 'jpeg'>('png');
   const [quality, setQuality] = useState(90);
 
+  const handleAnalyze = useCallback(async () => {
+    if (!imageFile) return;
+    setIsLoading(true);
+    setError(null);
+    setAnalysisResult('');
+    setEditedAnalysisResult('');
+    setTranslatedText('');
+    setEditedTranslatedText('');
+    try {
+      const result = await analyzeImage(imageFile);
+      setAnalysisResult(result);
+      setEditedAnalysisResult(result);
+      onAnalysisComplete({ fileName: imageFile.name, resultText: result });
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during analysis.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [imageFile, onAnalysisComplete]);
+  
+  const handleTranslate = useCallback(async () => {
+    if (!editedAnalysisResult) return;
+    setIsTranslating(true);
+    setTranslationError(null);
+    setTranslatedText('');
+    setEditedTranslatedText('');
+    try {
+        const result = await translateText(editedAnalysisResult, 'auto', targetLang.name);
+        setTranslatedText(result);
+        setEditedTranslatedText(result);
+    } catch (err: any) {
+        setTranslationError(err.message || 'An error occurred during translation.');
+    } finally {
+        setIsTranslating(false);
+    }
+  }, [editedAnalysisResult, targetLang.name]);
+
+  useEffect(() => {
+    if (imageFile && !analysisResult) {
+      handleAnalyze();
+    }
+  }, [imageFile, analysisResult, handleAnalyze]);
+
+  useEffect(() => {
+    if (editedAnalysisResult && !isTranslating) {
+      handleTranslate();
+    }
+  }, [editedAnalysisResult, targetLang, handleTranslate, isTranslating]);
+
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -143,43 +193,6 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
     setTranslationError(null);
     if (fileInputRef.current) {
         fileInputRef.current.value = '';
-    }
-  };
-
-  const handleAnalyze = async () => {
-    if (!imageFile) return;
-    setIsLoading(true);
-    setError(null);
-    setAnalysisResult('');
-    setEditedAnalysisResult('');
-    setTranslatedText('');
-    setEditedTranslatedText('');
-    try {
-      const result = await analyzeImage(imageFile);
-      setAnalysisResult(result);
-      setEditedAnalysisResult(result);
-      onAnalysisComplete({ fileName: imageFile.name, resultText: result });
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during analysis.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleTranslate = async () => {
-    if (!editedAnalysisResult) return;
-    setIsTranslating(true);
-    setTranslationError(null);
-    setTranslatedText('');
-    setEditedTranslatedText('');
-    try {
-        const result = await translateText(editedAnalysisResult, 'auto', targetLang.name);
-        setTranslatedText(result);
-        setEditedTranslatedText(result);
-    } catch (err: any) {
-        setTranslationError(err.message || 'An error occurred during translation.');
-    } finally {
-        setIsTranslating(false);
     }
   };
 
@@ -335,14 +348,14 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
                 disabled={isLoading || !imageFile}
                 className="w-full sm:w-1/2 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200"
             >
-                {isLoading ? t.analyzing : t.analyze}
+                {isLoading ? t.analyzing : (analysisResult ? t.reanalyze : t.analyze)}
             </button>
         </div>
 
 
         {error && <div className="text-red-400 mt-4 text-center">{error}</div>}
         
-        {analysisResult && (
+        {(analysisResult || isLoading) && (
             <>
                 <ResultBox 
                     title={t.imageAnalysisResult} 
@@ -352,6 +365,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
                     isCopied={isOcrCopied} 
                     onExport={(format) => handleExport(format, 'analysis')}
                     onChange={setEditedAnalysisResult}
+                    isLoading={isLoading}
                 />
                 
                 <div className="flex flex-col sm:flex-row items-center gap-4 mt-6">
@@ -362,18 +376,11 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
                       title={t.targetLanguage}
                       searchPlaceholder="Search target language"
                     />
-                    <button
-                        onClick={handleTranslate}
-                        disabled={isTranslating}
-                        className="w-full sm:w-auto px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200"
-                    >
-                        {isTranslating ? t.translating : t.translate}
-                    </button>
                 </div>
 
                 {translationError && <div className="text-red-400 mt-4 text-center">{translationError}</div>}
                 
-                {(isTranslating || translatedText) && (
+                {(isTranslating || translatedText || (isLoading && !error)) && (
                     <ResultBox 
                         title={t.translationResult} 
                         value={editedTranslatedText} 

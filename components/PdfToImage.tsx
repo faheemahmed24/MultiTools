@@ -73,7 +73,7 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
   const [progress, setProgress] = useState('');
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [imageFormat, setImageFormat] = useState<'png' | 'jpeg'>('png');
-  const [scale, setScale] = useState(2);
+  const [scale, setScale] = useState(3);
   const [pageSelectionMode, setPageSelectionMode] = useState<'all' | 'custom'>('all');
   const [pageRange, setPageRange] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -305,7 +305,10 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
               </div>
             </div>
             <div>
-              <label htmlFor="scale" className="block text-sm font-medium text-gray-300 mb-2">{t.qualityScale} ({scale.toFixed(1)}x)</label>
+                <div className='flex justify-between items-center mb-2'>
+                    <label htmlFor="scale" className="text-sm font-medium text-gray-300">{t.qualityScale} ({scale.toFixed(1)}x)</label>
+                    <span className="text-xs text-gray-400">{t.qualityScaleDetail}</span>
+                </div>
               <input
                 id="scale"
                 type="range"

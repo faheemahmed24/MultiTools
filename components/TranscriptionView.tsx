@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import type { Transcription, TranslationSet, TranscriptionSegment } from '../types';
 import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
@@ -45,6 +45,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   const [isEditing, setIsEditing] = useState(false);
   const [editedSegments, setEditedSegments] = useState<TranscriptionSegment[]>([]);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // State for undo/redo
   const [editHistory, setEditHistory] = useState<TranscriptionSegment[][]>([]);
@@ -58,6 +59,10 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
     setShowExportMenu(false);
     setEditHistory([]);
     setCurrentHistoryIndex(-1);
+    // Scroll to top when a new transcription is loaded
+    if (containerRef.current) {
+        containerRef.current.scrollTop = 0;
+    }
   }, [transcription.id]);
 
   // Effect to update history on debounced changes
@@ -318,7 +323,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
         </div>
       </div>
 
-      <div className="flex-grow bg-gray-900/50 rounded-lg p-4 overflow-y-auto mb-4 min-h-[200px]">
+      <div ref={containerRef} className="flex-grow bg-gray-900/50 rounded-lg p-4 overflow-y-auto mb-4 min-h-[200px]">
         <div className="text-gray-200 whitespace-pre-wrap leading-relaxed font-mono text-sm">
           {isEditing ? (
             editedSegments.map((segment, index) => (

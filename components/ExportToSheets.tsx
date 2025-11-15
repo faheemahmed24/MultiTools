@@ -2,6 +2,64 @@ import React, { useState, useEffect } from 'react';
 import type { TranslationSet } from '../types';
 import { DownloadIcon } from './icons/DownloadIcon';
 
+const parseCsv = (csvText: string, delimiter: string): string[][] => {
+    const rows: string[][] = [];
+    if (!csvText) return rows;
+
+    let currentRow: string[] = [];
+    let currentField = '';
+    let inQuotes = false;
+
+    // Normalize line endings
+    const text = csvText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+
+        if (inQuotes) {
+            if (char === '"') {
+                if (i + 1 < text.length && text[i + 1] === '"') {
+                    // Escaped quote
+                    currentField += '"';
+                    i++; // Skip next quote
+                } else {
+                    inQuotes = false;
+                }
+            } else {
+                currentField += char;
+            }
+        } else {
+            if (char === '"') {
+                inQuotes = true;
+            } else if (char === delimiter) {
+                currentRow.push(currentField);
+                currentField = '';
+            } else if (char === '\n') {
+                currentRow.push(currentField);
+                rows.push(currentRow);
+                currentRow = [];
+                currentField = '';
+            } else {
+                currentField += char;
+            }
+        }
+    }
+
+    // Add the last field and row if the file doesn't end with a newline
+    if (currentField || currentRow.length > 0) {
+        currentRow.push(currentField);
+        rows.push(currentRow);
+    }
+    
+    // Handle case where file ends with a blank line, creating an empty row
+    if (rows.length > 0 && rows[rows.length - 1].length === 1 && rows[rows.length-1][0] === '') {
+        rows.pop();
+    }
+
+    return rows;
+};
+
+
 const ExportToSheets: React.FC<{ t: TranslationSet }> = ({ t }) => {
   const [inputText, setInputText] = useState('');
   const [parsedData, setParsedData] = useState<string[][]>([]);
@@ -9,13 +67,7 @@ const ExportToSheets: React.FC<{ t: TranslationSet }> = ({ t }) => {
   const [hasHeader, setHasHeader] = useState(true);
 
   useEffect(() => {
-    if (!inputText.trim()) {
-      setParsedData([]);
-      return;
-    }
-
-    const rows = inputText.trim().split('\n').map(row => row.split(delimiter));
-    setParsedData(rows);
+    setParsedData(parseCsv(inputText, delimiter));
   }, [inputText, delimiter]);
 
   const escapeCsvCell = (cell: string): string => {

@@ -81,10 +81,25 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
         
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = html;
-        tempDiv.style.width = '595px'; // A4 width in points
-        tempDiv.style.padding = '15px';
-        tempDiv.style.fontFamily = 'sans-serif';
+        const style = document.createElement('style');
+        style.innerHTML = `
+          p { margin-bottom: 12px; }
+          h1 { font-size: 24px; font-weight: bold; margin-bottom: 16px; margin-top: 24px; }
+          h2 { font-size: 20px; font-weight: bold; margin-bottom: 14px; margin-top: 20px; }
+          h3 { font-size: 16px; font-weight: bold; margin-bottom: 12px; margin-top: 16px; }
+          ul, ol { padding-left: 20px; margin-bottom: 12px; }
+          li { margin-bottom: 6px; }
+          table { border-collapse: collapse; width: 100%; margin-bottom: 12px; }
+          th, td { border: 1px solid #ddd; padding: 8px; }
+          th { font-weight: bold; background-color: #f2f2f2; }
+        `;
+        tempDiv.prepend(style);
+        tempDiv.style.width = '595px';
+        tempDiv.style.padding = '40px';
+        tempDiv.style.fontFamily = 'Times New Roman, serif';
+        tempDiv.style.fontSize = '12pt';
         tempDiv.style.lineHeight = '1.5';
+        tempDiv.style.boxSizing = 'border-box';
         
         // Hide it
         tempDiv.style.position = 'absolute';
@@ -99,10 +114,11 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
                 setProgress(t.conversionComplete);
                 onConversionComplete({fileName: wordFile.name});
             },
-            x: 15,
-            y: 15,
-            width: 565, // A4 width in points minus margins
-            windowWidth: 595
+            x: 0,
+            y: 0,
+            width: 595,
+            windowWidth: 595,
+            autoPaging: 'text'
         });
 
         document.body.removeChild(tempDiv);
