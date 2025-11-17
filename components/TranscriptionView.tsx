@@ -279,7 +279,6 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
     } else if (format === 'docx') {
         const paragraphs = transcription.segments.map(seg => {
             const parts = [];
-            // Fix: Correct variable name from 'segment' to 'seg' to match map parameter.
             if (showTimestamps) parts.push(new docx.TextRun({ text: `[${seg.startTime} - ${seg.endTime}] `, color: "A78BFA" }));
             if (showSpeaker) parts.push(new docx.TextRun({ text: `${seg.speaker}: `, bold: true, color: "F472B6"}));
             parts.push(new docx.TextRun(seg.text));
@@ -298,7 +297,6 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
         doc.setFontSize(11);
         
         transcription.segments.forEach(seg => {
-            // Fix: Correct variable name from 'segment' to 'seg' to match forEach parameter.
             const line = (showTimestamps ? `[${seg.startTime} - ${seg.endTime}] ` : '') + (showSpeaker ? `${seg.speaker}: ` : '') + seg.text;
             
             const splitLines = doc.splitTextToSize(line, usableWidth);

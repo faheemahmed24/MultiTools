@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';
@@ -21,7 +20,7 @@ const PdfToWord: React.FC<PdfToWordProps> = ({ t, onConversionComplete }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [progress, setProgress] = useState('');
-  const [extractedText, setExtractedText] = useState<string[]>([]);
+  const [extractedText, setExtractedText] = useState<string>('');
   const [docxBlob, setDocxBlob] = useState<Blob | null>(null);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -30,7 +29,7 @@ const PdfToWord: React.FC<PdfToWordProps> = ({ t, onConversionComplete }) => {
     setPdfFile(null);
     setIsConverting(false);
     setProgress('');
-    setExtractedText([]);
+    setExtractedText('');
     setDocxBlob(null);
     setShowDownloadMenu(false);
   };
@@ -64,7 +63,7 @@ const PdfToWord: React.FC<PdfToWordProps> = ({ t, onConversionComplete }) => {
 
     setIsConverting(true);
     setDocxBlob(null);
-    setExtractedText([]);
+    setExtractedText('');
     setProgress(t.converting);
 
     const reader = new FileReader();
@@ -112,7 +111,8 @@ const PdfToWord: React.FC<PdfToWordProps> = ({ t, onConversionComplete }) => {
         }
         
         setProgress(t.generatingWord);
-        setExtractedText(allTextLines);
+        const textContent = allTextLines.join('\n').replace(/\f/g, '\n\n--- Page Break ---\n\n');
+        setExtractedText(textContent);
         const doc = new docx.Document({
             sections: [{
                 children: paragraphs,
@@ -152,12 +152,11 @@ const PdfToWord: React.FC<PdfToWordProps> = ({ t, onConversionComplete }) => {
     if (format === 'docx' && docxBlob) {
         download(`${baseFilename}.docx`, docxBlob);
     } else if (format === 'txt') {
-        const textContent = extractedText.join('\n').replace(/\f/g, '\n\n--- Page Break ---\n\n');
-        const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+        const blob = new Blob([extractedText], { type: 'text/plain;charset=utf-8' });
         download(`${baseFilename}.txt`, blob);
     } else if (format === 'pdf') {
         const doc = new jsPDF();
-        const lines = extractedText.join('\n').split('\n');
+        const lines = extractedText.split('\n');
         doc.text(lines, 10, 10);
         const blob = doc.output('blob');
         download(`${baseFilename}.pdf`, blob);
@@ -229,6 +228,17 @@ const PdfToWord: React.FC<PdfToWordProps> = ({ t, onConversionComplete }) => {
                        <p className={`font-semibold ${progress.includes('Error') ? 'text-red-400' : 'text-green-400'}`}>{progress}</p>
                     )}
                 </div>
+            )}
+
+            {extractedText && !isConverting && (
+              <div className="mt-6 w-full">
+                <h3 className="font-semibold text-gray-300 mb-2">Extracted Text Preview</h3>
+                <textarea
+                  readOnly
+                  value={extractedText}
+                  className="w-full h-48 bg-gray-900/50 rounded-lg p-4 text-gray-300 resize-y border border-gray-600 focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
             )}
           </div>
         </div>

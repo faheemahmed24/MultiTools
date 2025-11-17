@@ -1,10 +1,12 @@
-
 import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
 import * as mammoth from 'mammoth';
 import { jsPDF } from 'jspdf';
+import { CopyIcon } from './icons/CopyIcon';
+import { CheckIcon } from './icons/CheckIcon';
+import * as docx from 'docx';
 
 interface WordToPdfProps {
     t: TranslationSet;
@@ -19,11 +21,20 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [extractedText, setExtractedText] = useState('');
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractionError, setExtractionError] = useState('');
+  const [isTextCopied, setIsTextCopied] = useState(false);
+  const [showTextExportMenu, setShowTextExportMenu] = useState(false);
+
   const resetState = () => {
     setWordFile(null);
     setIsConverting(false);
     setProgress('');
     setPdfUrl(null);
+    setExtractedText('');
+    setIsExtracting(false);
+    setExtractionError('');
   };
 
   const handleFileChange = (file: File | null) => {
@@ -133,6 +144,65 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
     reader.readAsArrayBuffer(wordFile);
   };
   
+  const handleExtractText = async () => {
+    if (!wordFile) return;
+    setIsExtracting(true);
+    setExtractedText('');
+    setExtractionError('');
+    setProgress('');
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+        const arrayBuffer = event.target?.result;
+        if (!arrayBuffer) {
+            setIsExtracting(false);
+            setExtractionError('Error reading file.');
+            return;
+        }
+        try {
+            const result = await mammoth.extractRawText({ arrayBuffer });
+            setExtractedText(result.value);
+        } catch (err) {
+            setExtractionError('Could not extract text from this document.');
+            console.error(err);
+        } finally {
+            setIsExtracting(false);
+        }
+    };
+    reader.readAsArrayBuffer(wordFile);
+  };
+  
+  const handleCopyText = () => {
+    navigator.clipboard.writeText(extractedText);
+    setIsTextCopied(true);
+    setTimeout(() => setIsTextCopied(false), 2000);
+  };
+
+  const handleExportText = async (format: 'txt' | 'docx') => {
+    if (!extractedText || !wordFile) return;
+    const baseFilename = wordFile.name.replace(/\.[^/.]+$/, "") || 'word-text-extract';
+    
+    const download = async (filename: string, blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    };
+
+    if (format === 'txt') {
+        const blob = new Blob([extractedText], { type: 'text/plain;charset=utf-8' });
+        await download(`${baseFilename}.txt`, blob);
+    } else if (format === 'docx') {
+        const doc = new docx.Document({
+            sections: [{
+                children: extractedText.split('\n').map(line => new docx.Paragraph(line)),
+            }],
+        });
+        const blob = await docx.Packer.toBlob(doc);
+        await download(`${baseFilename}.docx`, blob);
+    }
+    setShowTextExportMenu(false);
+  };
+
   return (
     <div className="bg-gray-800 rounded-2xl shadow-lg p-6 min-h-[60vh] lg:h-full flex flex-col">
       {!wordFile ? (
@@ -159,19 +229,28 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
               <button onClick={() => handleFileChange(null)} className="text-sm text-purple-400 hover:underline flex-shrink-0 ml-4">Change File</button>
             </div>
             
-            {!pdfUrl ? (
+            <div className="flex flex-col sm:flex-row gap-4">
                 <button
                     onClick={handleConvert}
-                    disabled={isConverting}
+                    disabled={isConverting || isExtracting}
                     className="w-full px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200"
                 >
-                    {isConverting ? progress : t.convert}
+                    {isConverting ? progress : t.convertToPdf}
                 </button>
-            ) : (
+                 <button
+                    onClick={handleExtractText}
+                    disabled={isConverting || isExtracting}
+                    className="w-full px-6 py-3 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200"
+                >
+                    {isExtracting ? t.analyzing : t.extractText}
+                </button>
+            </div>
+
+            {pdfUrl && !isConverting && (
                 <a
                     href={pdfUrl}
                     download={`${wordFile.name.replace(/\.[^/.]+$/, "")}.pdf`}
-                    className="w-full flex items-center justify-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200"
+                    className="w-full mt-4 flex items-center justify-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200"
                 >
                     <DownloadIcon className="w-5 h-5 me-2" />
                     {t.downloadPdf}
@@ -189,6 +268,37 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
                        <p className={`font-semibold ${progress.includes('Error') ? 'text-red-400' : 'text-green-400'}`}>{progress}</p>
                     )}
                 </div>
+            )}
+
+            {extractionError && <p className="text-center mt-4 font-semibold text-red-400">{extractionError}</p>}
+            {(extractedText || isExtracting) && (
+              <div className="mt-6 w-full">
+                <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-semibold text-gray-300">Extracted Text</h3>
+                     <div className="flex items-center gap-2">
+                        <div className="relative">
+                            <button onClick={() => setShowTextExportMenu(!showTextExportMenu)} className="flex items-center px-3 py-1 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm">
+                                <DownloadIcon className="w-4 h-4 me-2" /> {t.export}
+                            </button>
+                            {showTextExportMenu && (
+                                <div onMouseLeave={() => setShowTextExportMenu(false)} className="absolute top-full mt-2 end-0 w-36 bg-gray-600 rounded-lg shadow-xl py-1 z-10 animate-slide-in-up">
+                                    <button onClick={() => handleExportText('txt')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">TXT (.txt)</button>
+                                    <button onClick={() => handleExportText('docx')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">DOCX (.docx)</button>
+                                </div>
+                            )}
+                        </div>
+                        <button onClick={handleCopyText} className="flex items-center px-3 py-1 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm">
+                            {isTextCopied ? <CheckIcon className="w-4 h-4 me-2"/> : <CopyIcon className="w-4 h-4 me-2" />}
+                            {isTextCopied ? t.copied : t.copy}
+                        </button>
+                    </div>
+                </div>
+                <textarea
+                  readOnly
+                  value={isExtracting ? 'Extracting text...' : extractedText}
+                  className="w-full h-48 bg-gray-900/50 rounded-lg p-4 text-gray-300 resize-y border border-gray-600 focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
             )}
           </div>
         </div>
