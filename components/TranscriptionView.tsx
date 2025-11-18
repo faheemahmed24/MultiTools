@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import type { Transcription, TranslationSet, TranscriptionSegment } from '../types';
 import { CopyIcon } from './icons/CopyIcon';
@@ -218,6 +219,9 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
       
       context.font = FONT;
       
+      // Detect RTL languages
+      const isRTL = ['ar', 'ur', 'fa', 'he', 'sd'].some(code => transcription.detectedLanguage?.toLowerCase().includes(code));
+
       let totalHeight = PADDING;
       const lines: {y: number, parts: {text: string, color: string}[]}[] = [];
 
@@ -254,6 +258,8 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
           textLines.forEach((lineText, index) => {
               totalHeight += LINE_HEIGHT;
               if (index === 0) {
+                  // If RTL, we might want to render prefix at the end? 
+                  // For now, keeping structure simple: prefix then text, but drawn RTL if needed.
                   lines.push({ y: totalHeight, parts: [...prefixParts, { text: lineText, color: TEXT_COLOR }] });
               } else {
                   lines.push({ y: totalHeight, parts: [{ text: '    ' + lineText, color: TEXT_COLOR }] });
@@ -270,11 +276,25 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
       context.font = FONT;
       
       lines.forEach(line => {
-          let currentX = PADDING;
+          // If RTL, start from right side
+          let currentX = isRTL ? CANVAS_WIDTH - PADDING : PADDING;
+          
           line.parts.forEach(part => {
               context.fillStyle = part.color;
+              
+              // Set direction for text rendering
+              context.direction = isRTL ? 'rtl' : 'ltr';
+              context.textAlign = isRTL ? 'right' : 'left';
+              
               context.fillText(part.text, currentX, line.y);
-              currentX += context.measureText(part.text).width;
+              
+              const width = context.measureText(part.text).width;
+              
+              if (isRTL) {
+                  currentX -= width; // Move left for next part
+              } else {
+                  currentX += width; // Move right for next part
+              }
           });
       });
       

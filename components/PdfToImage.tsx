@@ -224,7 +224,12 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
     try {
         for (let i = 0; i < generatedImages.length; i++) {
             const img = generatedImages[i];
-            setProgress(`Extracting text from page ${img.pageNumber}...`);
+            setProgress(`Extracting text from page ${img.pageNumber} (pacing for API limits)...`);
+            
+            // Rate limiting: Add SIGNIFICANT delay between requests to avoid 429 errors (15 RPM max = 4s per req)
+            // We use 5000ms to be safe.
+            if (i > 0) await new Promise(resolve => setTimeout(resolve, 5000));
+            
             const file = dataURLtoFile(img.src, `page-${img.pageNumber}.${imageFormat}`);
             const text = await analyzeImage(file);
             allText += `--- Page ${img.pageNumber} ---\n${text}\n\n`;

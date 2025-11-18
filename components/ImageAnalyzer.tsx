@@ -1,3 +1,4 @@
+
 // Fix: Import useCallback from React to resolve 'Cannot find name' errors.
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { TranslationSet } from '../types';
@@ -94,6 +95,7 @@ interface ImageConverterOcrProps {
 const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComplete }) => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [analysisResult, setAnalysisResult] = useState('');
   const [editedAnalysisResult, setEditedAnalysisResult] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -162,24 +164,42 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
   }, [editedAnalysisResult, targetLang, handleTranslate, isTranslating]);
 
 
+  const processFile = (file: File) => {
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    setAnalysisResult('');
+    setEditedAnalysisResult('');
+    setTranslatedText('');
+    setEditedTranslatedText('');
+    setError(null);
+    setTranslationError(null);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-      setAnalysisResult('');
-      setEditedAnalysisResult('');
-      setTranslatedText('');
-      setEditedTranslatedText('');
-      setError(null);
-      setTranslationError(null);
+      processFile(file);
     }
   };
   
+  const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); }, []);
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); }, []);
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); }, []);
+  
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+        processFile(file);
+    }
+  }, []);
+
   const handleReset = () => {
     setImageFile(null);
     setImagePreview(null);
@@ -296,7 +316,11 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
         ) : (
             <div
               onClick={handleUploadClick}
-              className="flex flex-grow flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 border-gray-600 hover:border-purple-500 cursor-pointer mb-4"
+              className={`flex flex-grow flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 cursor-pointer mb-4 ${isDragging ? 'border-purple-500 bg-gray-700/50' : 'border-gray-600 hover:border-purple-500'}`}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
             >
               <UploadIcon className="w-12 h-12 text-gray-500 mb-4" />
               <p className="text-gray-400">{t.uploadImage}</p>

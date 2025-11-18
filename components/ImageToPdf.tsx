@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import { jsPDF } from 'jspdf';
@@ -280,7 +281,11 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
     try {
         for (let i = 0; i < images.length; i++) {
             const img = images[i];
-            setConversionMessage(`Extracting text from image ${i + 1}...`);
+            setConversionMessage(`Extracting text from image ${i + 1} (pacing for API limits)...`);
+            
+            // Rate limiting: Add SIGNIFICANT delay between requests to avoid 429 errors (15 RPM max)
+            if (i > 0) await new Promise(resolve => setTimeout(resolve, 5000));
+            
             const text = await analyzeImage(img.file);
             allText += `--- Image ${i + 1} (${img.file.name}) ---\n${text}\n\n`;
         }
