@@ -89,7 +89,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
     setEditHistory([...newHistory, debouncedEditedSegments]);
     setCurrentHistoryIndex(newHistory.length);
 
-  }, [debouncedEditedSegments, isEditing]);
+  }, [debouncedEditedSegments, isEditing, currentHistoryIndex, editHistory]);
 
 
   const fullText = useMemo(() => {
