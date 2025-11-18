@@ -310,6 +310,37 @@ function App() {
         </div>
     );
 
+    const renderPdfImageHistoryItem = (item: PdfImageHistoryItem) => (
+        <div className="flex-grow overflow-hidden">
+            <p className="font-semibold truncate text-gray-200" title={item.fileName}>{item.fileName}</p>
+             <div className="flex items-center gap-2 mt-1">
+                <p className="text-xs text-gray-400">{item.date}</p>
+                <span className="bg-gray-600 text-purple-300 text-[10px] font-medium px-1.5 py-0.5 rounded">
+                    {item.pageCount} pages
+                </span>
+            </div>
+        </div>
+    );
+
+    const renderImagePdfHistoryItem = (item: ImagePdfHistoryItem) => (
+        <div className="flex-grow overflow-hidden">
+            <p className="font-semibold truncate text-gray-200" title={item.fileName}>{item.fileName}</p>
+             <div className="flex items-center gap-2 mt-1">
+                <p className="text-xs text-gray-400">{item.date}</p>
+                <span className="bg-gray-600 text-purple-300 text-[10px] font-medium px-1.5 py-0.5 rounded">
+                    {item.imageCount} images
+                </span>
+            </div>
+        </div>
+    );
+
+    const renderFileHistoryItem = (item: PdfWordHistoryItem | WordPdfHistoryItem) => (
+        <div className="flex-grow overflow-hidden">
+            <p className="font-semibold truncate text-gray-200" title={item.fileName}>{item.fileName}</p>
+            <p className="text-xs text-gray-400 mt-1">{item.date}</p>
+        </div>
+    );
+
     switch (activeTool) {
       case 'AI Transcriber':
         return (
@@ -427,7 +458,9 @@ function App() {
                 <div className={panelGridClass}>
                     <Panel title="Result" defaultOpen={true} className="md:col-span-2 lg:col-span-1"><EmptyPanel message="Converted images will appear in the tool above." /></Panel>
                     <Panel title="Translation" defaultOpen={true}><EmptyPanel message="Not applicable for this tool." /></Panel>
-                    <Panel title="History" defaultOpen={true}><EmptyPanel message="History coming soon for this tool." /></Panel>
+                    <Panel title={t.history} defaultOpen={true}>
+                        <HistoryPanel items={pdfImageHistory} onSelect={() => {}} onDelete={(id) => setPdfImageHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderPdfImageHistoryItem} />
+                    </Panel>
                 </div>
             </div>
         );
@@ -438,7 +471,9 @@ function App() {
                  <div className={panelGridClass}>
                     <Panel title="Result" defaultOpen={true} className="md:col-span-2 lg:col-span-1"><EmptyPanel message="The PDF download link will appear in the tool above." /></Panel>
                     <Panel title="Translation" defaultOpen={true}><EmptyPanel message="Not applicable for this tool." /></Panel>
-                    <Panel title="History" defaultOpen={true}><EmptyPanel message="History coming soon for this tool." /></Panel>
+                    <Panel title={t.history} defaultOpen={true}>
+                        <HistoryPanel items={imagePdfHistory} onSelect={() => {}} onDelete={(id) => setImagePdfHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderImagePdfHistoryItem} />
+                    </Panel>
                 </div>
             </div>
         );
@@ -449,7 +484,9 @@ function App() {
                  <div className={panelGridClass}>
                     <Panel title="Result" defaultOpen={true} className="md:col-span-2 lg:col-span-1"><EmptyPanel message="The document download link will appear in the tool above." /></Panel>
                     <Panel title="Translation" defaultOpen={true}><EmptyPanel message="Translation feature coming soon." /></Panel>
-                    <Panel title="History" defaultOpen={true}><EmptyPanel message="History coming soon for this tool." /></Panel>
+                    <Panel title={t.history} defaultOpen={true}>
+                        <HistoryPanel items={pdfWordHistory} onSelect={() => {}} onDelete={(id) => setPdfWordHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderFileHistoryItem} />
+                    </Panel>
                 </div>
             </div>
         );
@@ -460,7 +497,9 @@ function App() {
                  <div className={panelGridClass}>
                     <Panel title="Result" defaultOpen={true} className="md:col-span-2 lg:col-span-1"><EmptyPanel message="The PDF download link will appear in the tool above." /></Panel>
                     <Panel title="Translation" defaultOpen={true}><EmptyPanel message="Not applicable for this tool." /></Panel>
-                    <Panel title="History" defaultOpen={true}><EmptyPanel message="History coming soon for this tool." /></Panel>
+                    <Panel title={t.history} defaultOpen={true}>
+                        <HistoryPanel items={wordPdfHistory} onSelect={() => {}} onDelete={(id) => setWordPdfHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderFileHistoryItem} />
+                    </Panel>
                 </div>
             </div>
         );
