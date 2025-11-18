@@ -13,14 +13,7 @@ import { DownloadIcon } from './icons/DownloadIcon';
 import { CloseIcon } from './icons/CloseIcon';
 import { jsPDF } from 'jspdf';
 import * as docx from 'docx';
-
-const SkeletonLoader: React.FC = () => (
-    <div className="space-y-3 animate-pulse">
-        <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-        <div className="h-4 bg-gray-700 rounded w-full"></div>
-        <div className="h-4 bg-gray-700 rounded w-5/6"></div>
-    </div>
-);
+import { SkeletonLoader } from './Loader';
 
 const ResultBox: React.FC<{ 
     title: string; 
@@ -70,7 +63,7 @@ const ResultBox: React.FC<{
             </div>
             <div className="overflow-y-auto flex-grow bg-gray-800/50 p-3 rounded-md min-h-[120px]">
                 {isLoading ? (
-                    <SkeletonLoader />
+                    <SkeletonLoader lines={3} />
                 ) : (
                     <textarea
                         value={value}

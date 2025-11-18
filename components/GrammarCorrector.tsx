@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import type { TranslationSet, DiffPart } from '../types';
 import { correctGrammar } from '../services/geminiService';
@@ -11,6 +12,7 @@ import LanguageDropdown from './LanguageDropdown';
 import { sourceLanguages } from '../lib/languages';
 import type { LanguageOption } from '../lib/languages';
 import { XCircleIcon } from './icons/XCircleIcon';
+import { SkeletonLoader } from './Loader';
 
 // Simple diffing function
 const createDiff = (original: string, corrected: string): DiffPart[] => {
@@ -64,15 +66,6 @@ interface GrammarCorrectorProps {
     t: TranslationSet;
     onCorrectionComplete: (data: { originalText: string, correctedText: string, language: string, diff: DiffPart[] }) => void;
 }
-
-const SkeletonLoader = () => (
-    <div className="space-y-3 animate-pulse p-4">
-        <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-        <div className="h-4 bg-gray-700 rounded w-full"></div>
-        <div className="h-4 bg-gray-700 rounded w-5/6"></div>
-        <div className="h-4 bg-gray-700 rounded w-1/2"></div>
-    </div>
-);
 
 const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComplete }) => {
   const [inputText, setInputText] = useState('');
@@ -195,7 +188,7 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
                 <h3 className="font-semibold mb-2 text-gray-300">{t.grammarResult}</h3>
                 <div className={`w-full h-64 bg-gray-900/50 rounded-lg overflow-y-auto p-4 ${error ? 'text-red-400' : 'text-gray-200'}`}>
                     {isLoading ? (
-                        <SkeletonLoader />
+                        <SkeletonLoader lines={4} />
                     ) : error ? (
                         <p>{error}</p>
                     ) : (

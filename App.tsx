@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useUserLocalStorage } from './hooks/useUserLocalStorage';
@@ -26,6 +27,7 @@ import { ClockIcon } from './components/icons/ClockIcon';
 import { CheckCircleIcon } from './components/icons/CheckCircleIcon';
 import { XCircleIcon } from './components/icons/XCircleIcon';
 import { UserIcon } from './components/icons/UserIcon';
+import { SkeletonLoader } from './components/Loader';
 
 
 const HamburgerIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -78,14 +80,6 @@ const TranslationPanel: React.FC<{ text: string | null; t: TranslationSet }> = (
         return <EmptyPanel message="No text to translate." />;
     }
 
-    const SkeletonLoader = () => (
-        <div className="space-y-3 animate-pulse">
-            <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-            <div className="h-4 bg-gray-700 rounded w-full"></div>
-            <div className="h-4 bg-gray-700 rounded w-5/6"></div>
-        </div>
-    );
-
     return (
         <div className="flex flex-col h-full">
             <div className="px-1">
@@ -98,7 +92,7 @@ const TranslationPanel: React.FC<{ text: string | null; t: TranslationSet }> = (
                 />
             </div>
             <div className="mt-4 p-4 bg-gray-900/50 rounded-lg flex-grow overflow-y-auto min-h-[150px]">
-                {isTranslating && <SkeletonLoader />}
+                {isTranslating && <SkeletonLoader lines={3} />}
                 {error && <p className="text-red-400">{error}</p>}
                 {!isTranslating && !error && <p className="text-gray-200 whitespace-pre-wrap">{translatedText}</p>}
             </div>

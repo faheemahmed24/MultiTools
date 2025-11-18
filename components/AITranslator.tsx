@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import type { TranslationSet } from '../types';
 import { useDebounce } from '../hooks/useDebounce';
@@ -12,21 +13,12 @@ import { translateText } from '../services/geminiService';
 import { jsPDF } from 'jspdf';
 import * as docx from 'docx';
 import { XCircleIcon } from './icons/XCircleIcon';
+import { SkeletonLoader } from './Loader';
 
 interface AITranslatorProps {
     t: TranslationSet;
     onTranslationComplete: (data: { inputText: string, translatedText: string, sourceLang: string, targetLang: string }) => void;
 }
-
-const SkeletonLoader = () => (
-    <div className="space-y-3 animate-pulse p-4">
-        <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-        <div className="h-4 bg-gray-700 rounded w-full"></div>
-        <div className="h-4 bg-gray-700 rounded w-5/6"></div>
-        <div className="h-4 bg-gray-700 rounded w-1/2"></div>
-    </div>
-);
-
 
 const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete }) => {
   const [sourceLang, setSourceLang] = useState<LanguageOption>(sourceLanguages[0]);
@@ -186,7 +178,7 @@ const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete })
         <div className="relative">
            <div className={`w-full h-64 bg-gray-900/50 rounded-lg overflow-y-auto ${error ? 'text-red-400 p-4' : ''}`}>
              {isLoading ? (
-                <SkeletonLoader />
+                <div className="p-4"><SkeletonLoader lines={4} /></div>
              ) : error ? (
                 <p>{error}</p>
              ) : (
