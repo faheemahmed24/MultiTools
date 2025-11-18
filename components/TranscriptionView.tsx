@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import type { Transcription, TranslationSet, TranscriptionSegment } from '../types';
 import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
@@ -81,6 +81,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   useEffect(() => {
     if (!isEditing || !debouncedEditedSegments.length) return;
 
+    // Check if the current state matches the history at current index (meaning it was just set by undo/redo)
     if (editHistory[currentHistoryIndex] && JSON.stringify(editHistory[currentHistoryIndex]) === JSON.stringify(debouncedEditedSegments)) {
         return;
     }
@@ -90,6 +91,47 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
     setCurrentHistoryIndex(newHistory.length);
 
   }, [debouncedEditedSegments, isEditing, currentHistoryIndex, editHistory]);
+
+  const canUndo = isEditing && currentHistoryIndex > 0;
+  const canRedo = isEditing && currentHistoryIndex < editHistory.length - 1;
+
+  const handleUndo = useCallback(() => {
+    if (canUndo) {
+      const newIndex = currentHistoryIndex - 1;
+      setCurrentHistoryIndex(newIndex);
+      setEditedSegments(editHistory[newIndex]);
+    }
+  }, [canUndo, currentHistoryIndex, editHistory]);
+
+  const handleRedo = useCallback(() => {
+    if (canRedo) {
+      const newIndex = currentHistoryIndex + 1;
+      setCurrentHistoryIndex(newIndex);
+      setEditedSegments(editHistory[newIndex]);
+    }
+  }, [canRedo, currentHistoryIndex, editHistory]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if (!isEditing) return;
+        
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+            e.preventDefault();
+            if (e.shiftKey) {
+                handleRedo();
+            } else {
+                handleUndo();
+            }
+        } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+            e.preventDefault();
+            handleRedo();
+        }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isEditing, handleUndo, handleRedo]);
 
 
   const fullText = useMemo(() => {
@@ -143,25 +185,6 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
     setIsEditing(false);
     setEditHistory([]);
     setCurrentHistoryIndex(-1);
-  };
-  
-  const canUndo = isEditing && currentHistoryIndex > 0;
-  const canRedo = isEditing && currentHistoryIndex < editHistory.length - 1;
-
-  const handleUndo = () => {
-    if (canUndo) {
-      const newIndex = currentHistoryIndex - 1;
-      setCurrentHistoryIndex(newIndex);
-      setEditedSegments(editHistory[newIndex]);
-    }
-  };
-
-  const handleRedo = () => {
-    if (canRedo) {
-      const newIndex = currentHistoryIndex + 1;
-      setCurrentHistoryIndex(newIndex);
-      setEditedSegments(editHistory[newIndex]);
-    }
   };
 
   const createDownload = (filename: string, content: string | Blob, mime?: string) => {
@@ -396,8 +419,8 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
         <div className="flex flex-wrap gap-2">
             {isEditing && (
               <>
-                <button onClick={handleUndo} disabled={!canUndo} title={t.undo} className="flex items-center p-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><UndoIcon className="w-5 h-5"/></button>
-                <button onClick={handleRedo} disabled={!canRedo} title={t.redo} className="flex items-center p-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><RedoIcon className="w-5 h-5"/></button>
+                <button onClick={handleUndo} disabled={!canUndo} title={`${t.undo} (Ctrl+Z)`} className="flex items-center p-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><UndoIcon className="w-5 h-5"/></button>
+                <button onClick={handleRedo} disabled={!canRedo} title={`${t.redo} (Ctrl+Y)`} className="flex items-center p-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><RedoIcon className="w-5 h-5"/></button>
                 <div className="w-px bg-gray-600 mx-1"></div>
                 <button onClick={handleSaveChanges} className="flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200"><SaveIcon className="w-5 h-5 me-2"/> {t.saveChanges}</button>
               </>

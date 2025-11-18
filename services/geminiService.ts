@@ -39,7 +39,7 @@ export const transcribeAudio = async (file: File): Promise<Omit<Transcription, '
 
   // Fix: Use correct method to generate content and specify a model
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-pro', // Using a powerful model for complex tasks like this
+    model: 'gemini-2.5-flash', // Using Flash for speed and multimodal capability
     contents: { parts: [audioPart, textPart] },
     config: {
         responseMimeType: 'application/json'
@@ -77,7 +77,7 @@ export const translateText = async (text: string, sourceLang: string, targetLang
 You must provide only the translated text as a response. Do not include any extra information, context, or explanations. Do not wrap the response in quotes or any other formatting.`;
 
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-2.5-flash',
         contents: text,
         config: {
             systemInstruction,
@@ -97,7 +97,7 @@ Your goal is to improve clarity and correctness while preserving the original me
 You must provide only the corrected text as a response. Do not include any extra information, context, or explanations. Do not wrap the response in quotes or any other formatting. Just return the corrected text directly.`;
 
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-2.5-flash',
         contents: text,
         config: {
             systemInstruction,
@@ -125,7 +125,7 @@ export const analyzeImage = async (imageFile: File): Promise<string> => {
 
     // Fix: Use correct method to generate content and specify a model
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro', // Pro is better for vision tasks
+        model: 'gemini-2.5-flash', // Flash is efficient for vision tasks
         contents: { parts: [imagePart, textPart] },
     });
     
