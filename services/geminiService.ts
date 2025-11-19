@@ -1,5 +1,6 @@
+
 // Fix: Import GoogleGenAI from @google/genai
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import type { Transcription } from '../types';
 
 // Fix: Initialize GoogleGenAI with named apiKey parameter
@@ -98,14 +99,40 @@ export const transcribeAudio = async (file: File): Promise<Omit<Transcription, '
   };
   
   const textPart = {
-      text: `Transcribe this audio with high accuracy. The output must be a JSON object with two keys: "language" (the detected language code, e.g., "en-US") and "segments". The "segments" value must be an array of objects, each with "startTime", "endTime", "speaker", and "text" keys. Include speaker diarization to differentiate speakers, labeling them sequentially (e.g., "SPEAKER_01", "SPEAKER_02"). Timestamps must be in "HH:MM:SS.ms" format. Do not include segments of silence longer than 2 seconds.`
+      text: `Transcribe this audio with high accuracy. Include speaker diarization to differentiate speakers, labeling them sequentially (e.g., "SPEAKER_01", "SPEAKER_02"). Timestamps must be in "HH:MM:SS.ms" format. Do not include segments of silence longer than 2 seconds.`
   };
 
-  // Fix: Use retry helper
+  // Define the strict schema for the response
+  const transcriptionSchema = {
+    type: Type.OBJECT,
+    properties: {
+      language: { 
+        type: Type.STRING, 
+        description: "The detected language code of the audio (e.g., 'en-US', 'hi-IN')." 
+      },
+      segments: {
+        type: Type.ARRAY,
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            startTime: { type: Type.STRING, description: "Start time of the segment in HH:MM:SS.ms format" },
+            endTime: { type: Type.STRING, description: "End time of the segment in HH:MM:SS.ms format" },
+            speaker: { type: Type.STRING, description: "The speaker label (e.g., SPEAKER_01)" },
+            text: { type: Type.STRING, description: "The transcribed text" },
+          },
+          required: ["startTime", "endTime", "speaker", "text"]
+        }
+      }
+    },
+    required: ["language", "segments"]
+  };
+
+  // Fix: Use retry helper with responseSchema
   const response = await generateContentWithRetry(MODELS.primary, {
     contents: { parts: [audioPart, textPart] },
     config: {
-        responseMimeType: 'application/json'
+        responseMimeType: 'application/json',
+        responseSchema: transcriptionSchema
     }
   });
 
