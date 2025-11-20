@@ -564,6 +564,9 @@ function App() {
           )}
         </div>
         <main className="flex-grow p-4 sm:p-6 md:p-8 overflow-y-auto">
+         <div className="mb-8">
+            <AdUnit />
+         </div>
          {renderActiveTool()}
          <div className="mt-8">
             <AdUnit />
