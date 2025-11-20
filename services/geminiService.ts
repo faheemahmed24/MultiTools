@@ -191,19 +191,39 @@ You must provide only the translated text as a response. Do not include any extr
     return response.text.trim();
 };
 
-export const correctGrammar = async (text: string, language: string, tone: string = 'Professional'): Promise<string> => {
-    const systemInstruction = `You are an expert proofreader and editor. Your task is to correct any grammar, spelling, and punctuation errors in the given text. The text is in ${language === 'Auto-detect' ? 'an auto-detected language' : language}.
+export const correctGrammar = async (text: string, language: string, tone: string = 'Professional'): Promise<{ corrected: string; explanation: string }> => {
+    const systemInstruction = `You are an expert proofreader and editor. Your task is to correct grammar, spelling, and punctuation errors in the given text.
+The text is in ${language === 'Auto-detect' ? 'an auto-detected language' : language}.
 Your goal is to improve clarity and correctness while adjusting the tone to be **${tone}**.
-You must provide only the corrected text as a response. Do not include any extra information, context, or explanations. Do not wrap the response in quotes or any other formatting. Just return the corrected text directly.`;
+
+You MUST return a JSON object with two properties:
+1. "corrected": The corrected text.
+2. "explanation": A brief, educational explanation of the main changes made (max 2 sentences). Explain *why* the change was better.
+
+Do not wrap the JSON in markdown code blocks. Return raw JSON.`;
 
     const response = await generateContentWithRetry(MODELS.primary, {
         contents: text,
         config: {
             systemInstruction,
+            responseMimeType: 'application/json',
+            responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                    corrected: { type: Type.STRING },
+                    explanation: { type: Type.STRING }
+                },
+                required: ["corrected", "explanation"]
+            }
         },
     });
 
-    return response.text.trim();
+    try {
+        return JSON.parse(response.text.trim());
+    } catch (e) {
+        // Fallback if JSON parsing fails, though schema should prevent this
+        return { corrected: response.text.trim(), explanation: "Grammar corrected." };
+    }
 };
 
 export const analyzeImage = async (imageFile: File): Promise<string> => {
@@ -229,6 +249,19 @@ export const summarizeTranscription = async (text: string): Promise<string> => {
     const systemInstruction = `You are an expert summarizer. Your task is to provide a concise and accurate summary of the following transcription.
 Identify the key points, main speakers (if evident), and the overall conclusion or topic.
 Format the output as a short paragraph followed by bullet points for key takeaways.`;
+
+    const response = await generateContentWithRetry(MODELS.primary, {
+        contents: text,
+        config: {
+            systemInstruction,
+        },
+    });
+
+    return response.text.trim();
+};
+
+export const analyzeSentiment = async (text: string): Promise<string> => {
+    const systemInstruction = `Analyze the sentiment of the following text. Provide a concise description of the overall mood and emotional tone (e.g., "Positive and Enthusiastic", "Neutral and Informative", "Frustrated", "Concerned"). Keep it to 3-5 words maximum.`;
 
     const response = await generateContentWithRetry(MODELS.primary, {
         contents: text,

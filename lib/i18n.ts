@@ -154,6 +154,11 @@ const translations: Record<Language, TranslationSet> = {
     casual: 'Casual',
     academic: 'Academic',
     creative: 'Creative',
+    explanation: 'Explanation',
+    searchTranscription: 'Search transcription...',
+    sentimentAnalysis: 'Sentiment Analysis',
+    analyzingSentiment: 'Analyzing Sentiment...',
+    sentimentResult: 'Sentiment',
   },
   hi: {
     transcription: 'प्रतिलेखन',
@@ -307,6 +312,11 @@ const translations: Record<Language, TranslationSet> = {
     casual: 'अनौपचारिक',
     academic: 'शैक्षणिक',
     creative: 'रचनात्मक',
+    explanation: 'स्पष्टीकरण',
+    searchTranscription: 'प्रतिलेखन खोजें...',
+    sentimentAnalysis: 'भाव विश्लेषण',
+    analyzingSentiment: 'भाव विश्लेषण हो रहा है...',
+    sentimentResult: 'भाव',
   },
   ur: {
     transcription: 'نقل حرفی',
@@ -460,6 +470,11 @@ const translations: Record<Language, TranslationSet> = {
     casual: 'غیر رسمی',
     academic: 'تعلیمی',
     creative: 'تخلیقی',
+    explanation: 'وضاحت',
+    searchTranscription: 'نقل حرفی تلاش کریں...',
+    sentimentAnalysis: 'جذباتی تجزیہ',
+    analyzingSentiment: 'جذباتی تجزیہ ہو رہا ہے...',
+    sentimentResult: 'جذبات',
   },
   ar: {
     transcription: 'النسخ الصوتي',
@@ -613,6 +628,11 @@ const translations: Record<Language, TranslationSet> = {
     casual: 'غير رسمي',
     academic: 'أكاديمي',
     creative: 'إبداعي',
+    explanation: 'تفسير',
+    searchTranscription: 'بحث في النسخ...',
+    sentimentAnalysis: 'تحليل المشاعر',
+    analyzingSentiment: 'تحليل المشاعر...',
+    sentimentResult: 'المشاعر',
   }
 };
 

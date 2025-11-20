@@ -19,13 +19,13 @@ import { PdfIcon } from './icons/PdfIcon';
 import { DocxIcon } from './icons/DocxIcon';
 import { PngIcon } from './icons/PngIcon';
 import { JpgIcon } from './icons/JpgIcon';
-import { summarizeTranscription } from '../services/geminiService';
+import { summarizeTranscription, analyzeSentiment } from '../services/geminiService';
 import { SkeletonLoader } from './Loader';
 
 interface TranscriptionViewProps {
   transcription: Transcription;
   onSave: () => void;
-  onUpdate: (id: string, updatedSegments: TranscriptionSegment[]) => void;
+  onUpdate: (id: string, updatedSegments: TranscriptionSegment[], summary?: string, sentiment?: string) => void; // Updated signature
   t: TranslationSet;
 }
 
@@ -38,6 +38,13 @@ const Switch: React.FC<{ checked: boolean; onChange: (checked: boolean) => void;
         </div>
         <div className="ms-3 text-sm font-medium text-gray-300">{label}</div>
     </label>
+);
+
+// Search Icon Component
+const SearchIcon = (props: any) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+  </svg>
 );
 
 const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, onSave, onUpdate, t }) => {
@@ -56,6 +63,13 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
 
+  // Sentiment State
+  const [sentiment, setSentiment] = useState<string>(transcription.sentiment || '');
+  const [isAnalyzingSentiment, setIsAnalyzingSentiment] = useState(false);
+
+  // Search State
+  const [searchQuery, setSearchQuery] = useState('');
+
   // State for undo/redo
   const [editHistory, setEditHistory] = useState<TranscriptionSegment[][]>([]);
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState(-1);
@@ -70,11 +84,13 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
     setCurrentHistoryIndex(-1);
     setSummary(transcription.summary || '');
     setShowSummary(false);
+    setSentiment(transcription.sentiment || '');
+    setSearchQuery('');
     // Scroll to top when a new transcription is loaded
     if (containerRef.current) {
         containerRef.current.scrollTop = 0;
     }
-  }, [transcription.id, transcription.summary]);
+  }, [transcription.id, transcription.summary, transcription.sentiment]);
 
   // Click outside listener for export menu
    useEffect(() => {
@@ -175,12 +191,14 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
       setIsEditing(false);
       setEditHistory([]);
       setCurrentHistoryIndex(-1);
+      setSearchQuery(''); // Clear search when exiting edit mode
     } else {
       const initialSegments = JSON.parse(JSON.stringify(transcription.segments));
       setEditedSegments(initialSegments);
       setEditHistory([initialSegments]);
       setCurrentHistoryIndex(0);
       setIsEditing(true);
+      setSearchQuery(''); // Clear search when entering edit mode
     }
   };
 
@@ -191,7 +209,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   };
 
   const handleSaveChanges = () => {
-    onUpdate(transcription.id, editedSegments);
+    onUpdate(transcription.id, editedSegments, summary, sentiment);
     setIsEditing(false);
     setEditHistory([]);
     setCurrentHistoryIndex(-1);
@@ -208,12 +226,26 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
       try {
           const result = await summarizeTranscription(fullText);
           setSummary(result);
-          // Optionally update the parent state to persist summary
-          // onUpdateSummary(transcription.id, result); // requires props update
+          onUpdate(transcription.id, transcription.segments, result, sentiment); // Persist summary
       } catch (error) {
           console.error("Failed to summarize", error);
       } finally {
           setIsSummarizing(false);
+      }
+  };
+
+  const handleAnalyzeSentiment = async () => {
+      if (sentiment) return;
+      
+      setIsAnalyzingSentiment(true);
+      try {
+          const result = await analyzeSentiment(fullText);
+          setSentiment(result);
+          onUpdate(transcription.id, transcription.segments, summary, result); // Persist sentiment
+      } catch (error) {
+          console.error("Failed to analyze sentiment", error);
+      } finally {
+          setIsAnalyzingSentiment(false);
       }
   };
 
@@ -287,8 +319,6 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
           textLines.forEach((lineText, index) => {
               totalHeight += LINE_HEIGHT;
               if (index === 0) {
-                  // If RTL, we might want to render prefix at the end? 
-                  // For now, keeping structure simple: prefix then text, but drawn RTL if needed.
                   lines.push({ y: totalHeight, parts: [...prefixParts, { text: lineText, color: TEXT_COLOR }] });
               } else {
                   lines.push({ y: totalHeight, parts: [{ text: '    ' + lineText, color: TEXT_COLOR }] });
@@ -333,7 +363,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   const handleExport = async (format: 'txt' | 'json' | 'srt' | 'png' | 'jpg' | 'docx' | 'pdf' | 'csv') => {
     const baseFilename = transcription.fileName.split('.').slice(0, -1).join('.') || transcription.fileName;
     if (format === 'txt') createDownload(`${baseFilename}.txt`, fullText + (summary ? `\n\nSummary:\n${summary}` : ''), 'text/plain;charset=utf-8');
-    else if (format === 'json') createDownload(`${baseFilename}.json`, JSON.stringify({...transcription, summary}, null, 2), 'application/json;charset=utf-8');
+    else if (format === 'json') createDownload(`${baseFilename}.json`, JSON.stringify({...transcription, summary, sentiment}, null, 2), 'application/json;charset=utf-8');
     else if (format === 'srt') {
       const toSrtTime = (time: string) => time.replace('.', ',');
       const srtContent = transcription.segments.map((seg, i) => `${i + 1}\n${toSrtTime(seg.startTime)} --> ${toSrtTime(seg.endTime)}\n${seg.text}`).join('\n\n');
@@ -360,6 +390,9 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
             paragraphs.unshift(new docx.Paragraph({ children: [new docx.TextRun({text: "Summary", bold: true, size: 28})] }));
             paragraphs.unshift(new docx.Paragraph({ children: [new docx.TextRun(summary)] }));
              paragraphs.unshift(new docx.Paragraph({ children: [] })); // Spacer
+        }
+        if (sentiment) {
+            paragraphs.unshift(new docx.Paragraph({ children: [new docx.TextRun({text: `Sentiment: ${sentiment}`, bold: true})] }));
         }
 
         const doc = new docx.Document({ sections: [{ children: paragraphs }] });
@@ -409,24 +442,71 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
     { format: 'png', icon: PngIcon, separator: true }, { format: 'jpg', icon: JpgIcon }
   ];
 
+  const segmentsToRender = isEditing ? editedSegments : transcription.segments;
+  
+  // Filter segments based on search query
+  const filteredSegments = useMemo(() => {
+      if (!searchQuery) return segmentsToRender.map((s, i) => ({ ...s, originalIndex: i }));
+      const lowerQuery = searchQuery.toLowerCase();
+      return segmentsToRender
+        .map((s, i) => ({ ...s, originalIndex: i }))
+        .filter(s => s.text.toLowerCase().includes(lowerQuery) || s.speaker.toLowerCase().includes(lowerQuery));
+  }, [segmentsToRender, searchQuery]);
+
+
   return (
     <div className="flex flex-col h-full">
-      <div className="flex flex-wrap items-start justify-between mb-4 gap-4">
-        <div className="flex-1">
-            <h2 className="text-xl font-bold text-gray-200">{t.transcription}</h2>
-            <p className="text-sm text-gray-400 truncate max-w-xs" title={transcription.fileName}>{transcription.fileName}</p>
-            <p className="text-xs text-purple-400 mt-1">{t.detectedLanguage}: <span className="font-semibold">{transcription.detectedLanguage}</span></p>
+      <div className="flex flex-col gap-4 mb-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex-1 min-w-[200px]">
+                <h2 className="text-xl font-bold text-gray-200">{t.transcription}</h2>
+                <p className="text-sm text-gray-400 truncate max-w-xs" title={transcription.fileName}>{transcription.fileName}</p>
+                <div className="flex items-center gap-4 mt-1">
+                    <p className="text-xs text-purple-400">{t.detectedLanguage}: <span className="font-semibold">{transcription.detectedLanguage}</span></p>
+                    {sentiment && (
+                        <span className="text-xs bg-blue-900/50 text-blue-300 px-2 py-0.5 rounded border border-blue-800">
+                            {sentiment}
+                        </span>
+                    )}
+                </div>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+                <button
+                    onClick={handleSummarize}
+                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${showSummary ? 'bg-purple-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                >
+                    {isSummarizing ? t.summarizing : t.summarize}
+                </button>
+                 <button
+                    onClick={handleAnalyzeSentiment}
+                    disabled={!!sentiment || isAnalyzingSentiment}
+                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${sentiment ? 'bg-blue-600/20 text-blue-300 cursor-default' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                >
+                    {isAnalyzingSentiment ? t.analyzingSentiment : t.sentimentAnalysis}
+                </button>
+                <div className="w-px h-6 bg-gray-700 mx-1 hidden sm:block"></div>
+                <Switch checked={showTimestamps} onChange={setShowTimestamps} label={t.showTimestamps} />
+                <Switch checked={showSpeaker} onChange={setShowSpeaker} label={t.showSpeaker} />
+            </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-            <button
-                onClick={handleSummarize}
-                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${showSummary ? 'bg-purple-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
-            >
-                {isSummarizing ? t.summarizing : t.summarize}
-            </button>
-            <div className="w-px h-6 bg-gray-700 mx-1 hidden sm:block"></div>
-            <Switch checked={showTimestamps} onChange={setShowTimestamps} label={t.showTimestamps} />
-            <Switch checked={showSpeaker} onChange={setShowSpeaker} label={t.showSpeaker} />
+        
+        {/* Search Bar */}
+        <div className="relative">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <SearchIcon className="w-5 h-5 text-gray-400" />
+            </div>
+            <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t.searchTranscription}
+                className="w-full bg-gray-800 text-gray-200 border border-gray-700 rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 placeholder-gray-500"
+            />
+             {searchQuery && (
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                     <span className="text-xs text-gray-500">{filteredSegments.length} matches</span>
+                </div>
+            )}
         </div>
       </div>
         
@@ -443,30 +523,41 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
 
       <div ref={containerRef} className="flex-grow bg-gray-900/50 rounded-lg p-4 overflow-y-auto mb-4 min-h-[200px]">
         <div className="text-gray-200 whitespace-pre-wrap leading-relaxed font-mono text-sm">
-          {isEditing ? (
-            editedSegments.map((segment, index) => (
-              <div key={index} className="mb-2 flex items-start gap-3">
-                {showTimestamps && <span className="text-purple-400 whitespace-nowrap pt-1">[{segment.startTime}]</span>}
-                {showSpeaker && <strong className="text-pink-400 whitespace-nowrap pt-1">{segment.speaker}:</strong>}
-                <textarea
-                  value={segment.text}
-                  onChange={(e) => handleSegmentChange(index, e.target.value)}
-                  className="w-full bg-gray-700/80 text-gray-200 border border-gray-600 rounded-md p-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-y"
-                  rows={Math.max(1, segment.text.split('\n').length)}
-                />
-              </div>
-            ))
-          ) : (
-            transcription.segments.map((segment, index) => (
-              <div key={index} className="mb-2 flex flex-row flex-wrap">
-                {showTimestamps && <span className="text-purple-400 me-3">[{segment.startTime} - {segment.endTime}]</span>}
-                <p className="flex-1 min-w-[200px]">
-                  {showSpeaker && <strong className="text-pink-400 me-2">{segment.speaker}:</strong>}
-                  {segment.text}
-                </p>
-              </div>
-            ))
-          )}
+            {filteredSegments.length === 0 ? (
+                 <p className="text-gray-500 text-center py-8">No matches found.</p>
+            ) : (
+                filteredSegments.map((segment, index) => (
+                    <div key={segment.originalIndex} className="mb-2 flex flex-row flex-wrap">
+                        {isEditing ? (
+                             <div className="flex-grow">
+                                  <div className="flex items-center gap-2 mb-1 text-xs">
+                                    {showTimestamps && <span className="text-purple-400 font-semibold">[{segment.startTime}]</span>}
+                                    {showSpeaker && <span className="text-pink-400 font-bold">{segment.speaker}:</span>}
+                                  </div>
+                                 <textarea
+                                    value={segment.text}
+                                    onChange={(e) => handleSegmentChange(segment.originalIndex, e.target.value)}
+                                    className="w-full bg-gray-700/80 text-gray-200 border border-gray-600 rounded-md p-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-y"
+                                    rows={Math.max(1, segment.text.split('\n').length)}
+                                />
+                             </div>
+                        ) : (
+                            <>
+                                {showTimestamps && <span className="text-purple-400 me-3 select-none">[{segment.startTime} - {segment.endTime}]</span>}
+                                <p className="flex-1 min-w-[200px]">
+                                {showSpeaker && <strong className="text-pink-400 me-2 select-none">{segment.speaker}:</strong>}
+                                {/* Simple highlight for search */}
+                                {searchQuery ? (
+                                    segment.text.split(new RegExp(`(${searchQuery})`, 'gi')).map((part, i) => 
+                                        part.toLowerCase() === searchQuery.toLowerCase() ? <mark key={i} className="bg-yellow-500/50 text-white rounded-sm">{part}</mark> : part
+                                    )
+                                ) : segment.text}
+                                </p>
+                            </>
+                        )}
+                    </div>
+                ))
+            )}
         </div>
       </div>
       
