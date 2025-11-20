@@ -1,23 +1,15 @@
-import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
+// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, '.', '');
-    return {
-      server: {
-        port: 3000,
-        host: '0.0.0.0',
-      },
-      plugins: [react()],
-      define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
-      },
-      resolve: {
-        alias: {
-          '@': path.resolve(__dirname, '.'),
-        }
-      }
-    };
+  // Fix: Cast process to any to resolve TS error "Property 'cwd' does not exist on type 'Process'"
+  const env = loadEnv(mode, (process as any).cwd(), '');
+  return {
+    plugins: [react()],
+    base: '/MultiTools/', // Configuration for GitHub Pages deployment at https://<user>.github.io/MultiTools/
+    define: {
+      'process.env.API_KEY': JSON.stringify(env.API_KEY),
+    },
+  };
 });
