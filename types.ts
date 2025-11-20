@@ -18,6 +18,7 @@ export interface Transcription {
   date: string;
   detectedLanguage: string;
   segments: TranscriptionSegment[];
+  summary?: string; // Added summary field
 }
 
 export interface User {
@@ -49,6 +50,7 @@ export interface GrammarHistoryItem {
     originalText: string;
     correctedText: string;
     language: string;
+    tone?: string; // Added tone
     diff: DiffPart[];
 }
 

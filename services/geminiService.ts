@@ -4,7 +4,19 @@ import { GoogleGenAI, Type } from "@google/genai";
 import type { Transcription } from '../types';
 
 // Fix: Initialize GoogleGenAI with named apiKey parameter
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+let ai: GoogleGenAI | null = null;
+
+const getAiClient = () => {
+  if (!ai) {
+    if (!process.env.API_KEY) {
+       // Fallback or throw, but lazily to prevent crash on load
+       console.warn("API Key is missing. Some features will not work.");
+       return null;
+    }
+    ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+  }
+  return ai;
+};
 
 const MODELS = {
     primary: 'gemini-2.5-flash',
@@ -19,8 +31,11 @@ async function generateContentWithRetry(
   delay = 2000,
   allowFallback = true
 ): Promise<any> {
+    const client = getAiClient();
+    if (!client) throw new Error("API Key is not configured.");
+
   try {
-    return await ai.models.generateContent({ model, ...params });
+    return await client.models.generateContent({ model, ...params });
   } catch (error: any) {
     const isQuotaError = error.status === 429 || (error.message && error.message.includes('429'));
     const isServerError = error.status === 503 || (error.message && error.message.includes('503'));
@@ -85,10 +100,6 @@ const fileToBase64 = (file: File): Promise<string> => {
 };
 
 export const transcribeAudio = async (file: File): Promise<Omit<Transcription, 'id' | 'date'>> => {
-  if (!process.env.API_KEY) {
-    throw new Error("API_KEY environment variable not set");
-  }
-
   const base64Data = await fileToBase64(file);
 
   const audioPart = {
@@ -167,10 +178,6 @@ export const transcribeAudio = async (file: File): Promise<Omit<Transcription, '
 };
 
 export const translateText = async (text: string, sourceLang: string, targetLang: string): Promise<string> => {
-    if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable not set");
-    }
-
     const systemInstruction = `You are a world-class expert translator. Your task is to translate the given text from ${sourceLang === 'auto' ? 'the auto-detected language' : sourceLang} to ${targetLang}. Assume the context of the text is a spoken conversation or monologue, so prefer natural, conversational language where appropriate.
 You must provide only the translated text as a response. Do not include any extra information, context, or explanations. Do not wrap the response in quotes or any other formatting.`;
 
@@ -184,13 +191,9 @@ You must provide only the translated text as a response. Do not include any extr
     return response.text.trim();
 };
 
-export const correctGrammar = async (text: string, language: string): Promise<string> => {
-    if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable not set");
-    }
-
-    const systemInstruction = `You are an expert proofreader. Your task is to correct any grammar, spelling, and punctuation errors in the given text. The text is in ${language === 'Auto-detect' ? 'an auto-detected language' : language}.
-Your goal is to improve clarity and correctness while preserving the original meaning, tone, and style of the author.
+export const correctGrammar = async (text: string, language: string, tone: string = 'Professional'): Promise<string> => {
+    const systemInstruction = `You are an expert proofreader and editor. Your task is to correct any grammar, spelling, and punctuation errors in the given text. The text is in ${language === 'Auto-detect' ? 'an auto-detected language' : language}.
+Your goal is to improve clarity and correctness while adjusting the tone to be **${tone}**.
 You must provide only the corrected text as a response. Do not include any extra information, context, or explanations. Do not wrap the response in quotes or any other formatting. Just return the corrected text directly.`;
 
     const response = await generateContentWithRetry(MODELS.primary, {
@@ -204,10 +207,6 @@ You must provide only the corrected text as a response. Do not include any extra
 };
 
 export const analyzeImage = async (imageFile: File): Promise<string> => {
-    if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable not set");
-    }
-
     const base64Data = await fileToBase64(imageFile);
 
     const imagePart = {
@@ -223,5 +222,20 @@ export const analyzeImage = async (imageFile: File): Promise<string> => {
         contents: { parts: [imagePart, textPart] },
     });
     
+    return response.text.trim();
+};
+
+export const summarizeTranscription = async (text: string): Promise<string> => {
+    const systemInstruction = `You are an expert summarizer. Your task is to provide a concise and accurate summary of the following transcription.
+Identify the key points, main speakers (if evident), and the overall conclusion or topic.
+Format the output as a short paragraph followed by bullet points for key takeaways.`;
+
+    const response = await generateContentWithRetry(MODELS.primary, {
+        contents: text,
+        config: {
+            systemInstruction,
+        },
+    });
+
     return response.text.trim();
 };

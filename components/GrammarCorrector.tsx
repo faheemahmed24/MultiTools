@@ -13,6 +13,7 @@ import { sourceLanguages } from '../lib/languages';
 import type { LanguageOption } from '../lib/languages';
 import { XCircleIcon } from './icons/XCircleIcon';
 import { SkeletonLoader } from './Loader';
+import { ChevronDownIcon } from './icons/ChevronDownIcon';
 
 // Simple diffing function
 const createDiff = (original: string, corrected: string): DiffPart[] => {
@@ -64,7 +65,7 @@ const DiffView: React.FC<{ diff: DiffPart[] }> = ({ diff }) => (
 
 interface GrammarCorrectorProps {
     t: TranslationSet;
-    onCorrectionComplete: (data: { originalText: string, correctedText: string, language: string, diff: DiffPart[] }) => void;
+    onCorrectionComplete: (data: { originalText: string, correctedText: string, language: string, diff: DiffPart[], tone: string }) => void;
 }
 
 const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComplete }) => {
@@ -72,10 +73,19 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
   const [correctedText, setCorrectedText] = useState('');
   const [diff, setDiff] = useState<DiffPart[]>([]);
   const [language, setLanguage] = useState<LanguageOption>(sourceLanguages[0]);
+  const [tone, setTone] = useState<string>('Professional');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [isToneOpen, setIsToneOpen] = useState(false);
+
+  const tones = [
+      { key: 'Professional', label: t.professional },
+      { key: 'Casual', label: t.casual },
+      { key: 'Academic', label: t.academic },
+      { key: 'Creative', label: t.creative }
+  ];
 
   const handleCorrectGrammar = async () => {
     if (!inputText.trim()) {
@@ -87,7 +97,7 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
     setIsLoading(true);
     setError(null);
     try {
-      const result = await correctGrammar(inputText, language.name);
+      const result = await correctGrammar(inputText, language.name, tone);
       setCorrectedText(result);
       const newDiff = createDiff(inputText, result);
       setDiff(newDiff);
@@ -96,6 +106,7 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
         originalText: inputText,
         correctedText: result,
         language: language.name,
+        tone: tone,
         diff: newDiff
       });
     } catch (err: any) {
@@ -156,7 +167,7 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
 
   return (
     <div className="bg-gray-800 rounded-2xl shadow-lg p-6">
-        <div className="mb-4">
+        <div className="mb-4 flex flex-col sm:flex-row gap-4">
              <LanguageDropdown
                 languages={sourceLanguages}
                 selectedLang={language}
@@ -164,7 +175,42 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
                 title={t.language}
                 searchPlaceholder="Search language"
             />
+            
+            {/* Tone Selector */}
+            <div className="relative w-full sm:w-56">
+              <button
+                onClick={() => setIsToneOpen(!isToneOpen)}
+                className="w-full flex items-center justify-between bg-gray-700 px-4 py-2 rounded-lg text-gray-200 hover:bg-gray-600 transition-colors"
+              >
+                <div className="flex flex-col items-start">
+                    <span className="text-xs text-gray-400">{t.tone}</span>
+                    <span className="font-semibold">{tones.find(to => to.key === tone)?.label}</span>
+                </div>
+                <ChevronDownIcon className={`w-5 h-5 text-gray-400 transition-transform ${isToneOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isToneOpen && (
+                <div className="absolute z-10 top-full mt-2 w-full bg-gray-700 border border-gray-600 rounded-lg shadow-xl">
+                  <ul className="py-1">
+                    {tones.map(option => (
+                      <li key={option.key}>
+                        <button
+                          onClick={() => {
+                              setTone(option.key);
+                              setIsToneOpen(false);
+                          }}
+                          className={`w-full text-left px-4 py-2 text-sm ${tone === option.key ? 'bg-purple-600 text-white' : 'text-gray-300 hover:bg-purple-600/50'}`}
+                        >
+                          {option.label}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
         </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <h3 className="font-semibold mb-2 text-gray-300">{t.originalText}</h3>

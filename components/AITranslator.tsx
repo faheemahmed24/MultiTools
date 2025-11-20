@@ -14,6 +14,19 @@ import { jsPDF } from 'jspdf';
 import * as docx from 'docx';
 import { XCircleIcon } from './icons/XCircleIcon';
 import { SkeletonLoader } from './Loader';
+import { SpeakerWaveIcon } from './icons/SpeakerWaveIcon'; // Assuming you have this or need to add it
+
+// Simple icon component if not present in files
+const SpeakerIcon = (props: any) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
+    </svg>
+);
+const StopIcon = (props: any) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 7.5A2.25 2.25 0 017.5 5.25h9a2.25 2.25 0 012.25 2.25v9a2.25 2.25 0 01-2.25 2.25h-9a2.25 2.25 0 01-2.25-2.25v-9z" />
+    </svg>
+);
 
 interface AITranslatorProps {
     t: TranslationSet;
@@ -31,6 +44,9 @@ const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete })
   const [isCopied, setIsCopied] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [isSwapping, setIsSwapping] = useState(false);
+  
+  // TTS State
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const debouncedInputText = useDebounce(inputText, 500);
 
@@ -87,6 +103,25 @@ const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete })
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
   };
+  
+  const handleSpeak = () => {
+      if (isSpeaking) {
+          window.speechSynthesis.cancel();
+          setIsSpeaking(false);
+          return;
+      }
+
+      if (!editedTranslatedText) return;
+
+      const utterance = new SpeechSynthesisUtterance(editedTranslatedText);
+      // Try to match the language code
+      utterance.lang = targetLang.code;
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+      
+      setIsSpeaking(true);
+      window.speechSynthesis.speak(utterance);
+  };
 
   const createDownload = (filename: string, blob: Blob) => {
     const url = URL.createObjectURL(blob);
@@ -126,6 +161,8 @@ const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete })
     setTranslatedText('');
     setEditedTranslatedText('');
     setError(null);
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
   };
 
   const characterCount = inputText.length;
@@ -192,6 +229,13 @@ const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete })
           </div>
           {!isLoading && !error && translatedText && (
             <div className="absolute top-3 end-3 flex items-center space-x-2 rtl:space-x-reverse">
+                 <button
+                    onClick={handleSpeak}
+                    title={isSpeaking ? t.stop : t.listen}
+                    className={`flex items-center justify-center p-1.5 rounded-lg transition-colors duration-200 ${isSpeaking ? 'bg-red-600 text-white' : 'bg-gray-700 text-white hover:bg-gray-600'}`}
+                >
+                    {isSpeaking ? <StopIcon className="w-4 h-4" /> : <SpeakerIcon className="w-4 h-4" />}
+                </button>
                 <button
                     onClick={handleCopy}
                     className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200"

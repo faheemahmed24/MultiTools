@@ -1,3 +1,4 @@
+
 import type { Language, TranslationSet } from '../types';
 
 const translations: Record<Language, TranslationSet> = {
@@ -98,8 +99,8 @@ const translations: Record<Language, TranslationSet> = {
     pdfToWordDescription: 'Extract text from your PDF and save it as an editable Word document.',
     wordToPdfDescription: 'Convert your Word document (.docx) into a PDF file.',
     generatingWord: 'Generating Word Document...',
-    downloadWord: '.docx download करें',
-    downloadTxt: '.txt download करें',
+    downloadWord: '.docx download',
+    downloadTxt: '.txt download',
     download: 'Download',
     login: 'Login',
     logout: 'Logout',
@@ -143,6 +144,16 @@ const translations: Record<Language, TranslationSet> = {
     noDataToPreview: 'Paste data above to see a preview.',
     language: 'Language',
     outputFilename: 'Output Filename',
+    summarize: 'Summarize',
+    summarizing: 'Summarizing...',
+    summary: 'Summary',
+    listen: 'Listen',
+    stop: 'Stop',
+    tone: 'Tone',
+    professional: 'Professional',
+    casual: 'Casual',
+    academic: 'Academic',
+    creative: 'Creative',
   },
   hi: {
     transcription: 'प्रतिलेखन',
@@ -286,6 +297,16 @@ const translations: Record<Language, TranslationSet> = {
     noDataToPreview: 'पूर्वावलोकन देखने के लिए ऊपर डेटा पेस्ट करें।',
     language: 'भाषा',
     outputFilename: 'आउटपुट फ़ाइलनाम',
+    summarize: 'सारांशित करें',
+    summarizing: 'सारांश बना रहा है...',
+    summary: 'सारांश',
+    listen: 'सुनें',
+    stop: 'रोकें',
+    tone: 'लहज़ा',
+    professional: 'पेशेवर',
+    casual: 'अनौपचारिक',
+    academic: 'शैक्षणिक',
+    creative: 'रचनात्मक',
   },
   ur: {
     transcription: 'نقل حرفی',
@@ -429,6 +450,16 @@ const translations: Record<Language, TranslationSet> = {
     noDataToPreview: 'پیش نظارہ دیکھنے کے لیے اوپر ڈیٹا پیسٹ کریں۔',
     language: 'زبان',
     outputFilename: 'آؤٹ پٹ فائل کا نام',
+    summarize: 'خلاصہ کریں',
+    summarizing: 'خلاصہ کیا جا رہا ہے...',
+    summary: 'خلاصہ',
+    listen: 'سنیں',
+    stop: 'رکیں',
+    tone: 'لہجہ',
+    professional: 'پیشہ ورانہ',
+    casual: 'غیر رسمی',
+    academic: 'تعلیمی',
+    creative: 'تخلیقی',
   },
   ar: {
     transcription: 'النسخ الصوتي',
@@ -572,6 +603,16 @@ const translations: Record<Language, TranslationSet> = {
     noDataToPreview: 'الصق البيانات أعلاه لرؤية معاينة.',
     language: 'اللغة',
     outputFilename: 'اسم ملف الإخراج',
+    summarize: 'تلخيص',
+    summarizing: 'جاري التلخيص...',
+    summary: 'الملخص',
+    listen: 'استمع',
+    stop: 'قف',
+    tone: 'النغمة',
+    professional: 'مهني',
+    casual: 'غير رسمي',
+    academic: 'أكاديمي',
+    creative: 'إبداعي',
   }
 };
 

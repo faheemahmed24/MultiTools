@@ -19,6 +19,8 @@ import { PdfIcon } from './icons/PdfIcon';
 import { DocxIcon } from './icons/DocxIcon';
 import { PngIcon } from './icons/PngIcon';
 import { JpgIcon } from './icons/JpgIcon';
+import { summarizeTranscription } from '../services/geminiService';
+import { SkeletonLoader } from './Loader';
 
 interface TranscriptionViewProps {
   transcription: Transcription;
@@ -49,6 +51,11 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   const containerRef = useRef<HTMLDivElement>(null);
   const exportMenuRef = useRef<HTMLDivElement>(null);
 
+  // Summary State
+  const [summary, setSummary] = useState<string>(transcription.summary || '');
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
+
   // State for undo/redo
   const [editHistory, setEditHistory] = useState<TranscriptionSegment[][]>([]);
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState(-1);
@@ -61,11 +68,13 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
     setShowExportMenu(false);
     setEditHistory([]);
     setCurrentHistoryIndex(-1);
+    setSummary(transcription.summary || '');
+    setShowSummary(false);
     // Scroll to top when a new transcription is loaded
     if (containerRef.current) {
         containerRef.current.scrollTop = 0;
     }
-  }, [transcription.id]);
+  }, [transcription.id, transcription.summary]);
 
   // Click outside listener for export menu
    useEffect(() => {
@@ -188,6 +197,26 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
     setCurrentHistoryIndex(-1);
   };
 
+  const handleSummarize = async () => {
+      if (summary) {
+          setShowSummary(!showSummary);
+          return;
+      }
+      
+      setIsSummarizing(true);
+      setShowSummary(true);
+      try {
+          const result = await summarizeTranscription(fullText);
+          setSummary(result);
+          // Optionally update the parent state to persist summary
+          // onUpdateSummary(transcription.id, result); // requires props update
+      } catch (error) {
+          console.error("Failed to summarize", error);
+      } finally {
+          setIsSummarizing(false);
+      }
+  };
+
   const createDownload = (filename: string, content: string | Blob, mime?: string) => {
     const blob = content instanceof Blob ? content : new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
@@ -303,8 +332,8 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
 
   const handleExport = async (format: 'txt' | 'json' | 'srt' | 'png' | 'jpg' | 'docx' | 'pdf' | 'csv') => {
     const baseFilename = transcription.fileName.split('.').slice(0, -1).join('.') || transcription.fileName;
-    if (format === 'txt') createDownload(`${baseFilename}.txt`, fullText, 'text/plain;charset=utf-8');
-    else if (format === 'json') createDownload(`${baseFilename}.json`, JSON.stringify(transcription, null, 2), 'application/json;charset=utf-8');
+    if (format === 'txt') createDownload(`${baseFilename}.txt`, fullText + (summary ? `\n\nSummary:\n${summary}` : ''), 'text/plain;charset=utf-8');
+    else if (format === 'json') createDownload(`${baseFilename}.json`, JSON.stringify({...transcription, summary}, null, 2), 'application/json;charset=utf-8');
     else if (format === 'srt') {
       const toSrtTime = (time: string) => time.replace('.', ',');
       const srtContent = transcription.segments.map((seg, i) => `${i + 1}\n${toSrtTime(seg.startTime)} --> ${toSrtTime(seg.endTime)}\n${seg.text}`).join('\n\n');
@@ -327,6 +356,12 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
             parts.push(new docx.TextRun(seg.text));
             return new docx.Paragraph({ children: parts });
         });
+        if (summary) {
+            paragraphs.unshift(new docx.Paragraph({ children: [new docx.TextRun({text: "Summary", bold: true, size: 28})] }));
+            paragraphs.unshift(new docx.Paragraph({ children: [new docx.TextRun(summary)] }));
+             paragraphs.unshift(new docx.Paragraph({ children: [] })); // Spacer
+        }
+
         const doc = new docx.Document({ sections: [{ children: paragraphs }] });
         const blob = await docx.Packer.toBlob(doc);
         createDownload(`${baseFilename}.docx`, blob);
@@ -338,6 +373,16 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
         let y = margin;
 
         doc.setFontSize(11);
+
+        if (summary) {
+             doc.setFontSize(16);
+             doc.text("Summary", margin, y);
+             y += 8;
+             doc.setFontSize(11);
+             const splitSummary = doc.splitTextToSize(summary, usableWidth);
+             doc.text(splitSummary, margin, y);
+             y += (splitSummary.length * lineHeight) + 10;
+        }
         
         transcription.segments.forEach(seg => {
             const line = (showTimestamps ? `[${seg.startTime} - ${seg.endTime}] ` : '') + (showSpeaker ? `${seg.speaker}: ` : '') + seg.text;
@@ -372,11 +417,29 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
             <p className="text-sm text-gray-400 truncate max-w-xs" title={transcription.fileName}>{transcription.fileName}</p>
             <p className="text-xs text-purple-400 mt-1">{t.detectedLanguage}: <span className="font-semibold">{transcription.detectedLanguage}</span></p>
         </div>
-        <div className="flex items-center space-x-4 rtl:space-x-reverse">
-          <Switch checked={showTimestamps} onChange={setShowTimestamps} label={showTimestamps ? t.hideTimestamps : t.showTimestamps} />
-          <Switch checked={showSpeaker} onChange={setShowSpeaker} label={showSpeaker ? t.hideSpeaker : t.showSpeaker} />
+        <div className="flex items-center gap-2 flex-wrap">
+            <button
+                onClick={handleSummarize}
+                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${showSummary ? 'bg-purple-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+            >
+                {isSummarizing ? t.summarizing : t.summarize}
+            </button>
+            <div className="w-px h-6 bg-gray-700 mx-1 hidden sm:block"></div>
+            <Switch checked={showTimestamps} onChange={setShowTimestamps} label={t.showTimestamps} />
+            <Switch checked={showSpeaker} onChange={setShowSpeaker} label={t.showSpeaker} />
         </div>
       </div>
+        
+      {showSummary && (
+          <div className="mb-4 bg-purple-900/20 border border-purple-500/30 rounded-lg p-4 animate-slide-in-up">
+              <h3 className="text-lg font-semibold text-purple-300 mb-2">{t.summary}</h3>
+               {isSummarizing ? (
+                   <SkeletonLoader lines={3} />
+               ) : (
+                   <p className="text-gray-200 text-sm whitespace-pre-wrap leading-relaxed">{summary}</p>
+               )}
+          </div>
+      )}
 
       <div ref={containerRef} className="flex-grow bg-gray-900/50 rounded-lg p-4 overflow-y-auto mb-4 min-h-[200px]">
         <div className="text-gray-200 whitespace-pre-wrap leading-relaxed font-mono text-sm">
