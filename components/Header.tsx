@@ -12,6 +12,7 @@ import { PdfToWordIcon } from './icons/PdfToWordIcon';
 import { WordToPdfIcon } from './icons/WordToPdfIcon';
 import { SheetIcon } from './icons/SheetIcon';
 import { GrammarIcon } from './icons/GrammarIcon';
+import AdUnit from './AdUnit';
 
 interface HeaderProps {
   uiLanguage: Language;
@@ -151,6 +152,12 @@ const Header: React.FC<HeaderProps> = ({
           )
         })}
       </nav>
+      
+      {isSidebarOpen && (
+          <div className="mt-auto pt-4 border-t border-gray-700/50 px-1">
+             <AdUnit />
+          </div>
+      )}
     </aside>
   );
 };
