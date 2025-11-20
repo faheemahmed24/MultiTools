@@ -28,6 +28,7 @@ import { CheckCircleIcon } from './components/icons/CheckCircleIcon';
 import { XCircleIcon } from './components/icons/XCircleIcon';
 import { UserIcon } from './components/icons/UserIcon';
 import { SkeletonLoader } from './components/Loader';
+import AdUnit from './components/AdUnit';
 
 
 const HamburgerIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -564,6 +565,9 @@ function App() {
         </div>
         <main className="flex-grow p-4 sm:p-6 md:p-8 overflow-y-auto">
          {renderActiveTool()}
+         <div className="mt-8">
+            <AdUnit />
+         </div>
         </main>
       </div>
       <AuthModal 
