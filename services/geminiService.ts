@@ -3,8 +3,18 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { Transcription } from '../types';
 
-// Fix: Initialize GoogleGenAI with named apiKey parameter
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+// Lazy initialization to prevent crash on load if API Key is missing
+let ai: GoogleGenAI | null = null;
+
+const getAiClient = (): GoogleGenAI => {
+  if (!ai) {
+    const apiKey = process.env.API_KEY || '';
+    // We initialize even with empty key so the app loads. 
+    // Specific calls will fail gracefully later if key is invalid.
+    ai = new GoogleGenAI({ apiKey });
+  }
+  return ai;
+};
 
 const MODELS = {
     primary: 'gemini-2.5-flash',
@@ -19,8 +29,9 @@ async function generateContentWithRetry(
   delay = 2000,
   allowFallback = true
 ): Promise<any> {
+  const client = getAiClient();
   try {
-    return await ai.models.generateContent({ model, ...params });
+    return await client.models.generateContent({ model, ...params });
   } catch (error: any) {
     const isQuotaError = error.status === 429 || (error.message && error.message.includes('429'));
     const isServerError = error.status === 503 || (error.message && error.message.includes('503'));
@@ -85,8 +96,9 @@ const fileToBase64 = (file: File): Promise<string> => {
 };
 
 export const transcribeAudio = async (file: File): Promise<Omit<Transcription, 'id' | 'date'>> => {
+  // Check for key at runtime when feature is used
   if (!process.env.API_KEY) {
-    throw new Error("API_KEY environment variable not set");
+    throw new Error("API Key is missing. Please check your deployment settings.");
   }
 
   const base64Data = await fileToBase64(file);
@@ -168,7 +180,7 @@ export const transcribeAudio = async (file: File): Promise<Omit<Transcription, '
 
 export const translateText = async (text: string, sourceLang: string, targetLang: string): Promise<string> => {
     if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable not set");
+        throw new Error("API Key is missing. Please check your deployment settings.");
     }
 
     const systemInstruction = `You are a world-class expert translator. Your task is to translate the given text from ${sourceLang === 'auto' ? 'the auto-detected language' : sourceLang} to ${targetLang}. Assume the context of the text is a spoken conversation or monologue, so prefer natural, conversational language where appropriate.
@@ -186,7 +198,7 @@ You must provide only the translated text as a response. Do not include any extr
 
 export const correctGrammar = async (text: string, language: string): Promise<string> => {
     if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable not set");
+        throw new Error("API Key is missing. Please check your deployment settings.");
     }
 
     const systemInstruction = `You are an expert proofreader. Your task is to correct any grammar, spelling, and punctuation errors in the given text. The text is in ${language === 'Auto-detect' ? 'an auto-detected language' : language}.
@@ -205,7 +217,7 @@ You must provide only the corrected text as a response. Do not include any extra
 
 export const analyzeImage = async (imageFile: File): Promise<string> => {
     if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable not set");
+        throw new Error("API Key is missing. Please check your deployment settings.");
     }
 
     const base64Data = await fileToBase64(imageFile);

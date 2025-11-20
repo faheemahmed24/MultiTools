@@ -1,3 +1,4 @@
+
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -9,7 +10,8 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     base: '/MultiTools/', // Configuration for GitHub Pages deployment at https://<user>.github.io/MultiTools/
     define: {
-      'process.env.API_KEY': JSON.stringify(env.API_KEY),
+      // Ensure API_KEY is a string (empty if missing) to prevent "undefined" crashes
+      'process.env.API_KEY': JSON.stringify(env.API_KEY || ''),
     },
   };
 });
