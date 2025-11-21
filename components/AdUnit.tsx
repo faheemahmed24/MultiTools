@@ -18,8 +18,7 @@ const AdUnit: React.FC<AdUnitProps> = ({ slotId = "7406471479", format = "auto",
       const element = adRef.current;
       if (!element) return;
 
-      // If the element has no width (e.g. hidden or not layout yet), retry later.
-      // This prevents "No slot size for availableWidth=0" errors.
+      // Fix: Check width to avoid "No slot size for availableWidth=0" error
       if (element.offsetWidth === 0) {
         timeoutId = setTimeout(attemptLoadAd, 500);
         return;
@@ -36,6 +35,9 @@ const AdUnit: React.FC<AdUnitProps> = ({ slotId = "7406471479", format = "auto",
            }
         }
 
+        // Check if we already requested in this instance to avoid double push
+        if (isAdRequested) return;
+
         // Push the ad
         // @ts-ignore
         (window.adsbygoogle = window.adsbygoogle || []).push({});
@@ -47,8 +49,8 @@ const AdUnit: React.FC<AdUnitProps> = ({ slotId = "7406471479", format = "auto",
 
     // Only attempt if we haven't successfully requested yet in this mount lifecycle
     if (!isAdRequested) {
-       // Small delay to allow initial layout/transitions to start
-       timeoutId = setTimeout(attemptLoadAd, 200);
+       // Delay to allow initial layout/transitions (e.g. sidebar animation)
+       timeoutId = setTimeout(attemptLoadAd, 500);
     }
 
     return () => {

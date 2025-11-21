@@ -1,14 +1,16 @@
+
 import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
-import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
+import * as pdfjsLib from 'pdfjs-dist';
 import * as docx from 'docx';
 import { jsPDF } from 'jspdf';
 import { ChevronDownIcon } from './icons/ChevronDownIcon';
 
 // Configure the worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://aistudiocdn.com/pdfjs-dist@^4.5.136/build/pdf.worker.mjs`;
+// Using unpkg to serve the worker matching the installed package version
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@4.5.136/build/pdf.worker.min.mjs`;
 
 interface PdfToWordProps {
     t: TranslationSet;
