@@ -19,7 +19,6 @@ import { PdfIcon } from './icons/PdfIcon';
 import { DocxIcon } from './icons/DocxIcon';
 import { PngIcon } from './icons/PngIcon';
 import { JpgIcon } from './icons/JpgIcon';
-import { HtmlIcon } from './icons/HtmlIcon';
 import { summarizeTranscription, analyzeSentiment } from '../services/geminiService';
 import { SkeletonLoader } from './Loader';
 
@@ -361,7 +360,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
       return canvas.toDataURL(`image/${format}`, format === 'jpeg' ? 0.9 : undefined);
   }
 
-  const handleExport = async (format: 'txt' | 'json' | 'srt' | 'png' | 'jpg' | 'docx' | 'pdf' | 'csv' | 'html') => {
+  const handleExport = async (format: 'txt' | 'json' | 'srt' | 'png' | 'jpg' | 'docx' | 'pdf' | 'csv') => {
     const baseFilename = transcription.fileName.split('.').slice(0, -1).join('.') || transcription.fileName;
     if (format === 'txt') createDownload(`${baseFilename}.txt`, fullText + (summary ? `\n\nSummary:\n${summary}` : ''), 'text/plain;charset=utf-8');
     else if (format === 'json') createDownload(`${baseFilename}.json`, JSON.stringify({...transcription, summary, sentiment}, null, 2), 'application/json;charset=utf-8');
@@ -433,68 +432,11 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
             y += segmentHeight + 4; // Add a small gap between segments
         });
         createDownload(`${baseFilename}.pdf`, doc.output('blob'));
-    } else if (format === 'html') {
-         const html = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${transcription.fileName} - Transcription</title>
-    <style>
-        body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 2rem; }
-        header { margin-bottom: 2rem; border-bottom: 1px solid #eee; padding-bottom: 1rem; }
-        h1 { font-size: 1.5rem; margin-bottom: 0.5rem; color: #111; }
-        .metadata { color: #666; font-size: 0.9rem; margin-bottom: 1rem; }
-        .badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem; }
-        .badge-sentiment { background: #e0e7ff; color: #4338ca; }
-        .summary-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; }
-        .summary-title { font-weight: 600; color: #374151; margin-top: 0; margin-bottom: 0.5rem; }
-        .segment { margin-bottom: 1.5rem; }
-        .segment-meta { font-size: 0.85rem; color: #6b7280; margin-bottom: 0.25rem; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-        .timestamp { color: #7c3aed; margin-right: 0.5rem; }
-        .speaker { font-weight: 600; color: #db2777; margin-right: 0.5rem; }
-        .text { color: #1f2937; }
-    </style>
-</head>
-<body>
-    <header>
-        <h1>${transcription.fileName}</h1>
-        <div class="metadata">
-            <span>${transcription.date}</span>
-            <span> • </span>
-            <span>${transcription.detectedLanguage}</span>
-            ${sentiment ? `<span class="badge badge-sentiment">${sentiment}</span>` : ''}
-        </div>
-    </header>
-    
-    ${summary ? `
-    <div class="summary-box">
-        <h3 class="summary-title">Summary</h3>
-        <p>${summary.replace(/\n/g, '<br>')}</p>
-    </div>
-    ` : ''}
-
-    <div class="transcript">
-        ${transcription.segments.map(seg => `
-        <div class="segment">
-            <div class="segment-meta">
-                ${showTimestamps ? `<span class="timestamp">[${seg.startTime} - ${seg.endTime}]</span>` : ''}
-                ${showSpeaker ? `<span class="speaker">${seg.speaker}</span>` : ''}
-            </div>
-            <div class="text">${seg.text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
-        </div>
-        `).join('')}
-    </div>
-</body>
-</html>`;
-        createDownload(`${baseFilename}.html`, html, 'text/html;charset=utf-8');
     }
   };
 
   const exportOptions = [
     { format: 'txt', icon: TxtIcon }, { format: 'json', icon: JsonIcon }, 
-    { format: 'html', icon: HtmlIcon },
     { format: 'srt', icon: SrtIcon }, { format: 'csv', icon: CsvIcon },
     { format: 'pdf', icon: PdfIcon, separator: true }, { format: 'docx', icon: DocxIcon },
     { format: 'png', icon: PngIcon, separator: true }, { format: 'jpg', icon: JpgIcon }

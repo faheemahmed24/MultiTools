@@ -36,9 +36,6 @@ const AdUnit: React.FC<AdUnitProps> = ({ slotId = "7406471479", format = "auto",
            }
         }
 
-        // Check if we already requested in this instance to avoid double push
-        if (isAdRequested) return;
-
         // Push the ad
         // @ts-ignore
         (window.adsbygoogle = window.adsbygoogle || []).push({});
@@ -51,8 +48,7 @@ const AdUnit: React.FC<AdUnitProps> = ({ slotId = "7406471479", format = "auto",
     // Only attempt if we haven't successfully requested yet in this mount lifecycle
     if (!isAdRequested) {
        // Small delay to allow initial layout/transitions to start
-       // Increased from 200ms to 500ms to better handle sidebar animations
-       timeoutId = setTimeout(attemptLoadAd, 500);
+       timeoutId = setTimeout(attemptLoadAd, 200);
     }
 
     return () => {
