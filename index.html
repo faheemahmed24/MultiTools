@@ -4,35 +4,32 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="./vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
+   
     <!-- SEO Meta Tags -->
     <meta name="description" content="A powerful, local-first transcription application that converts speech from audio and video files into text. It features auto-language detection, multi-language support (English, Arabic, Urdu, Hindi), timestamp toggling, and a persistent history of your transcriptions.">
     <meta name="keywords" content="transcription, AI, speech to text, audio to text, converter, PDF tools, OCR, image analysis, local first">
     <meta name="author" content="MultiTools">
-    
+   
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://multitools.click/">
     <meta property="og:title" content="MultiTools - AI Transcription & PDF Tools">
     <meta property="og:description" content="Convert audio/video to text, analyze images, and manage PDFs with privacy-focused local tools.">
     <meta property="og:image" content="https://multitools.click/vite.svg">
-
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://multitools.click/">
     <meta property="twitter:title" content="MultiTools - AI Transcription & PDF Tools">
     <meta property="twitter:description" content="Convert audio/video to text, analyze images, and manage PDFs with privacy-focused local tools.">
     <meta property="twitter:image" content="https://multitools.click/vite.svg">
-
     <!-- AdSense Verification -->
     <meta name="google-adsense-account" content="ca-pub-3766117905337171">
-    
+   
     <title>MultiTools</title>
-    
+   
     <!-- Google AdSense Script -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3766117905337171"
      crossorigin="anonymous"></script>
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,7 +37,7 @@
     <style>
       :root {
         --bg-dark-gray: #111827; /* gray-900 */
-        --bg-med-gray: #1f2937;  /* gray-800 */
+        --bg-med-gray: #1f2937; /* gray-800 */
         --bg-light-gray: #374151; /* gray-700 */
         --border-gray: #4b5563; /* gray-600 */
         --text-light: #f3f4f6; /* gray-100 */
@@ -51,25 +48,22 @@
         --accent-pink: #ec4899; /* pink-500 */
         --font-sans: 'Inter', sans-serif;
       }
-
       html {
         scroll-behavior: smooth;
       }
-      
+     
       body {
         font-family: var(--font-sans);
         background-color: var(--bg-dark-gray);
         background-image: radial-gradient(circle at 1px 1px, rgba(139, 92, 246, 0.1) 1px, transparent 0);
         background-size: 2rem 2rem;
       }
-      
+     
       *, *::before, *::after {
         transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
         transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
         transition-duration: 150ms;
       }
-
-
       /* Custom scrollbar for webkit browsers */
       ::-webkit-scrollbar {
         width: 10px;
@@ -84,9 +78,8 @@
         border: 2px solid var(--bg-dark-gray);
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #6b7280;
+        background: var(--text-dark);
       }
-
       /* Custom input styles */
       .custom-input {
           background-color: var(--bg-med-gray);
@@ -101,7 +94,7 @@
           border-color: var(--accent-purple);
           box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
       }
-      
+     
       /* General Animations */
       @keyframes spin-slow {
         from { transform: rotate(0deg); }
@@ -110,7 +103,7 @@
       .animate-spin-slow {
         animation: spin-slow 3s linear infinite;
       }
-      
+     
       @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
@@ -118,7 +111,7 @@
       .animate-fadeIn {
         animation: fadeIn 0.3s ease-in-out forwards;
       }
-      
+     
       @keyframes pop-in {
         from { opacity: 0; transform: scale(0.95); }
         to { opacity: 1; transform: scale(1); }
@@ -126,7 +119,7 @@
       .animate-pop-in {
         animation: pop-in 0.2s ease-out forwards;
       }
-      
+     
       @keyframes slide-in-up {
          from { opacity: 0; transform: translateY(10px); }
          to { opacity: 1; transform: translateY(0); }
@@ -134,44 +127,43 @@
       .animate-slide-in-up {
         animation: slide-in-up 0.3s ease-out forwards;
       }
-      
+     
       @keyframes slide-in-right {
          from { opacity: 0; transform: translateX(-20px); }
          to { opacity: 1; transform: translateX(0); }
       }
-       .animate-slide-in-right {
+      .animate-slide-in-right {
         animation: slide-in-right 0.3s ease-out forwards;
       }
-
       @keyframes shimmer {
         0% { background-position: -1000px 0; }
         100% { background-position: 1000px 0; }
       }
       .progress-bar-shimmer {
-        background: linear-gradient(to right, var(--accent-purple) 4%, #a855f7 25%, var(--accent-purple) 36%);
+        background: linear-gradient(to right, var(--accent-purple) 4%, var(--accent-purple-hover) 25%, var(--accent-purple) 36%);
         background-size: 1000px 100%;
         animation: shimmer 2s infinite linear;
       }
     </style>
-<script type="importmap">
+    <script type="importmap">
 {
   "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "jszip": "https://aistudiocdn.com/jszip@^3.10.1",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
-    "jspdf": "https://aistudiocdn.com/jspdf@^3.0.4",
-    "mammoth": "https://aistudiocdn.com/mammoth@^1.11.0",
-    "docx": "https://aistudiocdn.com/docx@^9.5.1",
-    "pdfjs-dist/": "https://aistudiocdn.com/pdfjs-dist@^4.5.136/"
+    "react/": "https://aistudiocdn.com/react@19.2.0/",
+    "react": "https://aistudiocdn.com/react@19.2.0",
+    "react-dom": "https://aistudiocdn.com/react-dom@19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@19.2.0/",
+    "jszip": "https://aistudiocdn.com/jszip@3.10.1",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@1.30.0",
+    "jspdf": "https://aistudiocdn.com/jspdf@3.0.4",
+    "mammoth": "https://aistudiocdn.com/mammoth@1.11.0",
+    "docx": "https://aistudiocdn.com/docx@9.5.1",
+    "pdfjs-dist/": "https://aistudiocdn.com/pdfjs-dist@4.5.136/"
   }
 }
-</script>
-</head>
+    </script>
+  </head>
   <body class="bg-gray-900 text-gray-100 font-sans">
     <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
+    <script type="module" src="./index.tsx" rel="modulepreload"></script>
   </body>
 </html>
