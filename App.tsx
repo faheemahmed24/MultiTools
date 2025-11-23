@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useUserLocalStorage } from './hooks/useUserLocalStorage';
@@ -26,16 +25,9 @@ import LanguageDropdown from './components/LanguageDropdown';
 import { ClockIcon } from './components/icons/ClockIcon';
 import { CheckCircleIcon } from './components/icons/CheckCircleIcon';
 import { XCircleIcon } from './components/icons/XCircleIcon';
-import { UserIcon } from './components/icons/UserIcon';
 import { SkeletonLoader } from './components/Loader';
 import AdUnit from './components/AdUnit';
 
-
-const HamburgerIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-    </svg>
-);
 interface ProcessingFile {
   id: string;
   file: File;
@@ -101,14 +93,31 @@ const TranslationPanel: React.FC<{ text: string | null; t: TranslationSet }> = (
     );
 };
 
+// Map of Tool Keys to their Display Info
+const TOOLS_CONFIG = [
+    { key: 'AI Transcriber', category: 'media', iconClass: 'fas fa-file-audio' },
+    { key: 'Image Converter & OCR', category: 'media', iconClass: 'fas fa-image' },
+    { key: 'AI Translator', category: 'text', iconClass: 'fas fa-language' },
+    { key: 'Grammar Corrector', category: 'text', iconClass: 'fas fa-spell-check' },
+    { key: 'Voice Generator', category: 'media', iconClass: 'fas fa-microphone' },
+    { key: 'Video Editor', category: 'media', iconClass: 'fas fa-video' },
+    { key: 'PDF to Image', category: 'productivity', iconClass: 'fas fa-file-pdf' },
+    { key: 'Image to PDF', category: 'productivity', iconClass: 'fas fa-images' },
+    { key: 'PDF to Word', category: 'productivity', iconClass: 'fas fa-file-word' },
+    { key: 'Word to PDF', category: 'productivity', iconClass: 'fas fa-file-pdf' },
+    { key: 'Export to Sheets', category: 'data', iconClass: 'fas fa-table' },
+    { key: 'Data Analyzer', category: 'data', iconClass: 'fas fa-chart-line' },
+    { key: 'Code Assistant', category: 'development', iconClass: 'fas fa-code' }
+];
 
 function App() {
   const [uiLanguage, setUiLanguage] = useLocalStorage<Language>('uiLanguage', 'en');
   const [currentUser, setCurrentUser] = useLocalStorage<User | null>('currentUser', null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   
-  // User-specific data
-  const [activeTool, setActiveTool] = useUserLocalStorage<string>(currentUser?.id, 'activeTool', 'AI Transcriber');
+  // 'Dashboard' means the main grid view.
+  const [activeTool, setActiveTool] = useUserLocalStorage<string>(currentUser?.id, 'activeTool', 'Dashboard');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   
   // Transcription State
   const [transcriptions, setTranscriptions] = useUserLocalStorage<Transcription[]>(currentUser?.id, 'transcriptions', []);
@@ -124,8 +133,9 @@ function App() {
   const [pdfWordHistory, setPdfWordHistory] = useUserLocalStorage<PdfWordHistoryItem[]>(currentUser?.id, 'pdfWordHistory', []);
   const [wordPdfHistory, setWordPdfHistory] = useUserLocalStorage<WordPdfHistoryItem[]>(currentUser?.id, 'wordPdfHistory', []);
 
-  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
-  const [isSidebarOpen, setIsSidebarOpen] = useLocalStorage<boolean>('isSidebarOpen', window.innerWidth >= 768);
+  // IsSidebarOpen not needed for new layout, but keeping hook for backward compat if needed or removal
+  const [isSidebarOpen, setIsSidebarOpen] = useLocalStorage<boolean>('isSidebarOpen', true);
+  const [showAd, setShowAd] = useState(true);
 
   const t = useMemo(() => getTranslations(uiLanguage), [uiLanguage]);
 
@@ -140,22 +150,6 @@ function App() {
       setProcessingFiles([]);
     }
   }, [currentUser, setCurrentTranscriptionId]);
-
-   useEffect(() => {
-    const handleResize = () => {
-      const newIsDesktop = window.innerWidth >= 768;
-      if (newIsDesktop !== isDesktop) {
-        setIsDesktop(newIsDesktop);
-        if (!newIsDesktop) {
-          setIsSidebarOpen(false); // Close sidebar when switching to mobile
-        } else {
-          setIsSidebarOpen(true); // Open sidebar when switching to desktop
-        }
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [isDesktop, setIsSidebarOpen]);
 
 
   const currentTranscription = useMemo(() => {
@@ -273,6 +267,7 @@ function App() {
     const mainContentClass = "flex flex-col";
     const panelGridClass = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 min-h-0";
     
+    // History Renderers
     const renderTranscriptionHistoryItem = (item: Transcription, isActive: boolean) => (
         <div className="flex-grow overflow-hidden">
             <p className="font-semibold truncate text-gray-200">{item.fileName}</p>
@@ -347,45 +342,25 @@ function App() {
         return (
             <div className={`${mainContentClass} animate-fadeIn`}>
                 {processingFiles.length > 0 ? (
-                    (() => {
-                        const allDone = processingFiles.every(f => f.status === 'done' || f.status === 'error');
-                        const StatusIndicator = ({ status, error }: { status: ProcessingFile['status'], error?: string }) => {
-                            if (status === 'pending') return <div className="flex items-center gap-2 text-gray-400"><ClockIcon className="w-5 h-5" /><span>Pending</span></div>;
-                            if (status === 'processing') return <div className="flex items-center gap-2 text-purple-400"><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-400"></div><span>Processing...</span></div>;
-                            if (status === 'done') return <div className="flex items-center gap-2 text-green-400"><CheckCircleIcon className="w-5 h-5" /><span>Done</span></div>;
-                            if (status === 'error') return <div className="flex items-center gap-2 text-red-400" title={error}><XCircleIcon className="w-5 h-5" /><span>Error</span></div>;
-                            return null;
-                        };
-                        const getProgressBarProps = (status: ProcessingFile['status']) => {
-                            if (status === 'pending') return { width: 'w-[10%]', classes: 'bg-purple-500' };
-                            if (status === 'processing') return { width: 'w-full', classes: 'progress-bar-shimmer' };
-                            if (status === 'error') return { width: 'w-full', classes: 'bg-red-500' };
-                            return { width: 'w-full', classes: 'bg-purple-500' };
-                        };
-
-                        return (
-                            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl shadow-lg p-6 transform-gpu">
-                                <h2 className="text-xl font-bold mb-4 text-gray-200">Transcription Queue</h2>
-                                <ul className="space-y-4">
-                                    {processingFiles.map(f => {
-                                        const {width, classes} = getProgressBarProps(f.status);
-                                        return (
-                                            <li key={f.id} className="bg-gray-700/50 p-4 rounded-lg">
-                                                <div className="flex items-center justify-between gap-4 mb-2">
-                                                    <p className="font-semibold truncate text-gray-200 flex-1" title={f.file.name}>{f.file.name}</p>
-                                                    <StatusIndicator status={f.status} error={f.error} />
-                                                </div>
-                                                <div className="w-full bg-gray-600 rounded-full h-2 overflow-hidden">
-                                                    <div className={`h-2 rounded-full transition-all duration-500 ${classes} ${width}`}></div>
-                                                </div>
-                                            </li>
-                                        )
-                                    })}
-                                </ul>
-                                {allDone && <button onClick={() => setProcessingFiles([])} className="w-full mt-6 px-4 py-2 bg-purple-600 font-semibold rounded-lg hover:bg-purple-700 transition-colors">Clear Completed</button>}
-                            </div>
-                        );
-                    })()
+                     <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl shadow-lg p-6 transform-gpu">
+                        <h2 className="text-xl font-bold mb-4 text-gray-200">Transcription Queue</h2>
+                        <ul className="space-y-4">
+                            {processingFiles.map(f => (
+                                <li key={f.id} className="bg-gray-700/50 p-4 rounded-lg">
+                                    <div className="flex items-center justify-between gap-4 mb-2">
+                                        <p className="font-semibold truncate text-gray-200 flex-1">{f.file.name}</p>
+                                        <span className="text-sm text-gray-400">{f.status}</span>
+                                    </div>
+                                    <div className="w-full bg-gray-600 rounded-full h-2">
+                                         <div className={`h-2 rounded-full transition-all duration-500 ${f.status === 'processing' ? 'bg-purple-500 w-full animate-pulse' : f.status === 'done' ? 'bg-green-500 w-full' : f.status === 'error' ? 'bg-red-500 w-full' : 'bg-gray-500 w-[10%]'}`}></div>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                         {processingFiles.every(f => f.status === 'done' || f.status === 'error') && 
+                            <button onClick={() => setProcessingFiles([])} className="w-full mt-6 px-4 py-2 bg-purple-600 font-semibold rounded-lg hover:bg-purple-700 transition-colors">Clear Completed</button>
+                         }
+                    </div>
                 ) : (
                     <FileUpload onFilesSelect={handleFilesSelect} t={t} isProcessing={false} />
                 )}
@@ -407,13 +382,8 @@ function App() {
             <div className={`${mainContentClass} animate-fadeIn`}>
                 <AITranslator t={t} onTranslationComplete={(data) => handleAddToHistory('AI Translator', data)} />
                  <div className={panelGridClass}>
-                    <Panel title={t.translationResult} defaultOpen={true} className="md:col-span-2 lg:col-span-1">
-                        <EmptyPanel message="Result is shown in the main tool above." />
-                    </Panel>
-                    <Panel title="Further Translation" defaultOpen={true}>
-                        <EmptyPanel message="Not applicable for this tool." />
-                    </Panel>
-                    <Panel title={t.history} defaultOpen={true}>
+                     {/* Panels remain similar to before */}
+                    <Panel title={t.history} defaultOpen={true} className="md:col-span-3">
                         <HistoryPanel items={translationHistory} onSelect={() => {}} onDelete={(id) => setTranslationHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderTranslationHistoryItem} />
                     </Panel>
                 </div>
@@ -423,11 +393,8 @@ function App() {
         return (
             <div className={`${mainContentClass} animate-fadeIn`}>
                 <GrammarCorrector t={t} onCorrectionComplete={(data) => handleAddToHistory('Grammar Corrector', data)} />
-                 <div className={panelGridClass}>
-                    <Panel title={t.grammarResult} defaultOpen={true} className="md:col-span-2 lg:col-span-1">
-                        <EmptyPanel message="Result is shown in the main tool above." />
-                    </Panel>
-                    <Panel title={t.history} defaultOpen={true} className="md:col-span-2 lg:col-span-2">
+                 <div className="mt-8">
+                     <Panel title={t.history} defaultOpen={true}>
                         <HistoryPanel items={grammarHistory} onSelect={() => {}} onDelete={(id) => setGrammarHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderGrammarHistoryItem} />
                     </Panel>
                 </div>
@@ -437,18 +404,10 @@ function App() {
         return (
             <div className={`${mainContentClass} animate-fadeIn`}>
                 <ImageConverterOcr t={t} onAnalysisComplete={(data) => handleAddToHistory('Image Converter & OCR', data)}/>
-                <div className="mt-8 flex flex-col gap-6">
-                    <Panel title={t.imageAnalysisResult} defaultOpen={true}>
-                         <EmptyPanel message="Analysis results will appear in the main tool above once an image is processed." />
+                <div className="mt-8">
+                     <Panel title={t.history} defaultOpen={true}>
+                        <HistoryPanel items={analysisHistory} onSelect={() => {}} onDelete={(id) => setAnalysisHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderAnalysisHistoryItem} />
                     </Panel>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Panel title={t.translationResult} defaultOpen={true}>
-                             <EmptyPanel message="Translation will appear in the main tool above." />
-                        </Panel>
-                        <Panel title={t.history} defaultOpen={true}>
-                            <HistoryPanel items={analysisHistory} onSelect={() => {}} onDelete={(id) => setAnalysisHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderAnalysisHistoryItem} />
-                        </Panel>
-                    </div>
                 </div>
             </div>
         );
@@ -456,9 +415,7 @@ function App() {
         return (
              <div className={`${mainContentClass} animate-fadeIn`}>
                 <PdfToImage t={t} onConversionComplete={(data) => handleAddToHistory('PDF to Image', data)} />
-                <div className={panelGridClass}>
-                    <Panel title="Result" defaultOpen={true} className="md:col-span-2 lg:col-span-1"><EmptyPanel message="Converted images will appear in the tool above." /></Panel>
-                    <Panel title="Translation" defaultOpen={true}><EmptyPanel message="Not applicable for this tool." /></Panel>
+                <div className="mt-8">
                     <Panel title={t.history} defaultOpen={true}>
                         <HistoryPanel items={pdfImageHistory} onSelect={() => {}} onDelete={(id) => setPdfImageHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderPdfImageHistoryItem} />
                     </Panel>
@@ -469,9 +426,7 @@ function App() {
         return (
              <div className={`${mainContentClass} animate-fadeIn`}>
                 <ImageToPdf t={t} onConversionComplete={(data) => handleAddToHistory('Image to PDF', data)}/>
-                 <div className={panelGridClass}>
-                    <Panel title="Result" defaultOpen={true} className="md:col-span-2 lg:col-span-1"><EmptyPanel message="The PDF download link will appear in the tool above." /></Panel>
-                    <Panel title="Translation" defaultOpen={true}><EmptyPanel message="Not applicable for this tool." /></Panel>
+                 <div className="mt-8">
                     <Panel title={t.history} defaultOpen={true}>
                         <HistoryPanel items={imagePdfHistory} onSelect={() => {}} onDelete={(id) => setImagePdfHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderImagePdfHistoryItem} />
                     </Panel>
@@ -482,9 +437,7 @@ function App() {
          return (
              <div className={`${mainContentClass} animate-fadeIn`}>
                 <PdfToWord t={t} onConversionComplete={(data) => handleAddToHistory('PDF to Word', data)} />
-                 <div className={panelGridClass}>
-                    <Panel title="Result" defaultOpen={true} className="md:col-span-2 lg:col-span-1"><EmptyPanel message="The document download link will appear in the tool above." /></Panel>
-                    <Panel title="Translation" defaultOpen={true}><EmptyPanel message="Translation feature coming soon." /></Panel>
+                 <div className="mt-8">
                     <Panel title={t.history} defaultOpen={true}>
                         <HistoryPanel items={pdfWordHistory} onSelect={() => {}} onDelete={(id) => setPdfWordHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderFileHistoryItem} />
                     </Panel>
@@ -495,9 +448,7 @@ function App() {
         return (
              <div className={`${mainContentClass} animate-fadeIn`}>
                 <WordToPdf t={t} onConversionComplete={(data) => handleAddToHistory('Word to PDF', data)} />
-                 <div className={panelGridClass}>
-                    <Panel title="Result" defaultOpen={true} className="md:col-span-2 lg:col-span-1"><EmptyPanel message="The PDF download link will appear in the tool above." /></Panel>
-                    <Panel title="Translation" defaultOpen={true}><EmptyPanel message="Not applicable for this tool." /></Panel>
+                 <div className="mt-8">
                     <Panel title={t.history} defaultOpen={true}>
                         <HistoryPanel items={wordPdfHistory} onSelect={() => {}} onDelete={(id) => setWordPdfHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderFileHistoryItem} />
                     </Panel>
@@ -508,20 +459,152 @@ function App() {
         return (
              <div className={`${mainContentClass} animate-fadeIn`}>
                 <ExportToSheets t={t} />
-                 <div className={panelGridClass}>
-                    <Panel title="Result" defaultOpen={true} className="md:col-span-2 lg:col-span-3">
-                        <EmptyPanel message="The CSV file will be downloaded directly to your device." />
-                    </Panel>
-                </div>
             </div>
         );
+      case 'Dashboard':
+          return null;
       default:
         return <ComingSoon toolName={activeTool} />;
     }
   };
 
+  const renderDashboard = () => (
+      <div className="animate-fadeIn">
+          {/* Advertisement */}
+          {showAd && (
+            <div className="advertisement">
+                <div className="ad-content">
+                    <i className="fas fa-crown ad-icon"></i>
+                    <div>
+                        <div className="ad-title">Upgrade to Pro</div>
+                        <div className="ad-description">Unlock all premium features and unlimited processing</div>
+                    </div>
+                </div>
+                <button className="ad-close" onClick={() => setShowAd(false)}>
+                    <i className="fas fa-times"></i>
+                </button>
+            </div>
+          )}
+          
+          {/* Categories */}
+          <section className="categories">
+            <div className="category-tabs">
+                {['all', 'media', 'text', 'productivity', 'development', 'data'].map(cat => (
+                    <button 
+                        key={cat}
+                        className={`category-tab ${selectedCategory === cat ? 'active' : ''}`}
+                        onClick={() => setSelectedCategory(cat)}
+                        style={{textTransform: 'capitalize'}}
+                    >
+                        {cat === 'all' ? t.tools : cat}
+                    </button>
+                ))}
+            </div>
+          </section>
+
+           {/* Quick Actions */}
+            <section className="quick-actions">
+                <h2 className="quick-actions-title">
+                    <i className="fas fa-bolt"></i>
+                    Quick Actions
+                </h2>
+                <div className="quick-actions-grid">
+                    <button className="quick-action-btn" onClick={() => setActiveTool('AI Transcriber')}>
+                        <i className="fas fa-upload"></i>
+                        <span>{t.transcription}</span>
+                    </button>
+                    <button className="quick-action-btn" onClick={() => setActiveTool('AI Translator')}>
+                        <i className="fas fa-language"></i>
+                        <span>{t.translate}</span>
+                    </button>
+                    <button className="quick-action-btn" onClick={() => setActiveTool('Image Converter & OCR')}>
+                        <i className="fas fa-image"></i>
+                        <span>OCR</span>
+                    </button>
+                    <button className="quick-action-btn">
+                        <i className="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </button>
+                </div>
+            </section>
+
+           {/* Tools Grid */}
+            <section className="tools-grid">
+                {TOOLS_CONFIG
+                    .filter(tool => selectedCategory === 'all' || tool.category === selectedCategory)
+                    .map(tool => {
+                        // Find user-friendly name if available in t, else use key
+                        let toolName = tool.key;
+                        let toolDesc = "AI powered tool";
+                        
+                        if (tool.key === 'AI Transcriber') { toolName = t.aiTranscriber; toolDesc = t.transcription; }
+                        else if (tool.key === 'AI Translator') { toolName = t.aiTranslatorTitle; toolDesc = "Translate text between 100+ languages"; }
+                        else if (tool.key === 'Image Converter & OCR') { toolName = t.imageConverterOcrTitle; toolDesc = "Convert images and extract text"; }
+                        
+                        return (
+                            <div key={tool.key} className="tool-card" onClick={() => setActiveTool(tool.key)}>
+                                <div className="tool-header">
+                                    <div className="tool-icon">
+                                        <i className={tool.iconClass}></i>
+                                    </div>
+                                    <div className="tool-info">
+                                        <h3 className="tool-name">{toolName}</h3>
+                                        <span className="tool-category">{tool.category}</span>
+                                    </div>
+                                </div>
+                                <p className="tool-description">{toolDesc}</p>
+                            </div>
+                        );
+                })}
+            </section>
+            
+            {/* Recent Activity */}
+            <section className="recent-activity">
+                 <h2 className="recent-activity-title">
+                    <i className="fas fa-clock"></i>
+                    Recent Activity
+                </h2>
+                <div className="activity-list">
+                    {transcriptions.slice(0, 1).map(item => (
+                        <div key={item.id} className="activity-item" onClick={() => { setCurrentTranscriptionId(item.id); setActiveTool('AI Transcriber'); }}>
+                            <div className="activity-icon"><i className="fas fa-file-audio"></i></div>
+                            <div className="activity-details">
+                                <div className="activity-title">Transcription: {item.fileName}</div>
+                                <div className="activity-time">{item.date}</div>
+                            </div>
+                            <span className="activity-status status-completed">Completed</span>
+                        </div>
+                    ))}
+                    {translationHistory.slice(0, 1).map(item => (
+                         <div key={item.id} className="activity-item" onClick={() => setActiveTool('AI Translator')}>
+                            <div className="activity-icon"><i className="fas fa-language"></i></div>
+                            <div className="activity-details">
+                                <div className="activity-title">Translation</div>
+                                <div className="activity-time">{item.date}</div>
+                            </div>
+                            <span className="activity-status status-completed">Completed</span>
+                        </div>
+                    ))}
+                    {analysisHistory.slice(0, 1).map(item => (
+                         <div key={item.id} className="activity-item" onClick={() => setActiveTool('Image Converter & OCR')}>
+                            <div className="activity-icon"><i className="fas fa-image"></i></div>
+                            <div className="activity-details">
+                                <div className="activity-title">Image Analysis</div>
+                                <div className="activity-time">{item.date}</div>
+                            </div>
+                            <span className="activity-status status-completed">Completed</span>
+                        </div>
+                    ))}
+                     {transcriptions.length === 0 && translationHistory.length === 0 && analysisHistory.length === 0 && (
+                        <p className="text-gray-500 text-center py-4">{t.noHistory}</p>
+                    )}
+                </div>
+            </section>
+      </div>
+  );
+
   return (
-    <div className="bg-gray-900 text-white h-screen font-sans flex overflow-hidden">
+    <div className="bg-[#1a1a2e] text-[#e0e0e0] min-h-screen font-sans flex flex-col">
       <Header 
         uiLanguage={uiLanguage} 
         setUiLanguage={setUiLanguage} 
@@ -534,45 +617,34 @@ function App() {
         onLoginClick={() => setIsAuthModalOpen(true)}
         onLogoutClick={handleLogout}
       />
-      {isSidebarOpen && !isDesktop && (
-        <div 
-          onClick={() => setIsSidebarOpen(false)} 
-          className="fixed inset-0 bg-black/60 z-30 md:hidden"
-          aria-hidden="true"
-        />
-      )}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="md:hidden flex items-center justify-between p-4 bg-gray-800/80 backdrop-blur-sm border-b border-gray-700/50 sticky top-0 z-20 h-16">
-          <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="p-2 -ms-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
-              aria-label="Open menu"
-          >
-              <HamburgerIcon className="w-6 h-6" />
-          </button>
-          <h1 className="text-xl font-bold">
-            <span className="text-purple-400">Multi</span><span className="text-pink-500">Tools</span>
-          </h1>
-          {currentUser ? (
-             <div className="p-1 bg-gray-700 rounded-full">
-                <UserIcon className="w-6 h-6 text-purple-400"/>
-              </div>
-          ) : (
-            <button onClick={() => setIsAuthModalOpen(true)} className="p-1">
-               <UserIcon className="w-6 h-6 text-gray-400" />
-            </button>
-          )}
+      
+      <main className="main-container flex-grow">
+         {activeTool === 'Dashboard' ? renderDashboard() : (
+            <div className="animate-fadeIn">
+                 <div className="mb-6 flex items-center gap-2">
+                    <button onClick={() => setActiveTool('Dashboard')} className="text-gray-400 hover:text-white transition-colors">
+                        <i className="fas fa-arrow-left me-2"></i> {t.back}
+                    </button>
+                    <h2 className="text-2xl font-bold">{activeTool}</h2>
+                 </div>
+                 {renderActiveTool()}
+            </div>
+         )}
+      </main>
+
+      <footer className="footer">
+        <div className="footer-content">
+            <div className="footer-links">
+                <a href="#" className="footer-link">About</a>
+                <a href="#" className="footer-link">Privacy Policy</a>
+                <a href="#" className="footer-link">Terms of Service</a>
+                <a href="#" className="footer-link">Contact</a>
+                <a href="#" className="footer-link">API</a>
+            </div>
+            <p className="footer-text">© 2024 MultiTools. All rights reserved.</p>
         </div>
-        <main className="flex-grow p-4 sm:p-6 md:p-8 overflow-y-auto">
-         <div className="mb-8">
-            <AdUnit />
-         </div>
-         {renderActiveTool()}
-         <div className="mt-8">
-            <AdUnit />
-         </div>
-        </main>
-      </div>
+      </footer>
+
       <AuthModal 
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}

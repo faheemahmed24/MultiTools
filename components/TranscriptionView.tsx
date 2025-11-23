@@ -1,36 +1,30 @@
-
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { Transcription, TranslationSet, TranscriptionSegment } from '../types';
 import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
 import { EditIcon } from './icons/EditIcon';
 import { SaveIcon } from './icons/SaveIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
-import { UndoIcon } from './icons/UndoIcon';
-import { RedoIcon } from './icons/RedoIcon';
-import { useDebounce } from '../hooks/useDebounce';
-import { jsPDF } from 'jspdf';
-import * as docx from 'docx';
 import { TxtIcon } from './icons/TxtIcon';
 import { JsonIcon } from './icons/JsonIcon';
 import { SrtIcon } from './icons/SrtIcon';
 import { CsvIcon } from './icons/CsvIcon';
 import { PdfIcon } from './icons/PdfIcon';
 import { DocxIcon } from './icons/DocxIcon';
-import { PngIcon } from './icons/PngIcon';
-import { JpgIcon } from './icons/JpgIcon';
 import { summarizeTranscription, analyzeSentiment } from '../services/geminiService';
 import { SkeletonLoader } from './Loader';
+import { jsPDF } from 'jspdf';
+import * as docx from 'docx';
 
 interface TranscriptionViewProps {
   transcription: Transcription;
   onSave: () => void;
-  onUpdate: (id: string, updatedSegments: TranscriptionSegment[], summary?: string, sentiment?: string) => void; // Updated signature
+  onUpdate: (id: string, updatedSegments: TranscriptionSegment[], summary?: string, sentiment?: string) => void;
   t: TranslationSet;
 }
 
 const Switch: React.FC<{ checked: boolean; onChange: (checked: boolean) => void; label: string; }> = ({ checked, onChange, label }) => (
-    <label className="flex items-center cursor-pointer">
+    <label className="flex items-center cursor-pointer select-none">
         <div className="relative">
             <input type="checkbox" className="sr-only" checked={checked} onChange={(e) => onChange(e.target.checked)} />
             <div className="block bg-gray-600 w-10 h-6 rounded-full"></div>
@@ -40,7 +34,6 @@ const Switch: React.FC<{ checked: boolean; onChange: (checked: boolean) => void;
     </label>
 );
 
-// Search Icon Component
 const SearchIcon = (props: any) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -55,180 +48,54 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   const [isEditing, setIsEditing] = useState(false);
   const [editedSegments, setEditedSegments] = useState<TranscriptionSegment[]>([]);
   const [showExportMenu, setShowExportMenu] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const exportMenuRef = useRef<HTMLDivElement>(null);
-
-  // Summary State
-  const [summary, setSummary] = useState<string>(transcription.summary || '');
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const [summary, setSummary] = useState(transcription.summary || '');
+  const [sentiment, setSentiment] = useState(transcription.sentiment || '');
   const [isSummarizing, setIsSummarizing] = useState(false);
-  const [showSummary, setShowSummary] = useState(false);
-
-  // Sentiment State
-  const [sentiment, setSentiment] = useState<string>(transcription.sentiment || '');
   const [isAnalyzingSentiment, setIsAnalyzingSentiment] = useState(false);
 
-  // Search State
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // State for undo/redo
-  const [editHistory, setEditHistory] = useState<TranscriptionSegment[][]>([]);
-  const [currentHistoryIndex, setCurrentHistoryIndex] = useState(-1);
-  const debouncedEditedSegments = useDebounce(editedSegments, 500);
-
   useEffect(() => {
-    // Reset state when a new transcription is loaded
-    setIsSaved(false);
-    setIsEditing(false);
-    setShowExportMenu(false);
-    setEditHistory([]);
-    setCurrentHistoryIndex(-1);
+    setEditedSegments(transcription.segments || []);
     setSummary(transcription.summary || '');
-    setShowSummary(false);
     setSentiment(transcription.sentiment || '');
-    setSearchQuery('');
-    // Scroll to top when a new transcription is loaded
-    if (containerRef.current) {
-        containerRef.current.scrollTop = 0;
-    }
-  }, [transcription.id, transcription.summary, transcription.sentiment]);
+  }, [transcription]);
 
-  // Click outside listener for export menu
-   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
-        setShowExportMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Effect to update history on debounced changes
-  useEffect(() => {
-    if (!isEditing || !debouncedEditedSegments.length) return;
-
-    // Check if the current state matches the history at current index (meaning it was just set by undo/redo)
-    if (editHistory[currentHistoryIndex] && JSON.stringify(editHistory[currentHistoryIndex]) === JSON.stringify(debouncedEditedSegments)) {
-        return;
-    }
-    
-    const newHistory = editHistory.slice(0, currentHistoryIndex + 1);
-    setEditHistory([...newHistory, debouncedEditedSegments]);
-    setCurrentHistoryIndex(newHistory.length);
-
-  }, [debouncedEditedSegments, isEditing, currentHistoryIndex, editHistory]);
-
-  const canUndo = isEditing && currentHistoryIndex > 0;
-  const canRedo = isEditing && currentHistoryIndex < editHistory.length - 1;
-
-  const handleUndo = useCallback(() => {
-    if (canUndo) {
-      const newIndex = currentHistoryIndex - 1;
-      setCurrentHistoryIndex(newIndex);
-      setEditedSegments(editHistory[newIndex]);
-    }
-  }, [canUndo, currentHistoryIndex, editHistory]);
-
-  const handleRedo = useCallback(() => {
-    if (canRedo) {
-      const newIndex = currentHistoryIndex + 1;
-      setCurrentHistoryIndex(newIndex);
-      setEditedSegments(editHistory[newIndex]);
-    }
-  }, [canRedo, currentHistoryIndex, editHistory]);
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-        if (!isEditing) return;
-        
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
-            e.preventDefault();
-            if (e.shiftKey) {
-                handleRedo();
-            } else {
-                handleUndo();
-            }
-        } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
-            e.preventDefault();
-            handleRedo();
-        }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isEditing, handleUndo, handleRedo]);
-
-
-  const fullText = useMemo(() => {
-    return transcription.segments
-      .map(segment => {
-        const timestamp = showTimestamps ? `[${segment.startTime} - ${segment.endTime}]` : '';
-        const speaker = showSpeaker ? `${segment.speaker}:` : '';
-        return [timestamp, speaker, segment.text].filter(Boolean).join(' ').trim();
-      })
-      .join('\n');
-  }, [transcription.segments, showTimestamps, showSpeaker]);
-
-  const characterCount = useMemo(() => {
-    const segmentsToCount = isEditing ? editedSegments : transcription.segments;
-    return segmentsToCount.reduce((acc, segment) => acc + segment.text.length, 0);
-  }, [isEditing, editedSegments, transcription.segments]);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(fullText);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
-  };
-  
-  const handleSave = () => {
-    onSave();
-    setIsSaved(true);
-  };
-
-  const handleEditToggle = () => {
-    if (isEditing) {
-      setIsEditing(false);
-      setEditHistory([]);
-      setCurrentHistoryIndex(-1);
-      setSearchQuery(''); // Clear search when exiting edit mode
-    } else {
-      const initialSegments = JSON.parse(JSON.stringify(transcription.segments));
-      setEditedSegments(initialSegments);
-      setEditHistory([initialSegments]);
-      setCurrentHistoryIndex(0);
-      setIsEditing(true);
-      setSearchQuery(''); // Clear search when entering edit mode
-    }
-  };
-
-  const handleSegmentChange = (index: number, newText: string) => {
+  const handleSegmentChange = (index: number, field: keyof TranscriptionSegment, value: string) => {
     const newSegments = [...editedSegments];
-    newSegments[index].text = newText;
+    newSegments[index] = { ...newSegments[index], [field]: value };
     setEditedSegments(newSegments);
   };
 
   const handleSaveChanges = () => {
     onUpdate(transcription.id, editedSegments, summary, sentiment);
     setIsEditing(false);
-    setEditHistory([]);
-    setCurrentHistoryIndex(-1);
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 2000);
+    onSave();
   };
 
-  const handleSummarize = async () => {
-      if (summary) {
-          setShowSummary(!showSummary);
-          return;
-      }
-      
+  const handleCopy = () => {
+    const text = editedSegments.map(s => {
+        const time = showTimestamps ? `[${s.startTime}] ` : '';
+        const speaker = showSpeaker ? `${s.speaker}: ` : '';
+        return `${time}${speaker}${s.text}`;
+    }).join('\n');
+    navigator.clipboard.writeText(text);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
+  const handleGenerateSummary = async () => {
+      if (summary) return;
       setIsSummarizing(true);
-      setShowSummary(true);
       try {
+          const fullText = transcription.segments.map(s => s.text).join(' ');
           const result = await summarizeTranscription(fullText);
           setSummary(result);
-          onUpdate(transcription.id, transcription.segments, result, sentiment); // Persist summary
-      } catch (error) {
-          console.error("Failed to summarize", error);
+          onUpdate(transcription.id, editedSegments, result, sentiment);
+      } catch (e) {
+          console.error(e);
       } finally {
           setIsSummarizing(false);
       }
@@ -236,374 +103,213 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
 
   const handleAnalyzeSentiment = async () => {
       if (sentiment) return;
-      
       setIsAnalyzingSentiment(true);
       try {
+          const fullText = transcription.segments.map(s => s.text).join(' ');
           const result = await analyzeSentiment(fullText);
           setSentiment(result);
-          onUpdate(transcription.id, transcription.segments, summary, result); // Persist sentiment
-      } catch (error) {
-          console.error("Failed to analyze sentiment", error);
+          onUpdate(transcription.id, editedSegments, summary, result);
+      } catch (e) {
+          console.error(e);
       } finally {
           setIsAnalyzingSentiment(false);
       }
   };
 
-  const createDownload = (filename: string, content: string | Blob, mime?: string) => {
-    const blob = content instanceof Blob ? content : new Blob([content], { type: mime });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setShowExportMenu(false);
-  };
-  
-  const renderTranscriptionToCanvas = (format: 'png' | 'jpeg') => {
-      const PADDING = 25;
-      const LINE_HEIGHT = 28;
-      const FONT_SIZE = 16;
-      const FONT = `${FONT_SIZE}px monospace`;
-      const CANVAS_WIDTH = 1200;
+  const handleExport = async (format: 'txt' | 'json' | 'srt' | 'csv' | 'pdf' | 'docx') => {
+      const filename = (transcription.fileName || 'transcription').split('.')[0];
+      let content = '';
+      let mimeType = 'text/plain';
+      let blob: Blob | null = null;
 
-      const BG_COLOR = '#1f2937';
-      const TIMESTAMP_COLOR = '#A78BFA';
-      const SPEAKER_COLOR = '#F472B6';
-      const TEXT_COLOR = '#E5E7EB';
-
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      if (!context) return;
-      
-      context.font = FONT;
-      
-      // Detect RTL languages
-      const isRTL = ['ar', 'ur', 'fa', 'he', 'sd'].some(code => transcription.detectedLanguage?.toLowerCase().includes(code));
-
-      let totalHeight = PADDING;
-      const lines: {y: number, parts: {text: string, color: string}[]}[] = [];
-
-      transcription.segments.forEach(segment => {
-          const prefixParts: {text: string, color: string}[] = [];
-          if (showTimestamps) prefixParts.push({ text: `[${segment.startTime} - ${segment.endTime}] `, color: TIMESTAMP_COLOR });
-          if (showSpeaker) prefixParts.push({ text: `${segment.speaker}: `, color: SPEAKER_COLOR });
-          
-          const prefixWidth = prefixParts.reduce((acc, part) => acc + context.measureText(part.text).width, 0);
-          const availableWidth = CANVAS_WIDTH - PADDING * 2;
-          
-          const words = segment.text.split(' ');
-          let currentLineText = '';
-          const textLines: string[] = [];
-          
-          words.forEach((word) => {
-              const testLine = currentLineText + word + ' ';
-              const widthLimit = textLines.length === 0 ? availableWidth - prefixWidth : availableWidth;
-              const testWidth = context.measureText(testLine).width;
-
-              if (testWidth > widthLimit && currentLineText) {
-                  textLines.push(currentLineText.trim());
-                  currentLineText = word + ' ';
-              } else {
-                  currentLineText = testLine;
-              }
-          });
-          if (currentLineText.trim()) {
-              textLines.push(currentLineText.trim());
+      switch (format) {
+          case 'txt':
+              content = editedSegments.map(s => {
+                  const time = showTimestamps ? `[${s.startTime}] ` : '';
+                  const speaker = showSpeaker ? `${s.speaker}: ` : '';
+                  return `${time}${speaker}${s.text}`;
+              }).join('\n');
+              blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+              break;
+          case 'json':
+              content = JSON.stringify(transcription, null, 2);
+              mimeType = 'application/json';
+              blob = new Blob([content], { type: mimeType });
+              break;
+          case 'srt':
+             content = editedSegments.map((s, i) => {
+                 return `${i + 1}\n${s.startTime.replace('.', ',')} --> ${s.endTime.replace('.', ',')}\n${s.speaker ? s.speaker + ': ' : ''}${s.text}\n`;
+             }).join('\n');
+             blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+             break;
+          case 'csv':
+              content = 'Start Time,End Time,Speaker,Text\n' + editedSegments.map(s => `"${s.startTime}","${s.endTime}","${s.speaker}","${s.text.replace(/"/g, '""')}"`).join('\n');
+              mimeType = 'text/csv';
+              blob = new Blob([content], { type: mimeType });
+              break;
+          case 'pdf': {
+               const doc = new jsPDF();
+               let y = 10;
+               editedSegments.forEach(s => {
+                   if (y > 280) { doc.addPage(); y = 10; }
+                   const line = `${showTimestamps ? `[${s.startTime}] ` : ''}${showSpeaker ? `${s.speaker}: ` : ''}${s.text}`;
+                   const splitText = doc.splitTextToSize(line, 190);
+                   doc.text(splitText, 10, y);
+                   y += (splitText.length * 7) + 5;
+               });
+               blob = doc.output('blob');
+               break;
           }
+          case 'docx': {
+              const paragraphs = editedSegments.map(s => {
+                  return new docx.Paragraph({
+                      children: [
+                          new docx.TextRun({ text: showTimestamps ? `[${s.startTime}] ` : '', bold: true, color: "888888" }),
+                          new docx.TextRun({ text: showSpeaker ? `${s.speaker}: ` : '', bold: true }),
+                          new docx.TextRun({ text: s.text }),
+                      ],
+                      spacing: { after: 200 }
+                  });
+              });
+              const doc = new docx.Document({ sections: [{ children: paragraphs }] });
+              blob = await docx.Packer.toBlob(doc);
+              break;
+          }
+      }
 
-          if(textLines.length === 0) textLines.push('');
-
-          textLines.forEach((lineText, index) => {
-              totalHeight += LINE_HEIGHT;
-              if (index === 0) {
-                  lines.push({ y: totalHeight, parts: [...prefixParts, { text: lineText, color: TEXT_COLOR }] });
-              } else {
-                  lines.push({ y: totalHeight, parts: [{ text: '    ' + lineText, color: TEXT_COLOR }] });
-              }
-          });
-      });
-      
-      totalHeight += PADDING;
-
-      canvas.width = CANVAS_WIDTH;
-      canvas.height = totalHeight;
-      context.fillStyle = BG_COLOR;
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      context.font = FONT;
-      
-      lines.forEach(line => {
-          // If RTL, start from right side
-          let currentX = isRTL ? CANVAS_WIDTH - PADDING : PADDING;
-          
-          line.parts.forEach(part => {
-              context.fillStyle = part.color;
-              
-              // Set direction for text rendering
-              context.direction = isRTL ? 'rtl' : 'ltr';
-              context.textAlign = isRTL ? 'right' : 'left';
-              
-              context.fillText(part.text, currentX, line.y);
-              
-              const width = context.measureText(part.text).width;
-              
-              if (isRTL) {
-                  currentX -= width; // Move left for next part
-              } else {
-                  currentX += width; // Move right for next part
-              }
-          });
-      });
-      
-      return canvas.toDataURL(`image/${format}`, format === 'jpeg' ? 0.9 : undefined);
-  }
-
-  const handleExport = async (format: 'txt' | 'json' | 'srt' | 'png' | 'jpg' | 'docx' | 'pdf' | 'csv') => {
-    const baseFilename = transcription.fileName.split('.').slice(0, -1).join('.') || transcription.fileName;
-    if (format === 'txt') createDownload(`${baseFilename}.txt`, fullText + (summary ? `\n\nSummary:\n${summary}` : ''), 'text/plain;charset=utf-8');
-    else if (format === 'json') createDownload(`${baseFilename}.json`, JSON.stringify({...transcription, summary, sentiment}, null, 2), 'application/json;charset=utf-8');
-    else if (format === 'srt') {
-      const toSrtTime = (time: string) => time.replace('.', ',');
-      const srtContent = transcription.segments.map((seg, i) => `${i + 1}\n${toSrtTime(seg.startTime)} --> ${toSrtTime(seg.endTime)}\n${seg.text}`).join('\n\n');
-      createDownload(`${baseFilename}.srt`, srtContent, 'application/x-subrip;charset=utf-8');
-    } else if (format === 'png' || format === 'jpg') {
-        const dataUrl = renderTranscriptionToCanvas(format === 'jpg' ? 'jpeg' : 'png');
-        if (dataUrl) {
-            const a = document.createElement('a'); a.href = dataUrl; a.download = `${baseFilename}.${format}`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a); setShowExportMenu(false);
-        }
-    } else if (format === 'csv') {
-        const header = "startTime,endTime,speaker,text\n";
-        const rows = transcription.segments.map(s => `"${s.startTime}","${s.endTime}","${s.speaker}","${s.text.replace(/"/g, '""')}"`).join('\n');
-        createDownload(`${baseFilename}.csv`, header + rows, 'text/csv;charset=utf-8');
-    } else if (format === 'docx') {
-        const paragraphs = transcription.segments.map(seg => {
-            const parts = [];
-            if (showTimestamps) parts.push(new docx.TextRun({ text: `[${seg.startTime} - ${seg.endTime}] `, color: "A78BFA" }));
-            if (showSpeaker) parts.push(new docx.TextRun({ text: `${seg.speaker}: `, bold: true, color: "F472B6"}));
-            parts.push(new docx.TextRun(seg.text));
-            return new docx.Paragraph({ children: parts });
-        });
-        if (summary) {
-            paragraphs.unshift(new docx.Paragraph({ children: [new docx.TextRun({text: "Summary", bold: true, size: 28})] }));
-            paragraphs.unshift(new docx.Paragraph({ children: [new docx.TextRun(summary)] }));
-             paragraphs.unshift(new docx.Paragraph({ children: [] })); // Spacer
-        }
-        if (sentiment) {
-            paragraphs.unshift(new docx.Paragraph({ children: [new docx.TextRun({text: `Sentiment: ${sentiment}`, bold: true})] }));
-        }
-
-        const doc = new docx.Document({ sections: [{ children: paragraphs }] });
-        const blob = await docx.Packer.toBlob(doc);
-        createDownload(`${baseFilename}.docx`, blob);
-    } else if (format === 'pdf') {
-        const doc = new jsPDF();
-        const margin = 15;
-        const usableWidth = doc.internal.pageSize.getWidth() - margin * 2;
-        const lineHeight = 6;
-        let y = margin;
-
-        doc.setFontSize(11);
-
-        if (summary) {
-             doc.setFontSize(16);
-             doc.text("Summary", margin, y);
-             y += 8;
-             doc.setFontSize(11);
-             const splitSummary = doc.splitTextToSize(summary, usableWidth);
-             doc.text(splitSummary, margin, y);
-             y += (splitSummary.length * lineHeight) + 10;
-        }
-        
-        transcription.segments.forEach(seg => {
-            const line = (showTimestamps ? `[${seg.startTime} - ${seg.endTime}] ` : '') + (showSpeaker ? `${seg.speaker}: ` : '') + seg.text;
-            
-            const splitLines = doc.splitTextToSize(line, usableWidth);
-            const segmentHeight = splitLines.length * lineHeight;
-
-            if (y + segmentHeight > doc.internal.pageSize.getHeight() - margin) {
-                doc.addPage();
-                y = margin;
-            }
-            
-            doc.text(splitLines, margin, y);
-            y += segmentHeight + 4; // Add a small gap between segments
-        });
-        createDownload(`${baseFilename}.pdf`, doc.output('blob'));
-    }
+      if (blob) {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${filename}.${format}`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+      }
+      setShowExportMenu(false);
   };
 
-  const exportOptions = [
-    { format: 'txt', icon: TxtIcon }, { format: 'json', icon: JsonIcon }, 
-    { format: 'srt', icon: SrtIcon }, { format: 'csv', icon: CsvIcon },
-    { format: 'pdf', icon: PdfIcon, separator: true }, { format: 'docx', icon: DocxIcon },
-    { format: 'png', icon: PngIcon, separator: true }, { format: 'jpg', icon: JpgIcon }
-  ];
-
-  const segmentsToRender = isEditing ? editedSegments : transcription.segments;
-  
-  // Filter segments based on search query
-  const filteredSegments = useMemo(() => {
-      if (!searchQuery) return segmentsToRender.map((s, i) => ({ ...s, originalIndex: i }));
-      const lowerQuery = searchQuery.toLowerCase();
-      return segmentsToRender
-        .map((s, i) => ({ ...s, originalIndex: i }))
-        .filter(s => s.text.toLowerCase().includes(lowerQuery) || s.speaker.toLowerCase().includes(lowerQuery));
-  }, [segmentsToRender, searchQuery]);
-
+  const filteredSegments = editedSegments.filter(s => 
+      s.text.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      (s.speaker && s.speaker.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex flex-col gap-4 mb-4">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="flex-1 min-w-[200px]">
-                <h2 className="text-xl font-bold text-gray-200">{t.transcription}</h2>
-                <p className="text-sm text-gray-400 truncate max-w-xs" title={transcription.fileName}>{transcription.fileName}</p>
-                <div className="flex items-center gap-4 mt-1">
-                    <p className="text-xs text-purple-400">{t.detectedLanguage}: <span className="font-semibold">{transcription.detectedLanguage}</span></p>
-                    {sentiment && (
-                        <span className="text-xs bg-blue-900/50 text-blue-300 px-2 py-0.5 rounded border border-blue-800">
-                            {sentiment}
-                        </span>
-                    )}
-                </div>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-                <button
-                    onClick={handleSummarize}
-                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${showSummary ? 'bg-purple-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
-                >
-                    {isSummarizing ? t.summarizing : t.summarize}
-                </button>
-                 <button
-                    onClick={handleAnalyzeSentiment}
-                    disabled={!!sentiment || isAnalyzingSentiment}
-                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${sentiment ? 'bg-blue-600/20 text-blue-300 cursor-default' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
-                >
-                    {isAnalyzingSentiment ? t.analyzingSentiment : t.sentimentAnalysis}
-                </button>
-                <div className="w-px h-6 bg-gray-700 mx-1 hidden sm:block"></div>
+    <div className="flex flex-col h-full bg-gray-900/50 rounded-lg overflow-hidden border border-gray-700/50">
+        <div className="p-4 border-b border-gray-700/50 bg-gray-800/30 flex flex-wrap gap-4 items-center justify-between">
+            <div className="flex items-center gap-4">
                 <Switch checked={showTimestamps} onChange={setShowTimestamps} label={t.showTimestamps} />
                 <Switch checked={showSpeaker} onChange={setShowSpeaker} label={t.showSpeaker} />
             </div>
+            
+            <div className="flex items-center gap-2">
+                 <div className="relative">
+                    <input 
+                        type="text" 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder={t.searchTranscription}
+                        className="bg-gray-700 text-gray-200 text-sm rounded-lg pl-8 pr-3 py-1.5 focus:ring-1 focus:ring-purple-500 border-none w-48"
+                    />
+                    <SearchIcon className="w-4 h-4 text-gray-400 absolute left-2.5 top-2" />
+                </div>
+                
+                {isEditing ? (
+                    <button onClick={handleSaveChanges} className="p-2 bg-green-600 rounded-lg hover:bg-green-700 text-white" title={t.save}>
+                        <SaveIcon className="w-5 h-5" />
+                    </button>
+                ) : (
+                    <button onClick={() => setIsEditing(true)} className="p-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-white" title={t.edit}>
+                        <EditIcon className="w-5 h-5" />
+                    </button>
+                )}
+
+                <button onClick={handleCopy} className="p-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-white" title={t.copy}>
+                    {isCopied ? <CheckIcon className="w-5 h-5 text-green-400" /> : <CopyIcon className="w-5 h-5" />}
+                </button>
+                
+                <div className="relative">
+                    <button onClick={() => setShowExportMenu(!showExportMenu)} className="p-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-white" title={t.export}>
+                        <DownloadIcon className="w-5 h-5" />
+                    </button>
+                    {showExportMenu && (
+                        <div className="absolute right-0 mt-2 w-40 bg-gray-800 border border-gray-700 rounded-lg shadow-xl py-1 z-10" onMouseLeave={() => setShowExportMenu(false)}>
+                            <button onClick={() => handleExport('txt')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><TxtIcon className="w-4 h-4 mr-2" /> TXT</button>
+                            <button onClick={() => handleExport('json')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><JsonIcon className="w-4 h-4 mr-2" /> JSON</button>
+                            <button onClick={() => handleExport('srt')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><SrtIcon className="w-4 h-4 mr-2" /> SRT</button>
+                            <button onClick={() => handleExport('csv')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><CsvIcon className="w-4 h-4 mr-2" /> CSV</button>
+                            <button onClick={() => handleExport('pdf')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><PdfIcon className="w-4 h-4 mr-2" /> PDF</button>
+                            <button onClick={() => handleExport('docx')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><DocxIcon className="w-4 h-4 mr-2" /> DOCX</button>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
         
-        {/* Search Bar */}
-        <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <SearchIcon className="w-5 h-5 text-gray-400" />
-            </div>
-            <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t.searchTranscription}
-                className="w-full bg-gray-800 text-gray-200 border border-gray-700 rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 placeholder-gray-500"
-            />
-             {searchQuery && (
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                     <span className="text-xs text-gray-500">{filteredSegments.length} matches</span>
+        <div className="p-4 border-b border-gray-700/50 bg-gray-800/20 flex gap-4">
+             <div className="flex-1">
+                 <div className="flex justify-between items-center mb-2">
+                     <h4 className="text-sm font-semibold text-gray-300">{t.summary}</h4>
+                     <button 
+                        onClick={handleGenerateSummary} 
+                        disabled={isSummarizing || !!summary}
+                        className="text-xs bg-purple-600/20 text-purple-300 px-2 py-1 rounded hover:bg-purple-600/40 disabled:opacity-50"
+                     >
+                        {isSummarizing ? t.summarizing : (summary ? 'Regenerate' : t.summarize)}
+                     </button>
+                 </div>
+                 <div className="text-xs text-gray-400 bg-gray-900/50 p-2 rounded min-h-[40px] max-h-[100px] overflow-y-auto">
+                     {isSummarizing ? <SkeletonLoader lines={2} /> : (summary || "Click summarize to generate AI summary.")}
+                 </div>
+             </div>
+             <div className="flex-1">
+                 <div className="flex justify-between items-center mb-2">
+                     <h4 className="text-sm font-semibold text-gray-300">{t.sentimentAnalysis}</h4>
+                     <button 
+                        onClick={handleAnalyzeSentiment} 
+                        disabled={isAnalyzingSentiment || !!sentiment}
+                        className="text-xs bg-purple-600/20 text-purple-300 px-2 py-1 rounded hover:bg-purple-600/40 disabled:opacity-50"
+                     >
+                        {isAnalyzingSentiment ? t.analyzingSentiment : (sentiment ? 'Regenerate' : t.analyze)}
+                     </button>
+                 </div>
+                 <div className="text-xs text-gray-400 bg-gray-900/50 p-2 rounded min-h-[40px]">
+                     {isAnalyzingSentiment ? <SkeletonLoader lines={1} /> : (sentiment || "Click analyze to get sentiment.")}
+                 </div>
+             </div>
+        </div>
+
+        <div className="overflow-y-auto flex-grow p-4 space-y-4">
+            {filteredSegments.length > 0 ? filteredSegments.map((segment, index) => (
+                <div key={index} className="flex gap-4 group">
+                    {showTimestamps && (
+                        <div className="text-xs text-gray-500 font-mono pt-1 w-20 flex-shrink-0 select-none">
+                            {segment.startTime}
+                        </div>
+                    )}
+                    <div className="flex-grow">
+                        {showSpeaker && (
+                            <div className="text-xs font-bold text-purple-400 mb-0.5 select-none">{segment.speaker}</div>
+                        )}
+                        {isEditing ? (
+                            <textarea 
+                                className="w-full bg-gray-800 text-gray-200 text-sm p-2 rounded border border-gray-600 focus:ring-1 focus:ring-purple-500"
+                                value={segment.text}
+                                onChange={(e) => handleSegmentChange(index, 'text', e.target.value)}
+                                rows={Math.max(2, Math.ceil(segment.text.length / 80))}
+                            />
+                        ) : (
+                            <p className="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap">{segment.text}</p>
+                        )}
+                    </div>
+                </div>
+            )) : (
+                <div className="text-center text-gray-500 py-10">
+                    No segments found matching your search.
                 </div>
             )}
         </div>
-      </div>
-        
-      {showSummary && (
-          <div className="mb-4 bg-purple-900/20 border border-purple-500/30 rounded-lg p-4 animate-slide-in-up">
-              <h3 className="text-lg font-semibold text-purple-300 mb-2">{t.summary}</h3>
-               {isSummarizing ? (
-                   <SkeletonLoader lines={3} />
-               ) : (
-                   <p className="text-gray-200 text-sm whitespace-pre-wrap leading-relaxed">{summary}</p>
-               )}
-          </div>
-      )}
-
-      <div ref={containerRef} className="flex-grow bg-gray-900/50 rounded-lg p-4 overflow-y-auto mb-4 min-h-[200px]">
-        <div className="text-gray-200 whitespace-pre-wrap leading-relaxed font-mono text-sm">
-            {filteredSegments.length === 0 ? (
-                 <p className="text-gray-500 text-center py-8">No matches found.</p>
-            ) : (
-                filteredSegments.map((segment, index) => (
-                    <div key={segment.originalIndex} className="mb-2 flex flex-row flex-wrap">
-                        {isEditing ? (
-                             <div className="flex-grow">
-                                  <div className="flex items-center gap-2 mb-1 text-xs">
-                                    {showTimestamps && <span className="text-purple-400 font-semibold">[{segment.startTime}]</span>}
-                                    {showSpeaker && <span className="text-pink-400 font-bold">{segment.speaker}:</span>}
-                                  </div>
-                                 <textarea
-                                    value={segment.text}
-                                    onChange={(e) => handleSegmentChange(segment.originalIndex, e.target.value)}
-                                    className="w-full bg-gray-700/80 text-gray-200 border border-gray-600 rounded-md p-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-y"
-                                    rows={Math.max(1, segment.text.split('\n').length)}
-                                />
-                             </div>
-                        ) : (
-                            <>
-                                {showTimestamps && <span className="text-purple-400 me-3 select-none">[{segment.startTime} - {segment.endTime}]</span>}
-                                <p className="flex-1 min-w-[200px]">
-                                {showSpeaker && <strong className="text-pink-400 me-2 select-none">{segment.speaker}:</strong>}
-                                {/* Simple highlight for search */}
-                                {searchQuery ? (
-                                    segment.text.split(new RegExp(`(${searchQuery})`, 'gi')).map((part, i) => 
-                                        part.toLowerCase() === searchQuery.toLowerCase() ? <mark key={i} className="bg-yellow-500/50 text-white rounded-sm">{part}</mark> : part
-                                    )
-                                ) : segment.text}
-                                </p>
-                            </>
-                        )}
-                    </div>
-                ))
-            )}
-        </div>
-      </div>
-      
-      <div className="text-end text-sm text-gray-400 mb-4 px-1">
-        {characterCount} characters
-      </div>
-
-      <div className="flex flex-wrap gap-2 justify-between">
-        <div className="flex flex-wrap gap-2">
-           <button onClick={handleCopy} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
-            {isCopied ? <CheckIcon className="w-5 h-5 me-2"/> : <CopyIcon className="w-5 h-5 me-2" />}
-            {isCopied ? t.copied : t.copy}
-          </button>
-          <div className="relative" ref={exportMenuRef}>
-            <button onClick={() => setShowExportMenu(!showExportMenu)} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
-              <DownloadIcon className="w-5 h-5 me-2" />
-              {t.export}
-            </button>
-            {showExportMenu && (
-              <div className="absolute bottom-full mb-2 w-48 bg-gray-700 border border-gray-600 rounded-lg shadow-xl py-1 z-10 animate-slide-in-up">
-                {exportOptions.map(({ format, icon: Icon, separator }) => (
-                  <React.Fragment key={format}>
-                    {separator && <div className="h-px bg-gray-600 my-1"></div>}
-                    <button onClick={() => handleExport(format as any)} className="flex items-center gap-3 w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600 rounded-md mx-1 w-[calc(100%-0.5rem)]">
-                      <Icon className="w-5 h-5 text-gray-400" /> {format.toUpperCase()}
-                    </button>
-                  </React.Fragment>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-            {isEditing && (
-              <>
-                <button onClick={handleUndo} disabled={!canUndo} title={`${t.undo} (Ctrl+Z)`} className="flex items-center p-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><UndoIcon className="w-5 h-5"/></button>
-                <button onClick={handleRedo} disabled={!canRedo} title={`${t.redo} (Ctrl+Y)`} className="flex items-center p-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><RedoIcon className="w-5 h-5"/></button>
-                <div className="w-px bg-gray-600 mx-1"></div>
-                <button onClick={handleSaveChanges} className="flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200"><SaveIcon className="w-5 h-5 me-2"/> {t.saveChanges}</button>
-              </>
-            )}
-            <button onClick={handleEditToggle} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
-              <EditIcon className="w-5 h-5 me-2"/> {isEditing ? t.cancel : t.edit}
-            </button>
-        </div>
-      </div>
     </div>
   );
 };
