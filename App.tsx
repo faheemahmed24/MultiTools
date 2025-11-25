@@ -22,11 +22,7 @@ import AuthModal from './components/AuthModal';
 import Panel from './components/Panel';
 import { LanguageOption, targetLanguages } from './lib/languages';
 import LanguageDropdown from './components/LanguageDropdown';
-import { ClockIcon } from './components/icons/ClockIcon';
-import { CheckCircleIcon } from './components/icons/CheckCircleIcon';
-import { XCircleIcon } from './components/icons/XCircleIcon';
 import { SkeletonLoader } from './components/Loader';
-import AdUnit from './components/AdUnit';
 
 interface ProcessingFile {
   id: string;
@@ -93,21 +89,21 @@ const TranslationPanel: React.FC<{ text: string | null; t: TranslationSet }> = (
     );
 };
 
-// Map of Tool Keys to their Display Info
+// Updated Tool Configuration with descriptions and stats for new design
 const TOOLS_CONFIG = [
-    { key: 'AI Transcriber', category: 'media', iconClass: 'fas fa-file-audio' },
-    { key: 'Image Converter & OCR', category: 'media', iconClass: 'fas fa-image' },
-    { key: 'AI Translator', category: 'text', iconClass: 'fas fa-language' },
-    { key: 'Grammar Corrector', category: 'text', iconClass: 'fas fa-spell-check' },
-    { key: 'Voice Generator', category: 'media', iconClass: 'fas fa-microphone' },
-    { key: 'Video Editor', category: 'media', iconClass: 'fas fa-video' },
-    { key: 'PDF to Image', category: 'productivity', iconClass: 'fas fa-file-pdf' },
-    { key: 'Image to PDF', category: 'productivity', iconClass: 'fas fa-images' },
-    { key: 'PDF to Word', category: 'productivity', iconClass: 'fas fa-file-word' },
-    { key: 'Word to PDF', category: 'productivity', iconClass: 'fas fa-file-pdf' },
-    { key: 'Export to Sheets', category: 'data', iconClass: 'fas fa-table' },
-    { key: 'Data Analyzer', category: 'data', iconClass: 'fas fa-chart-line' },
-    { key: 'Code Assistant', category: 'development', iconClass: 'fas fa-code' }
+    { key: 'AI Transcriber', category: 'media', iconClass: 'fas fa-file-audio', description: 'Convert audio and video files to text with high accuracy using advanced AI transcription.', users: '12.5k', rating: 4.8 },
+    { key: 'Image Converter & OCR', category: 'media', iconClass: 'fas fa-image', description: 'Convert images between formats and extract text using powerful OCR technology.', users: '18.2k', rating: 4.9 },
+    { key: 'AI Translator', category: 'text', iconClass: 'fas fa-language', description: 'Translate text between 100+ languages with AI-powered accuracy and natural results.', users: '25.8k', rating: 4.7 },
+    { key: 'Grammar Corrector', category: 'text', iconClass: 'fas fa-spell-check', description: 'Fix grammar, spelling, and style issues automatically.', users: '15.3k', rating: 4.6 },
+    { key: 'Voice Generator', category: 'media', iconClass: 'fas fa-microphone', description: 'Convert text to natural-sounding speech with multiple voice options.', users: '15.3k', rating: 4.6 },
+    { key: 'Video Editor', category: 'media', iconClass: 'fas fa-video', description: 'Edit and enhance videos with AI-powered tools, filters, and automated effects.', users: '9.7k', rating: 4.5 },
+    { key: 'PDF to Image', category: 'productivity', iconClass: 'fas fa-file-pdf', description: 'Convert PDF pages into high-quality images.', users: '10.1k', rating: 4.5 },
+    { key: 'Image to PDF', category: 'productivity', iconClass: 'fas fa-images', description: 'Combine multiple images into a single PDF document.', users: '12.4k', rating: 4.6 },
+    { key: 'PDF to Word', category: 'productivity', iconClass: 'fas fa-file-word', description: 'Convert PDF documents to editable Word files.', users: '14.2k', rating: 4.7 },
+    { key: 'Word to PDF', category: 'productivity', iconClass: 'fas fa-file-pdf', description: 'Convert Word documents to standardized PDF format.', users: '11.8k', rating: 4.7 },
+    { key: 'Export to Sheets', category: 'data', iconClass: 'fas fa-table', description: 'Process data and export directly to spreadsheet formats.', users: '5.4k', rating: 4.4 },
+    { key: 'Data Analyzer', category: 'data', iconClass: 'fas fa-chart-line', description: 'Analyze and visualize data with AI-powered insights and automated reporting.', users: '11.4k', rating: 4.7 },
+    { key: 'Code Assistant', category: 'development', iconClass: 'fas fa-code', description: 'AI-powered code generation, debugging, and optimization for multiple programming languages.', users: '19.6k', rating: 4.9 }
 ];
 
 function App() {
@@ -133,8 +129,6 @@ function App() {
   const [pdfWordHistory, setPdfWordHistory] = useUserLocalStorage<PdfWordHistoryItem[]>(currentUser?.id, 'pdfWordHistory', []);
   const [wordPdfHistory, setWordPdfHistory] = useUserLocalStorage<WordPdfHistoryItem[]>(currentUser?.id, 'wordPdfHistory', []);
 
-  // IsSidebarOpen not needed for new layout, but keeping hook for backward compat if needed or removal
-  const [isSidebarOpen, setIsSidebarOpen] = useLocalStorage<boolean>('isSidebarOpen', true);
   const [showAd, setShowAd] = useState(true);
 
   const t = useMemo(() => getTranslations(uiLanguage), [uiLanguage]);
@@ -168,7 +162,9 @@ function App() {
       };
     });
     setProcessingFiles(current => [...newFilesToProcess]);
-    setActiveTool('AI Transcriber');
+    // Usually we would navigate to the tool here, but if already in tool view it stays.
+    // If dropped on Dashboard it handles itself via drag drop there or distinct button.
+    if (activeTool === 'Dashboard') setActiveTool('AI Transcriber');
   };
 
   useEffect(() => {
@@ -337,9 +333,11 @@ function App() {
         </div>
     );
 
+    let toolContent = <ComingSoon toolName={activeTool} />;
+
     switch (activeTool) {
       case 'AI Transcriber':
-        return (
+        toolContent = (
             <div className={`${mainContentClass} animate-fadeIn`}>
                 {processingFiles.length > 0 ? (
                      <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl shadow-lg p-6 transform-gpu">
@@ -377,20 +375,21 @@ function App() {
                 </div>
             </div>
         );
+        break;
       case 'AI Translator':
-        return (
+        toolContent = (
             <div className={`${mainContentClass} animate-fadeIn`}>
                 <AITranslator t={t} onTranslationComplete={(data) => handleAddToHistory('AI Translator', data)} />
                  <div className={panelGridClass}>
-                     {/* Panels remain similar to before */}
                     <Panel title={t.history} defaultOpen={true} className="md:col-span-3">
                         <HistoryPanel items={translationHistory} onSelect={() => {}} onDelete={(id) => setTranslationHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderTranslationHistoryItem} />
                     </Panel>
                 </div>
             </div>
         );
+        break;
       case 'Grammar Corrector':
-        return (
+        toolContent = (
             <div className={`${mainContentClass} animate-fadeIn`}>
                 <GrammarCorrector t={t} onCorrectionComplete={(data) => handleAddToHistory('Grammar Corrector', data)} />
                  <div className="mt-8">
@@ -400,8 +399,9 @@ function App() {
                 </div>
             </div>
         );
+        break;
        case 'Image Converter & OCR':
-        return (
+        toolContent = (
             <div className={`${mainContentClass} animate-fadeIn`}>
                 <ImageConverterOcr t={t} onAnalysisComplete={(data) => handleAddToHistory('Image Converter & OCR', data)}/>
                 <div className="mt-8">
@@ -411,8 +411,9 @@ function App() {
                 </div>
             </div>
         );
+        break;
       case 'PDF to Image':
-        return (
+        toolContent = (
              <div className={`${mainContentClass} animate-fadeIn`}>
                 <PdfToImage t={t} onConversionComplete={(data) => handleAddToHistory('PDF to Image', data)} />
                 <div className="mt-8">
@@ -422,8 +423,9 @@ function App() {
                 </div>
             </div>
         );
+        break;
       case 'Image to PDF':
-        return (
+        toolContent = (
              <div className={`${mainContentClass} animate-fadeIn`}>
                 <ImageToPdf t={t} onConversionComplete={(data) => handleAddToHistory('Image to PDF', data)}/>
                  <div className="mt-8">
@@ -433,8 +435,9 @@ function App() {
                 </div>
             </div>
         );
+        break;
       case 'PDF to Word':
-         return (
+         toolContent = (
              <div className={`${mainContentClass} animate-fadeIn`}>
                 <PdfToWord t={t} onConversionComplete={(data) => handleAddToHistory('PDF to Word', data)} />
                  <div className="mt-8">
@@ -444,8 +447,9 @@ function App() {
                 </div>
             </div>
         );
+        break;
       case 'Word to PDF':
-        return (
+        toolContent = (
              <div className={`${mainContentClass} animate-fadeIn`}>
                 <WordToPdf t={t} onConversionComplete={(data) => handleAddToHistory('Word to PDF', data)} />
                  <div className="mt-8">
@@ -455,17 +459,38 @@ function App() {
                 </div>
             </div>
         );
+        break;
       case 'Export to Sheets':
-        return (
+        toolContent = (
              <div className={`${mainContentClass} animate-fadeIn`}>
                 <ExportToSheets t={t} />
             </div>
         );
-      case 'Dashboard':
-          return null;
-      default:
-        return <ComingSoon toolName={activeTool} />;
+        break;
     }
+
+    // Get icon for the current tool
+    const currentToolConfig = TOOLS_CONFIG.find(tool => tool.key === activeTool);
+    const iconClass = currentToolConfig ? currentToolConfig.iconClass : 'fas fa-tools';
+
+    return (
+        <div className="tool-container">
+            <div className="tool-header-page">
+                <div className="tool-icon-large">
+                    <i className={iconClass}></i>
+                </div>
+                <div className="tool-title-section">
+                    <h2>{activeTool}</h2>
+                    <p>{currentToolConfig ? currentToolConfig.description : 'AI Powered Tool'}</p>
+                </div>
+                <button className="back-btn" onClick={() => setActiveTool('Dashboard')}>
+                    <i className="fas fa-arrow-left"></i>
+                    Back to Dashboard
+                </button>
+            </div>
+            {toolContent}
+        </div>
+    );
   };
 
   const renderDashboard = () => (
@@ -535,11 +560,10 @@ function App() {
                     .map(tool => {
                         // Find user-friendly name if available in t, else use key
                         let toolName = tool.key;
-                        let toolDesc = "AI powered tool";
                         
-                        if (tool.key === 'AI Transcriber') { toolName = t.aiTranscriber; toolDesc = t.transcription; }
-                        else if (tool.key === 'AI Translator') { toolName = t.aiTranslatorTitle; toolDesc = "Translate text between 100+ languages"; }
-                        else if (tool.key === 'Image Converter & OCR') { toolName = t.imageConverterOcrTitle; toolDesc = "Convert images and extract text"; }
+                        if (tool.key === 'AI Transcriber') { toolName = t.aiTranscriber; }
+                        else if (tool.key === 'AI Translator') { toolName = t.aiTranslatorTitle; }
+                        else if (tool.key === 'Image Converter & OCR') { toolName = t.imageConverterOcrTitle; }
                         
                         return (
                             <div key={tool.key} className="tool-card" onClick={() => setActiveTool(tool.key)}>
@@ -552,51 +576,64 @@ function App() {
                                         <span className="tool-category">{tool.category}</span>
                                     </div>
                                 </div>
-                                <p className="tool-description">{toolDesc}</p>
+                                <p className="tool-description">{tool.description}</p>
+                                <div className="tool-stats">
+                                    <span className="tool-stat">
+                                        <i className="fas fa-users"></i>
+                                        {tool.users} users
+                                    </span>
+                                    <span className="tool-stat">
+                                        <i className="fas fa-star"></i>
+                                        {tool.rating}
+                                    </span>
+                                </div>
                             </div>
                         );
-                })}
+                    })}
             </section>
-            
-            {/* Recent Activity */}
+
+            {/* Recent Activity (Mockup based on user request, but using some real data if available) */}
             <section className="recent-activity">
-                 <h2 className="recent-activity-title">
+                <h2 className="recent-activity-title">
                     <i className="fas fa-clock"></i>
                     Recent Activity
                 </h2>
                 <div className="activity-list">
-                    {transcriptions.slice(0, 1).map(item => (
-                        <div key={item.id} className="activity-item" onClick={() => { setCurrentTranscriptionId(item.id); setActiveTool('AI Transcriber'); }}>
-                            <div className="activity-icon"><i className="fas fa-file-audio"></i></div>
-                            <div className="activity-details">
-                                <div className="activity-title">Transcription: {item.fileName}</div>
-                                <div className="activity-time">{item.date}</div>
-                            </div>
-                            <span className="activity-status status-completed">Completed</span>
+                    {/* Mix of some static recent activities for demo as requested in prototype */}
+                    <div className="activity-item">
+                        <div className="activity-icon">
+                            <i className="fas fa-file-audio"></i>
                         </div>
-                    ))}
-                    {translationHistory.slice(0, 1).map(item => (
-                         <div key={item.id} className="activity-item" onClick={() => setActiveTool('AI Translator')}>
-                            <div className="activity-icon"><i className="fas fa-language"></i></div>
-                            <div className="activity-details">
-                                <div className="activity-title">Translation</div>
-                                <div className="activity-time">{item.date}</div>
-                            </div>
-                            <span className="activity-status status-completed">Completed</span>
+                        <div className="activity-details">
+                            <div className="activity-title">Audio transcription completed</div>
+                            <div className="activity-time">2 minutes ago</div>
                         </div>
-                    ))}
-                    {analysisHistory.slice(0, 1).map(item => (
-                         <div key={item.id} className="activity-item" onClick={() => setActiveTool('Image Converter & OCR')}>
-                            <div className="activity-icon"><i className="fas fa-image"></i></div>
-                            <div className="activity-details">
-                                <div className="activity-title">Image Analysis</div>
-                                <div className="activity-time">{item.date}</div>
-                            </div>
-                            <span className="activity-status status-completed">Completed</span>
+                        <span className="activity-status status-completed">Completed</span>
+                    </div>
+                    
+                    <div className="activity-item">
+                        <div className="activity-icon">
+                            <i className="fas fa-image"></i>
                         </div>
-                    ))}
-                     {transcriptions.length === 0 && translationHistory.length === 0 && analysisHistory.length === 0 && (
-                        <p className="text-gray-500 text-center py-4">{t.noHistory}</p>
+                        <div className="activity-details">
+                            <div className="activity-title">Image OCR processing</div>
+                            <div className="activity-time">15 minutes ago</div>
+                        </div>
+                        <span className="activity-status status-processing">Processing</span>
+                    </div>
+                    
+                    {/* Dynamic recent item if available */}
+                    {transcriptions.length > 0 && (
+                         <div className="activity-item">
+                            <div className="activity-icon">
+                                <i className="fas fa-file-audio"></i>
+                            </div>
+                            <div className="activity-details">
+                                <div className="activity-title">Transcription: {transcriptions[0].fileName}</div>
+                                <div className="activity-time">{transcriptions[0].date}</div>
+                            </div>
+                            <span className="activity-status status-completed">Saved</span>
+                        </div>
                     )}
                 </div>
             </section>
@@ -604,34 +641,23 @@ function App() {
   );
 
   return (
-    <div className="bg-[#1a1a2e] text-[#e0e0e0] min-h-screen font-sans flex flex-col">
+    <>
       <Header 
         uiLanguage={uiLanguage} 
         setUiLanguage={setUiLanguage} 
         activeTool={activeTool} 
-        setActiveTool={setActiveTool} 
+        setActiveTool={setActiveTool}
         t={t}
-        isSidebarOpen={isSidebarOpen}
-        setIsSidebarOpen={setIsSidebarOpen}
         currentUser={currentUser}
         onLoginClick={() => setIsAuthModalOpen(true)}
         onLogoutClick={handleLogout}
       />
       
-      <main className="main-container flex-grow">
-         {activeTool === 'Dashboard' ? renderDashboard() : (
-            <div className="animate-fadeIn">
-                 <div className="mb-6 flex items-center gap-2">
-                    <button onClick={() => setActiveTool('Dashboard')} className="text-gray-400 hover:text-white transition-colors">
-                        <i className="fas fa-arrow-left me-2"></i> {t.back}
-                    </button>
-                    <h2 className="text-2xl font-bold">{activeTool}</h2>
-                 </div>
-                 {renderActiveTool()}
-            </div>
-         )}
+      <main className="main-container">
+        {activeTool === 'Dashboard' ? renderDashboard() : renderActiveTool()}
       </main>
 
+      {/* Footer */}
       <footer className="footer">
         <div className="footer-content">
             <div className="footer-links">
@@ -646,12 +672,12 @@ function App() {
       </footer>
 
       <AuthModal 
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
         onLoginSuccess={handleLoginSuccess}
         t={t}
       />
-    </div>
+    </>
   );
 }
 

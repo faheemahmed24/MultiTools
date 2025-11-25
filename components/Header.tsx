@@ -8,8 +8,6 @@ interface HeaderProps {
   activeTool: string;
   setActiveTool: (tool: string) => void;
   t: TranslationSet;
-  isSidebarOpen: boolean;
-  setIsSidebarOpen: (isOpen: boolean) => void;
   currentUser: User | null;
   onLoginClick: () => void;
   onLogoutClick: () => void;
@@ -18,7 +16,6 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ 
     uiLanguage, 
     setUiLanguage, 
-    activeTool, 
     setActiveTool, 
     t, 
     currentUser,
@@ -33,8 +30,8 @@ const Header: React.FC<HeaderProps> = ({
                 <h1>MultiTools</h1>
             </div>
             
-            <div className="search-bar hidden md:block">
-                <input type="text" className="search-input" placeholder="Search for tools..." id="searchInput" />
+            <div className="search-bar">
+                <input type="text" className="search-input" placeholder={t.searchTranscription || "Search for tools..."} id="searchInput" />
                 <button className="search-btn">
                     <i className="fas fa-search"></i>
                 </button>
