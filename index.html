@@ -146,9 +146,14 @@
             background-color: #252538;
             border-radius: 8px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: none;
             z-index: 1000;
             overflow: hidden;
             min-width: 150px;
+        }
+        
+        .language-dropdown.active {
+            display: block;
         }
         
         .language-option {
@@ -217,7 +222,7 @@
             max-width: 1400px;
             margin: 0 auto;
             padding: 30px;
-            min-height: 85vh;
+            min-height: calc(100vh - 80px);
         }
         
         .advertisement {
@@ -532,18 +537,16 @@
             background-color: rgba(241, 196, 15, 0.2);
             color: #f1c40f;
         }
-
+        
         /* Tool Page Styles */
         .tool-container {
             background-color: #252538;
             border-radius: 12px;
             padding: 30px;
             margin-bottom: 30px;
-            min-height: 600px;
         }
         
-        .tool-container .tool-header {
-            /* Scope this to .tool-container to apply the page header style override */
+        .tool-header {
             display: flex;
             align-items: center;
             gap: 20px;
@@ -590,6 +593,198 @@
         
         .back-btn:hover {
             background-color: #4a4a5e;
+        }
+        
+        /* Common Tool Elements */
+        .upload-area {
+            border: 2px dashed #555;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #9b59b6;
+            background-color: rgba(155, 89, 182, 0.05);
+        }
+        
+        .upload-icon {
+            font-size: 60px;
+            color: #9b59b6;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background-color: #9b59b6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #8e44ad;
+        }
+        
+        .btn-secondary {
+            background-color: #3a3a4e;
+            color: #e0e0e0;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #4a4a5e;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .options-panel {
+            background-color: #2a2a3e;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .options-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        
+        .option-group {
+            margin-bottom: 15px;
+        }
+        
+        .option-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ccc;
+        }
+        
+        .select-input, .text-input, .text-area {
+            width: 100%;
+            padding: 10px;
+            background-color: #1a1a2e;
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+        
+        .text-area {
+            min-height: 150px;
+            resize: vertical;
+            font-family: inherit;
+        }
+        
+        .text-area:focus, .text-input:focus, .select-input:focus {
+            outline: none;
+            border-color: #9b59b6;
+        }
+        
+        /* Results Panel */
+        .results-panel {
+            background-color: #2a2a3e;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .results-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        
+        .result-content {
+            background-color: #1a1a2e;
+            border-radius: 6px;
+            padding: 15px;
+            min-height: 100px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        /* Notification Dropdown */
+        .notification-dropdown {
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            background-color: #252538;
+            border-radius: 12px;
+            padding: 15px;
+            min-width: 300px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 1000;
+        }
+        
+        .notification-dropdown.active {
+            display: block;
+        }
+        
+        .notification-item {
+            padding: 12px;
+            border-bottom: 1px solid #3a3a4e;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .notification-item:hover {
+            background-color: #3a3a4e;
+        }
+        
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+        
+        .notification-title {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .notification-time {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        /* User Dropdown */
+        .user-dropdown {
+            position: absolute;
+            top: 60px;
+            right: 80px;
+            background-color: #252538;
+            border-radius: 12px;
+            padding: 15px;
+            min-width: 200px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 1000;
+        }
+        
+        .user-dropdown.active {
+            display: block;
+        }
+        
+        .user-dropdown-item {
+            padding: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            border-radius: 8px;
+        }
+        
+        .user-dropdown-item:hover {
+            background-color: #3a3a4e;
         }
         
         /* Footer */

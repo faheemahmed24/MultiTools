@@ -19,7 +19,6 @@ import PdfToWord from './components/PdfToWord';
 import WordToPdf from './components/WordToPdf';
 import ExportToSheets from './components/ExportToSheets';
 import AuthModal from './components/AuthModal';
-import Panel from './components/Panel';
 import { LanguageOption, targetLanguages } from './lib/languages';
 import LanguageDropdown from './components/LanguageDropdown';
 import { SkeletonLoader } from './components/Loader';
@@ -258,10 +257,7 @@ function App() {
   const renderActiveTool = () => {
     const fullText = currentTranscription?.segments.map(s => s.text).join('\n') || null;
 
-    const mainContentClass = "flex flex-col";
-    const panelGridClass = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 min-h-0";
-    
-    // History Renderers
+    // History Renderers (Keeping these as is)
     const renderTranscriptionHistoryItem = (item: Transcription, isActive: boolean) => (
         <div className="flex-grow overflow-hidden">
             <p className="font-semibold truncate text-gray-200">{item.fileName}</p>
@@ -336,7 +332,7 @@ function App() {
     switch (activeTool) {
       case 'AI Transcriber':
         toolContent = (
-            <div className={`${mainContentClass} animate-fadeIn`}>
+            <div className="animate-fadeIn space-y-6">
                 {processingFiles.length > 0 ? (
                      <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl shadow-lg p-6 transform-gpu mb-6">
                         <h2 className="text-xl font-bold mb-4 text-gray-200">Transcription Queue</h2>
@@ -362,107 +358,122 @@ function App() {
                         <FileUpload onFilesSelect={handleFilesSelect} t={t} isProcessing={false} />
                     </div>
                 )}
-                <div className={panelGridClass}>
-                    <Panel title={t.transcription} defaultOpen={true} className="md:col-span-2 lg:col-span-1">
-                        {currentTranscription ? <TranscriptionView transcription={currentTranscription} onSave={() => {}} onUpdate={handleUpdateTranscription} t={t} /> : <EmptyPanel message="No transcription selected or available." />}
-                    </Panel>
-                    <Panel title={t.aiTranslatorTitle} defaultOpen={true}>
+                {/* Linear Layout matching prototype page view */}
+                {currentTranscription && (
+                    <div className="options-panel">
+                        <h3 className="options-title">{t.transcription}</h3>
+                        <TranscriptionView transcription={currentTranscription} onSave={() => {}} onUpdate={handleUpdateTranscription} t={t} />
+                    </div>
+                )}
+                {currentTranscription && (
+                    <div className="options-panel">
+                        <h3 className="options-title">{t.aiTranslatorTitle}</h3>
                         <TranslationPanel text={fullText} t={t} />
-                    </Panel>
-                    <Panel title={t.history} defaultOpen={true}>
+                    </div>
+                )}
+                <div className="results-panel">
+                    <h3 className="results-title">{t.history}</h3>
+                    <div className="h-64">
                         <HistoryPanel items={transcriptions} onSelect={handleSelectTranscription} onDelete={handleDeleteTranscription} activeId={currentTranscription?.id} t={t} renderItem={renderTranscriptionHistoryItem} />
-                    </Panel>
+                    </div>
                 </div>
             </div>
         );
         break;
       case 'AI Translator':
         toolContent = (
-            <div className={`${mainContentClass} animate-fadeIn`}>
+            <div className="animate-fadeIn space-y-6">
                 <AITranslator t={t} onTranslationComplete={(data) => handleAddToHistory('AI Translator', data)} />
-                 <div className={panelGridClass}>
-                    <Panel title={t.history} defaultOpen={true} className="md:col-span-3">
+                 <div className="results-panel">
+                    <h3 className="results-title">{t.history}</h3>
+                    <div className="h-64">
                         <HistoryPanel items={translationHistory} onSelect={() => {}} onDelete={(id) => setTranslationHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderTranslationHistoryItem} />
-                    </Panel>
+                    </div>
                 </div>
             </div>
         );
         break;
       case 'Grammar Corrector':
         toolContent = (
-            <div className={`${mainContentClass} animate-fadeIn`}>
+            <div className="animate-fadeIn space-y-6">
                 <GrammarCorrector t={t} onCorrectionComplete={(data) => handleAddToHistory('Grammar Corrector', data)} />
-                 <div className="mt-8">
-                     <Panel title={t.history} defaultOpen={true}>
+                 <div className="results-panel">
+                     <h3 className="results-title">{t.history}</h3>
+                     <div className="h-64">
                         <HistoryPanel items={grammarHistory} onSelect={() => {}} onDelete={(id) => setGrammarHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderGrammarHistoryItem} />
-                    </Panel>
+                    </div>
                 </div>
             </div>
         );
         break;
        case 'Image Converter & OCR':
         toolContent = (
-            <div className={`${mainContentClass} animate-fadeIn`}>
+            <div className="animate-fadeIn space-y-6">
                 <ImageConverterOcr t={t} onAnalysisComplete={(data) => handleAddToHistory('Image Converter & OCR', data)}/>
-                <div className="mt-8">
-                     <Panel title={t.history} defaultOpen={true}>
+                <div className="results-panel">
+                     <h3 className="results-title">{t.history}</h3>
+                     <div className="h-64">
                         <HistoryPanel items={analysisHistory} onSelect={() => {}} onDelete={(id) => setAnalysisHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderAnalysisHistoryItem} />
-                    </Panel>
+                    </div>
                 </div>
             </div>
         );
         break;
       case 'PDF to Image':
         toolContent = (
-             <div className={`${mainContentClass} animate-fadeIn`}>
+             <div className="animate-fadeIn space-y-6">
                 <PdfToImage t={t} onConversionComplete={(data) => handleAddToHistory('PDF to Image', data)} />
-                <div className="mt-8">
-                    <Panel title={t.history} defaultOpen={true}>
+                <div className="results-panel">
+                    <h3 className="results-title">{t.history}</h3>
+                    <div className="h-64">
                         <HistoryPanel items={pdfImageHistory} onSelect={() => {}} onDelete={(id) => setPdfImageHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderPdfImageHistoryItem} />
-                    </Panel>
+                    </div>
                 </div>
             </div>
         );
         break;
       case 'Image to PDF':
         toolContent = (
-             <div className={`${mainContentClass} animate-fadeIn`}>
+             <div className="animate-fadeIn space-y-6">
                 <ImageToPdf t={t} onConversionComplete={(data) => handleAddToHistory('Image to PDF', data)}/>
-                 <div className="mt-8">
-                    <Panel title={t.history} defaultOpen={true}>
+                 <div className="results-panel">
+                    <h3 className="results-title">{t.history}</h3>
+                    <div className="h-64">
                         <HistoryPanel items={imagePdfHistory} onSelect={() => {}} onDelete={(id) => setImagePdfHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderImagePdfHistoryItem} />
-                    </Panel>
+                    </div>
                 </div>
             </div>
         );
         break;
       case 'PDF to Word':
          toolContent = (
-             <div className={`${mainContentClass} animate-fadeIn`}>
+             <div className="animate-fadeIn space-y-6">
                 <PdfToWord t={t} onConversionComplete={(data) => handleAddToHistory('PDF to Word', data)} />
-                 <div className="mt-8">
-                    <Panel title={t.history} defaultOpen={true}>
+                 <div className="results-panel">
+                    <h3 className="results-title">{t.history}</h3>
+                    <div className="h-64">
                         <HistoryPanel items={pdfWordHistory} onSelect={() => {}} onDelete={(id) => setPdfWordHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderFileHistoryItem} />
-                    </Panel>
+                    </div>
                 </div>
             </div>
         );
         break;
       case 'Word to PDF':
         toolContent = (
-             <div className={`${mainContentClass} animate-fadeIn`}>
+             <div className="animate-fadeIn space-y-6">
                 <WordToPdf t={t} onConversionComplete={(data) => handleAddToHistory('Word to PDF', data)} />
-                 <div className="mt-8">
-                    <Panel title={t.history} defaultOpen={true}>
+                 <div className="results-panel">
+                    <h3 className="results-title">{t.history}</h3>
+                    <div className="h-64">
                         <HistoryPanel items={wordPdfHistory} onSelect={() => {}} onDelete={(id) => setWordPdfHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderFileHistoryItem} />
-                    </Panel>
+                    </div>
                 </div>
             </div>
         );
         break;
       case 'Export to Sheets':
         toolContent = (
-             <div className={`${mainContentClass} animate-fadeIn`}>
+             <div className="animate-fadeIn space-y-6">
                 <ExportToSheets t={t} />
             </div>
         );
@@ -497,7 +508,7 @@ function App() {
       <div className="animate-fadeIn">
           {/* Advertisement */}
           {showAd && (
-            <div className="advertisement">
+            <div className="advertisement" id="advertisement">
                 <div className="ad-content">
                     <i className="fas fa-crown ad-icon"></i>
                     <div>
@@ -554,7 +565,7 @@ function App() {
             </section>
 
            {/* Tools Grid */}
-            <section className="tools-grid">
+            <section className="tools-grid" id="toolsGrid">
                 {TOOLS_CONFIG
                     .filter(tool => selectedCategory === 'all' || tool.category === selectedCategory)
                     .map(tool => {
