@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { Routes, Route, useNavigate, useParams, Navigate, useLocation } from 'react-router-dom';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useUserLocalStorage } from './hooks/useUserLocalStorage';
 import { getTranslations } from './lib/i18n';
@@ -29,32 +30,32 @@ interface ProcessingFile {
   error?: string;
 }
 
-// Updated Tool Configuration with descriptions and stats for new design
+// Updated Tool Configuration with IDs for routing
 const TOOLS_CONFIG = [
-    { key: 'AI Transcriber', category: 'media', iconClass: 'fas fa-file-audio', description: 'Convert audio and video files to text with high accuracy using advanced AI transcription.', users: '12.5k', rating: 4.8 },
-    { key: 'Image Converter & OCR', category: 'media', iconClass: 'fas fa-image', description: 'Convert images between formats and extract text using powerful OCR technology.', users: '18.2k', rating: 4.9 },
-    { key: 'AI Translator', category: 'text', iconClass: 'fas fa-language', description: 'Translate text between 100+ languages with AI-powered accuracy and natural results.', users: '25.8k', rating: 4.7 },
-    { key: 'Grammar Corrector', category: 'text', iconClass: 'fas fa-spell-check', description: 'Fix grammar, spelling, and style issues automatically.', users: '15.3k', rating: 4.6 },
-    { key: 'Voice Generator', category: 'media', iconClass: 'fas fa-microphone', description: 'Convert text to natural-sounding speech with multiple voice options.', users: '15.3k', rating: 4.6 },
-    { key: 'Video Editor', category: 'media', iconClass: 'fas fa-video', description: 'Edit and enhance videos with AI-powered tools, filters, and automated effects.', users: '9.7k', rating: 4.5 },
-    { key: 'PDF to Image', category: 'productivity', iconClass: 'fas fa-file-pdf', description: 'Convert PDF pages into high-quality images.', users: '10.1k', rating: 4.5 },
-    { key: 'Image to PDF', category: 'productivity', iconClass: 'fas fa-images', description: 'Combine multiple images into a single PDF document.', users: '12.4k', rating: 4.6 },
-    { key: 'PDF to Word', category: 'productivity', iconClass: 'fas fa-file-word', description: 'Convert PDF documents to editable Word files.', users: '14.2k', rating: 4.7 },
-    { key: 'Word to PDF', category: 'productivity', iconClass: 'fas fa-file-pdf', description: 'Convert Word documents to standardized PDF format.', users: '11.8k', rating: 4.7 },
-    { key: 'Export to Sheets', category: 'data', iconClass: 'fas fa-table', description: 'Process data and export directly to spreadsheet formats.', users: '5.4k', rating: 4.4 },
-    { key: 'Data Analyzer', category: 'data', iconClass: 'fas fa-chart-line', description: 'Analyze and visualize data with AI-powered insights and automated reporting.', users: '11.4k', rating: 4.7 },
-    { key: 'Code Assistant', category: 'development', iconClass: 'fas fa-code', description: 'AI-powered code generation, debugging, and optimization for multiple programming languages.', users: '19.6k', rating: 4.9 }
+    { id: 'ai-transcriber', key: 'AI Transcriber', category: 'media', iconClass: 'fas fa-file-audio', description: 'Convert audio and video files to text with high accuracy using advanced AI transcription.', users: '12.5k', rating: 4.8 },
+    { id: 'image-converter', key: 'Image Converter & OCR', category: 'media', iconClass: 'fas fa-image', description: 'Convert images between formats and extract text using powerful OCR technology.', users: '18.2k', rating: 4.9 },
+    { id: 'ai-translator', key: 'AI Translator', category: 'text', iconClass: 'fas fa-language', description: 'Translate text between 100+ languages with AI-powered accuracy and natural results.', users: '25.8k', rating: 4.7 },
+    { id: 'grammar-corrector', key: 'Grammar Corrector', category: 'text', iconClass: 'fas fa-spell-check', description: 'Fix grammar, spelling, and style issues automatically.', users: '15.3k', rating: 4.6 },
+    { id: 'voice-generator', key: 'Voice Generator', category: 'media', iconClass: 'fas fa-microphone', description: 'Convert text to natural-sounding speech with multiple voice options.', users: '15.3k', rating: 4.6 },
+    { id: 'video-editor', key: 'Video Editor', category: 'media', iconClass: 'fas fa-video', description: 'Edit and enhance videos with AI-powered tools, filters, and automated effects.', users: '9.7k', rating: 4.5 },
+    { id: 'pdf-to-image', key: 'PDF to Image', category: 'productivity', iconClass: 'fas fa-file-pdf', description: 'Convert PDF pages into high-quality images.', users: '10.1k', rating: 4.5 },
+    { id: 'image-to-pdf', key: 'Image to PDF', category: 'productivity', iconClass: 'fas fa-images', description: 'Combine multiple images into a single PDF document.', users: '12.4k', rating: 4.6 },
+    { id: 'pdf-to-word', key: 'PDF to Word', category: 'productivity', iconClass: 'fas fa-file-word', description: 'Convert PDF documents to editable Word files.', users: '14.2k', rating: 4.7 },
+    { id: 'word-to-pdf', key: 'Word to PDF', category: 'productivity', iconClass: 'fas fa-file-pdf', description: 'Convert Word documents to standardized PDF format.', users: '11.8k', rating: 4.7 },
+    { id: 'export-to-sheets', key: 'Export to Sheets', category: 'data', iconClass: 'fas fa-table', description: 'Process data and export directly to spreadsheet formats.', users: '5.4k', rating: 4.4 },
+    { id: 'data-analyzer', key: 'Data Analyzer', category: 'data', iconClass: 'fas fa-chart-line', description: 'Analyze and visualize data with AI-powered insights and automated reporting.', users: '11.4k', rating: 4.7 },
+    { id: 'code-assistant', key: 'Code Assistant', category: 'development', iconClass: 'fas fa-code', description: 'AI-powered code generation, debugging, and optimization for multiple programming languages.', users: '19.6k', rating: 4.9 }
 ];
 
 function App() {
   const [uiLanguage, setUiLanguage] = useLocalStorage<Language>('uiLanguage', 'en');
   const [currentUser, setCurrentUser] = useLocalStorage<User | null>('currentUser', null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  
-  // 'Dashboard' means the main grid view.
-  const [activeTool, setActiveTool] = useUserLocalStorage<string>(currentUser?.id, 'activeTool', 'Dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   
+  const navigate = useNavigate();
+  const location = useLocation();
+
   // Transcription State
   const [transcriptions, setTranscriptions] = useUserLocalStorage<Transcription[]>(currentUser?.id, 'transcriptions', []);
   const [currentTranscriptionId, setCurrentTranscriptionId] = useUserLocalStorage<string | null>(currentUser?.id, 'currentTranscriptionId', null);
@@ -100,7 +101,8 @@ function App() {
       };
     });
     setProcessingFiles(current => [...newFilesToProcess]);
-    if (activeTool === 'Dashboard') setActiveTool('AI Transcriber');
+    // Navigate to transcriber tool
+    navigate('/tool/ai-transcriber');
   };
 
   useEffect(() => {
@@ -155,13 +157,13 @@ function App() {
     setCurrentUser(null);
   };
   
-  const handleAddToHistory = (tool: string, data: any) => {
+  const handleAddToHistory = (toolName: string, data: any) => {
     const newItem = {
         id: new Date().toISOString() + Math.random(),
         date: new Date().toLocaleDateString(uiLanguage, { year: 'numeric', month: 'long', day: 'numeric' }),
         ...data,
     };
-    switch (tool) {
+    switch (toolName) {
         case 'AI Translator':
             setTranslationHistory(prev => [newItem, ...prev]);
             break;
@@ -188,9 +190,30 @@ function App() {
     }
   };
 
-  const renderToolContent = () => {
-    switch (activeTool) {
-      case 'AI Transcriber':
+  const handleNavigate = (identifier: string) => {
+    if (identifier === 'Dashboard') {
+        navigate('/');
+        return;
+    }
+    
+    // Try to find tool by ID first
+    let tool = TOOLS_CONFIG.find(t => t.id === identifier);
+    
+    // If not found, try to find by Key (Name) - for legacy support
+    if (!tool) {
+        tool = TOOLS_CONFIG.find(t => t.key === identifier);
+    }
+
+    if (tool) {
+        navigate(`/tool/${tool.id}`);
+    } else {
+        navigate('/');
+    }
+  };
+
+  const renderToolContent = (toolId: string) => {
+    switch (toolId) {
+      case 'ai-transcriber':
         return (
           <div>
             <div className="mb-6">
@@ -208,27 +231,29 @@ function App() {
             )}
           </div>
         );
-      case 'AI Translator':
+      case 'ai-translator':
         return <AITranslator t={t} onTranslationComplete={(data) => handleAddToHistory('AI Translator', data)} />;
-      case 'Grammar Corrector':
+      case 'grammar-corrector':
         return <GrammarCorrector t={t} onCorrectionComplete={(data) => handleAddToHistory('Grammar Corrector', data)} />;
-      case 'Image Converter & OCR':
+      case 'image-converter':
         return <ImageConverterOcr t={t} onAnalysisComplete={(data) => handleAddToHistory('Image Converter & OCR', data)} />;
-      case 'PDF to Image':
+      case 'pdf-to-image':
         return <PdfToImage t={t} onConversionComplete={(data) => handleAddToHistory('PDF to Image', data)} />;
-      case 'Image to PDF':
+      case 'image-to-pdf':
         return <ImageToPdf t={t} onConversionComplete={(data) => handleAddToHistory('Image to PDF', data)} />;
-      case 'PDF to Word':
+      case 'pdf-to-word':
         return <PdfToWord t={t} onConversionComplete={(data) => handleAddToHistory('PDF to Word', data)} />;
-      case 'Word to PDF':
+      case 'word-to-pdf':
         return <WordToPdf t={t} onConversionComplete={(data) => handleAddToHistory('Word to PDF', data)} />;
-      case 'Export to Sheets':
+      case 'export-to-sheets':
         return <ExportToSheets t={t} />;
-      case 'Voice Generator':
-      case 'Video Editor':
-      case 'Data Analyzer':
-      case 'Code Assistant':
-        return <ComingSoon toolName={activeTool} />;
+      case 'voice-generator':
+      case 'video-editor':
+      case 'data-analyzer':
+      case 'code-assistant':
+        // Find the display name
+        const tool = TOOLS_CONFIG.find(t => t.id === toolId);
+        return <ComingSoon toolName={tool ? tool.key : 'Tool'} />;
       default:
         return <div>Tool not found</div>;
     }
@@ -242,7 +267,7 @@ function App() {
               time: item.date, 
               status: 'Completed', 
               icon: 'fa-file-audio',
-              tool: 'AI Transcriber'
+              tool: 'AI Transcriber' // Use name for consistent lookup in handleNavigate
           })),
           ...translationHistory.map(item => ({
               id: item.id,
@@ -264,15 +289,44 @@ function App() {
       return allActivity.slice(0, 5);
   };
 
-  const activeToolConfig = TOOLS_CONFIG.find(t => t.key === activeTool);
+  const ToolWrapper = () => {
+      const { toolId } = useParams();
+      const toolConfig = TOOLS_CONFIG.find(t => t.id === toolId);
+      
+      if (!toolConfig || !toolId) {
+          return <Navigate to="/" replace />;
+      }
+
+      return (
+        <div className="page-view active">
+            <div className="tool-container">
+                <div className="tool-header">
+                    <div className="tool-icon-large">
+                        <i className={toolConfig.iconClass || 'fas fa-tools'}></i>
+                    </div>
+                    <div className="tool-title-section">
+                        <h2>{toolConfig.key}</h2>
+                        <p>{toolConfig.description}</p>
+                    </div>
+                    <button className="back-btn" onClick={() => navigate('/')}>
+                        <i className="fas fa-arrow-left"></i>
+                        Back to Dashboard
+                    </button>
+                </div>
+                
+                {renderToolContent(toolId)}
+            </div>
+        </div>
+      );
+  };
 
   return (
     <>
       <Header
         uiLanguage={uiLanguage}
         setUiLanguage={setUiLanguage}
-        activeTool={activeTool}
-        setActiveTool={setActiveTool}
+        activeTool={location.pathname === '/' ? 'Dashboard' : (location.pathname.split('/')[2] || '')}
+        setActiveTool={handleNavigate}
         t={t}
         currentUser={currentUser}
         onLoginClick={() => setIsAuthModalOpen(true)}
@@ -281,35 +335,19 @@ function App() {
       />
       
       <main className="main-container">
-        {activeTool === 'Dashboard' ? (
-            <Dashboard 
-                t={t}
-                tools={TOOLS_CONFIG}
-                recentActivity={getRecentActivity()}
-                setActiveTool={setActiveTool}
-                searchQuery={searchQuery}
-            />
-        ) : (
-            <div className="page-view active">
-                <div className="tool-container">
-                    <div className="tool-header">
-                        <div className="tool-icon-large">
-                            <i className={activeToolConfig?.iconClass || 'fas fa-tools'}></i>
-                        </div>
-                        <div className="tool-title-section">
-                            <h2>{activeToolConfig?.key}</h2>
-                            <p>{activeToolConfig?.description}</p>
-                        </div>
-                        <button className="back-btn" onClick={() => setActiveTool('Dashboard')}>
-                            <i className="fas fa-arrow-left"></i>
-                            Back to Dashboard
-                        </button>
-                    </div>
-                    
-                    {renderToolContent()}
-                </div>
-            </div>
-        )}
+        <Routes>
+            <Route path="/" element={
+                <Dashboard 
+                    t={t}
+                    tools={TOOLS_CONFIG}
+                    recentActivity={getRecentActivity()}
+                    setActiveTool={handleNavigate}
+                    searchQuery={searchQuery}
+                />
+            } />
+            <Route path="/tool/:toolId" element={<ToolWrapper />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </main>
 
       <Footer />

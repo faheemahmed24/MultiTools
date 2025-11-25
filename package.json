@@ -16,7 +16,8 @@
     "mammoth": "^1.11.0",
     "jspdf": "^3.0.4",
     "docx": "^9.5.1",
-    "pdfjs-dist": "^5.4.394"
+    "pdfjs-dist": "^5.4.394",
+    "react-router-dom": "^7.9.6"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

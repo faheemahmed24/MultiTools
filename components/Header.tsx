@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import type { Language, TranslationSet, User } from '../types';
 
@@ -140,7 +141,7 @@ const Header: React.FC<HeaderProps> = ({
         </div>
         <div className="notification-item">
             <div className="notification-title">System update ready</div>
-            <div class="notification-time">3 hours ago</div>
+            <div className="notification-time">3 hours ago</div>
         </div>
     </div>
 

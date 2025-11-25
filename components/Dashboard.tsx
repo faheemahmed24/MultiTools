@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import type { TranslationSet } from '../types';
 
 interface ToolConfig {
+    id: string;
     key: string;
     category: string;
     iconClass: string;
@@ -24,7 +25,7 @@ interface DashboardProps {
     t: TranslationSet;
     tools: ToolConfig[];
     recentActivity: ActivityItem[];
-    setActiveTool: (tool: string) => void;
+    setActiveTool: (toolId: string) => void;
     searchQuery: string;
 }
 
@@ -72,7 +73,7 @@ const Dashboard: React.FC<DashboardProps> = ({ t, tools, recentActivity, setActi
                     Quick Actions
                 </h2>
                 <div className="quick-actions-grid">
-                    <button className="quick-action-btn" onClick={() => setActiveTool('AI Transcriber')}>
+                    <button className="quick-action-btn" onClick={() => setActiveTool('ai-transcriber')}>
                         <i className="fas fa-upload"></i>
                         <span>Upload Files</span>
                     </button>
@@ -93,7 +94,7 @@ const Dashboard: React.FC<DashboardProps> = ({ t, tools, recentActivity, setActi
 
             <section className="tools-grid">
                 {filteredTools.map(tool => (
-                    <div key={tool.key} className="tool-card" onClick={() => setActiveTool(tool.key)}>
+                    <div key={tool.id} className="tool-card" onClick={() => setActiveTool(tool.id)}>
                         <div className="tool-header">
                             <div className="tool-icon">
                                 <i className={tool.iconClass}></i>
