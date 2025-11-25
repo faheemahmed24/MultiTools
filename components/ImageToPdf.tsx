@@ -220,7 +220,7 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
     }
     
     const url = doc.output('bloburl');
-    setPdfUrl(url as string);
+    setPdfUrl(url as unknown as string);
     setIsConverting(false);
     setConversionMessage('');
     onConversionComplete({ fileName: `${outputFilename || 'converted'}.pdf`, imageCount: images.length });
@@ -246,7 +246,7 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
         const a4Width = 792 * 12700;
         
         const imageRun = new docx.ImageRun({
-            data: base64Data,
+            data: Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)),
             transformation: {
                 width: a4Width, 
                 height: (a4Width * tempImg.height) / tempImg.width,

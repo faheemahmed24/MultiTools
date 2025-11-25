@@ -1,7 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
 import type { TranslationSet, User } from '../types';
-import { CloseIcon } from './icons/CloseIcon';
-import { GoogleIcon } from './icons/GoogleIcon';
 import GoogleAccountSelectorModal from './GoogleAccountSelectorModal';
 
 interface AuthModalProps {
@@ -140,7 +139,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess, 
                   {isLoginMode ? t.login : t.signup}
                 </h2>
                 <button onClick={handleClose} className="p-1 rounded-full text-gray-400 hover:bg-gray-700">
-                  <CloseIcon className="w-6 h-6" />
+                  <i className="fas fa-times w-6 h-6 flex items-center justify-center" />
                 </button>
               </div>
 
@@ -192,7 +191,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess, 
                 onClick={() => setIsGoogleAccountSelectorOpen(true)}
                 className="w-full flex items-center justify-center py-2.5 px-4 bg-white text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors"
               >
-                <GoogleIcon className="w-5 h-5 me-3" />
+                <i className="fab fa-google w-5 h-5 me-3 flex items-center justify-center" />
                 {t.continueWithGoogle}
               </button>
 

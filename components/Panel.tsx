@@ -1,5 +1,5 @@
+
 import React, { useState } from 'react';
-import { ChevronDownIcon } from './icons/ChevronDownIcon';
 
 interface PanelProps {
   title: string;
@@ -19,7 +19,7 @@ const Panel: React.FC<PanelProps> = ({ title, children, defaultOpen = true, clas
         aria-expanded={isOpen}
       >
         <h3 className="font-bold text-lg text-gray-200">{title}</h3>
-        <ChevronDownIcon className={`w-6 h-6 text-gray-400 transition-transform duration-300 ${isOpen ? '' : 'rotate-180'}`} />
+        <i className={`fas fa-chevron-down w-6 h-6 text-gray-400 transition-transform duration-300 flex items-center justify-center ${isOpen ? '' : 'rotate-180'}`} />
       </button>
       <div 
         className="grid transition-all duration-300 ease-in-out"

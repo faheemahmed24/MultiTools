@@ -1,7 +1,6 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import type { Language } from '../types';
-import { GlobeIcon } from './icons/GlobeIcon';
-import { ChevronDownIcon } from './icons/ChevronDownIcon';
 
 interface LanguageSelectorProps {
   selectedLanguage: Language;
@@ -43,10 +42,10 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ selectedLanguage, o
         className="w-full flex items-center justify-between bg-gray-700/50 px-4 py-2 rounded-lg text-gray-200 hover:bg-gray-700 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <GlobeIcon className="w-5 h-5 text-gray-400" />
+          <i className="fas fa-globe w-5 h-5 text-gray-400 flex items-center justify-center" />
           <span className="font-semibold">{currentLanguage?.name || 'Select Language'}</span>
         </div>
-        <ChevronDownIcon className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <i className={`fas fa-chevron-down w-5 h-5 text-gray-400 transition-transform flex items-center justify-center ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (

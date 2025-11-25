@@ -1,6 +1,6 @@
+
 import React, { useState, useCallback, useRef } from 'react';
 import type { TranslationSet } from '../types';
-import { UploadIcon } from './icons/UploadIcon';
 
 interface FileUploadProps {
   onFilesSelect: (files: File[]) => void;
@@ -62,7 +62,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
         <div className={`absolute inset-0 bg-purple-500/20 rounded-xl transition-all duration-300 transform scale-95 ${isDragging ? 'opacity-100 scale-100' : 'opacity-0'}`}></div>
         <div className={`flex flex-col items-center justify-center text-center z-10 transition-transform duration-300 transform ${isDragging ? 'scale-105' : ''}`}>
             <div className="p-4 bg-gray-700/50 rounded-full mb-4 border border-gray-600">
-                <UploadIcon className="w-10 h-10 text-gray-400" />
+                <i className="fas fa-cloud-upload-alt w-10 h-10 text-gray-400 flex items-center justify-center text-3xl" />
             </div>
             <input
               type="file"

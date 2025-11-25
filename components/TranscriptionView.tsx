@@ -1,16 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
 import type { Transcription, TranslationSet, TranscriptionSegment } from '../types';
-import { CopyIcon } from './icons/CopyIcon';
-import { CheckIcon } from './icons/CheckIcon';
-import { EditIcon } from './icons/EditIcon';
-import { SaveIcon } from './icons/SaveIcon';
-import { DownloadIcon } from './icons/DownloadIcon';
-import { TxtIcon } from './icons/TxtIcon';
-import { JsonIcon } from './icons/JsonIcon';
-import { SrtIcon } from './icons/SrtIcon';
-import { CsvIcon } from './icons/CsvIcon';
-import { PdfIcon } from './icons/PdfIcon';
-import { DocxIcon } from './icons/DocxIcon';
 import { summarizeTranscription, analyzeSentiment } from '../services/geminiService';
 import { SkeletonLoader } from './Loader';
 import { jsPDF } from 'jspdf';
@@ -32,12 +22,6 @@ const Switch: React.FC<{ checked: boolean; onChange: (checked: boolean) => void;
         </div>
         <div className="ms-3 text-sm font-medium text-gray-300">{label}</div>
     </label>
-);
-
-const SearchIcon = (props: any) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-  </svg>
 );
 
 const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, onSave, onUpdate, t }) => {
@@ -212,35 +196,35 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
                         placeholder={t.searchTranscription}
                         className="bg-gray-700 text-gray-200 text-sm rounded-lg pl-8 pr-3 py-1.5 focus:ring-1 focus:ring-purple-500 border-none w-48"
                     />
-                    <SearchIcon className="w-4 h-4 text-gray-400 absolute left-2.5 top-2" />
+                    <i className="fas fa-search w-4 h-4 text-gray-400 absolute left-2.5 top-2.5 text-xs" />
                 </div>
                 
                 {isEditing ? (
                     <button onClick={handleSaveChanges} className="p-2 bg-green-600 rounded-lg hover:bg-green-700 text-white" title={t.save}>
-                        <SaveIcon className="w-5 h-5" />
+                        <i className="fas fa-save w-5 h-5 flex items-center justify-center" />
                     </button>
                 ) : (
                     <button onClick={() => setIsEditing(true)} className="p-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-white" title={t.edit}>
-                        <EditIcon className="w-5 h-5" />
+                        <i className="fas fa-pen w-5 h-5 flex items-center justify-center" />
                     </button>
                 )}
 
                 <button onClick={handleCopy} className="p-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-white" title={t.copy}>
-                    {isCopied ? <CheckIcon className="w-5 h-5 text-green-400" /> : <CopyIcon className="w-5 h-5" />}
+                    {isCopied ? <i className="fas fa-check w-5 h-5 text-green-400 flex items-center justify-center" /> : <i className="fas fa-copy w-5 h-5 flex items-center justify-center" />}
                 </button>
                 
                 <div className="relative">
                     <button onClick={() => setShowExportMenu(!showExportMenu)} className="p-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-white" title={t.export}>
-                        <DownloadIcon className="w-5 h-5" />
+                        <i className="fas fa-download w-5 h-5 flex items-center justify-center" />
                     </button>
                     {showExportMenu && (
                         <div className="absolute right-0 mt-2 w-40 bg-gray-800 border border-gray-700 rounded-lg shadow-xl py-1 z-10" onMouseLeave={() => setShowExportMenu(false)}>
-                            <button onClick={() => handleExport('txt')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><TxtIcon className="w-4 h-4 mr-2" /> TXT</button>
-                            <button onClick={() => handleExport('json')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><JsonIcon className="w-4 h-4 mr-2" /> JSON</button>
-                            <button onClick={() => handleExport('srt')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><SrtIcon className="w-4 h-4 mr-2" /> SRT</button>
-                            <button onClick={() => handleExport('csv')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><CsvIcon className="w-4 h-4 mr-2" /> CSV</button>
-                            <button onClick={() => handleExport('pdf')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><PdfIcon className="w-4 h-4 mr-2" /> PDF</button>
-                            <button onClick={() => handleExport('docx')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><DocxIcon className="w-4 h-4 mr-2" /> DOCX</button>
+                            <button onClick={() => handleExport('txt')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><i className="fas fa-file-lines w-4 h-4 mr-2" /> TXT</button>
+                            <button onClick={() => handleExport('json')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><i className="fas fa-file-code w-4 h-4 mr-2" /> JSON</button>
+                            <button onClick={() => handleExport('srt')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><i className="fas fa-file-video w-4 h-4 mr-2" /> SRT</button>
+                            <button onClick={() => handleExport('csv')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><i className="fas fa-file-csv w-4 h-4 mr-2" /> CSV</button>
+                            <button onClick={() => handleExport('pdf')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><i className="fas fa-file-pdf w-4 h-4 mr-2" /> PDF</button>
+                            <button onClick={() => handleExport('docx')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><i className="fas fa-file-word w-4 h-4 mr-2" /> DOCX</button>
                         </div>
                     )}
                 </div>
