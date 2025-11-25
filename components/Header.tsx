@@ -10,6 +10,7 @@ interface HeaderProps {
   currentUser: User | null;
   onLoginClick: () => void;
   onLogoutClick: () => void;
+  onSearch: (query: string) => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -19,7 +20,8 @@ const Header: React.FC<HeaderProps> = ({
     t, 
     currentUser,
     onLoginClick,
-    onLogoutClick 
+    onLogoutClick,
+    onSearch
 }) => {
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -79,7 +81,12 @@ const Header: React.FC<HeaderProps> = ({
             </div>
             
             <div className="search-bar">
-                <input type="text" className="search-input" placeholder="Search for tools..." id="searchInput" />
+                <input 
+                    type="text" 
+                    className="search-input" 
+                    placeholder="Search for tools..." 
+                    onChange={(e) => onSearch(e.target.value)}
+                />
                 <button className="search-btn">
                     <i className="fas fa-search"></i>
                 </button>
@@ -133,7 +140,7 @@ const Header: React.FC<HeaderProps> = ({
         </div>
         <div className="notification-item">
             <div className="notification-title">System update ready</div>
-            <div className="notification-time">3 hours ago</div>
+            <div class="notification-time">3 hours ago</div>
         </div>
     </div>
 

@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
 import type { TranslationSet } from '../types';
-import { UploadIcon } from './icons/UploadIcon';
 
 interface FileUploadProps {
   onFilesSelect: (files: File[]) => void;
