@@ -116,6 +116,59 @@
             gap: 20px;
         }
         
+        .language-selector {
+            position: relative;
+        }
+        
+        .language-btn {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 12px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .language-btn:hover {
+            background-color: #252538;
+            color: #e0e0e0;
+        }
+        
+        .language-dropdown {
+            position: absolute;
+            top: 40px;
+            right: 0;
+            background-color: #252538;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            overflow: hidden;
+            min-width: 150px;
+        }
+        
+        .language-option {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .language-option:hover {
+            background-color: #3a3a4e;
+        }
+        
+        .language-option.active {
+            background-color: rgba(155, 89, 182, 0.2);
+            color: #9b59b6;
+        }
+        
         .notification-btn {
             background: none;
             border: none;
@@ -489,7 +542,8 @@
             min-height: 600px;
         }
         
-        .tool-header-page {
+        .tool-container .tool-header {
+            /* Scope this to .tool-container to apply the page header style override */
             display: flex;
             align-items: center;
             gap: 20px;

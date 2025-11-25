@@ -162,8 +162,6 @@ function App() {
       };
     });
     setProcessingFiles(current => [...newFilesToProcess]);
-    // Usually we would navigate to the tool here, but if already in tool view it stays.
-    // If dropped on Dashboard it handles itself via drag drop there or distinct button.
     if (activeTool === 'Dashboard') setActiveTool('AI Transcriber');
   };
 
@@ -199,8 +197,8 @@ function App() {
     processFile();
   }, [processingFiles, setTranscriptions, uiLanguage, setCurrentTranscriptionId]);
 
-  const handleUpdateTranscription = useCallback((id: string, updatedSegments: TranscriptionSegment[]) => {
-    setTranscriptions(prev => prev.map(t => t.id === id ? { ...t, segments: updatedSegments } : t));
+  const handleUpdateTranscription = useCallback((id: string, updatedSegments: TranscriptionSegment[], summary?: string, sentiment?: string) => {
+    setTranscriptions(prev => prev.map(t => t.id === id ? { ...t, segments: updatedSegments, summary, sentiment } : t));
   }, [setTranscriptions]);
 
   const handleDeleteTranscription = useCallback((id: string) => {
@@ -340,7 +338,7 @@ function App() {
         toolContent = (
             <div className={`${mainContentClass} animate-fadeIn`}>
                 {processingFiles.length > 0 ? (
-                     <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl shadow-lg p-6 transform-gpu">
+                     <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl shadow-lg p-6 transform-gpu mb-6">
                         <h2 className="text-xl font-bold mb-4 text-gray-200">Transcription Queue</h2>
                         <ul className="space-y-4">
                             {processingFiles.map(f => (
@@ -360,7 +358,9 @@ function App() {
                          }
                     </div>
                 ) : (
-                    <FileUpload onFilesSelect={handleFilesSelect} t={t} isProcessing={false} />
+                    <div className="mb-6">
+                        <FileUpload onFilesSelect={handleFilesSelect} t={t} isProcessing={false} />
+                    </div>
                 )}
                 <div className={panelGridClass}>
                     <Panel title={t.transcription} defaultOpen={true} className="md:col-span-2 lg:col-span-1">
@@ -475,7 +475,7 @@ function App() {
 
     return (
         <div className="tool-container">
-            <div className="tool-header-page">
+            <div className="tool-header">
                 <div className="tool-icon-large">
                     <i className={iconClass}></i>
                 </div>
@@ -592,48 +592,28 @@ function App() {
                     })}
             </section>
 
-            {/* Recent Activity (Mockup based on user request, but using some real data if available) */}
+            {/* Recent Activity */}
             <section className="recent-activity">
                 <h2 className="recent-activity-title">
                     <i className="fas fa-clock"></i>
                     Recent Activity
                 </h2>
                 <div className="activity-list">
-                    {/* Mix of some static recent activities for demo as requested in prototype */}
-                    <div className="activity-item">
-                        <div className="activity-icon">
-                            <i className="fas fa-file-audio"></i>
-                        </div>
-                        <div className="activity-details">
-                            <div className="activity-title">Audio transcription completed</div>
-                            <div className="activity-time">2 minutes ago</div>
-                        </div>
-                        <span className="activity-status status-completed">Completed</span>
-                    </div>
-                    
-                    <div className="activity-item">
-                        <div className="activity-icon">
-                            <i className="fas fa-image"></i>
-                        </div>
-                        <div className="activity-details">
-                            <div className="activity-title">Image OCR processing</div>
-                            <div className="activity-time">15 minutes ago</div>
-                        </div>
-                        <span className="activity-status status-processing">Processing</span>
-                    </div>
-                    
-                    {/* Dynamic recent item if available */}
-                    {transcriptions.length > 0 && (
-                         <div className="activity-item">
-                            <div className="activity-icon">
-                                <i className="fas fa-file-audio"></i>
+                    {transcriptions.length > 0 ? (
+                         transcriptions.slice(0, 3).map((item, idx) => (
+                            <div className="activity-item" key={idx}>
+                                <div className="activity-icon">
+                                    <i className="fas fa-file-audio"></i>
+                                </div>
+                                <div className="activity-details">
+                                    <div className="activity-title">{item.fileName}</div>
+                                    <div className="activity-time">{item.date}</div>
+                                </div>
+                                <span className="activity-status status-completed">Saved</span>
                             </div>
-                            <div className="activity-details">
-                                <div className="activity-title">Transcription: {transcriptions[0].fileName}</div>
-                                <div className="activity-time">{transcriptions[0].date}</div>
-                            </div>
-                            <span className="activity-status status-completed">Saved</span>
-                        </div>
+                         ))
+                    ) : (
+                        <p className="text-gray-500 text-center p-4">{t.noHistory}</p>
                     )}
                 </div>
             </section>
