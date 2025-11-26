@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useUserLocalStorage } from './hooks/useUserLocalStorage';
@@ -18,6 +19,9 @@ import ImageToPdf from './components/ImageToPdf';
 import PdfToWord from './components/PdfToWord';
 import WordToPdf from './components/WordToPdf';
 import ExportToSheets from './components/ExportToSheets';
+import DataAnalyzer from './components/DataAnalyzer';
+import CodeAssistant from './components/CodeAssistant';
+import VoiceGenerator from './components/VoiceGenerator';
 import AuthModal from './components/AuthModal';
 import Panel from './components/Panel';
 import { LanguageOption, targetLanguages } from './lib/languages';
@@ -454,6 +458,24 @@ function App() {
         return (
              <div className={`${mainContentClass} animate-fadeIn`}>
                 <ExportToSheets t={t} />
+            </div>
+        );
+      case 'Data Analyzer':
+        return (
+             <div className={`${mainContentClass} animate-fadeIn`}>
+                <DataAnalyzer t={t} />
+            </div>
+        );
+      case 'Code Assistant':
+        return (
+            <div className={`${mainContentClass} animate-fadeIn`}>
+                <CodeAssistant t={t} />
+            </div>
+        );
+      case 'Voice Generator':
+        return (
+            <div className={`${mainContentClass} animate-fadeIn`}>
+                <VoiceGenerator t={t} />
             </div>
         );
       case 'Dashboard':

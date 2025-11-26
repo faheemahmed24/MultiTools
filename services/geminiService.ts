@@ -272,3 +272,36 @@ export const analyzeSentiment = async (text: string): Promise<string> => {
 
     return response.text.trim();
 };
+
+export const analyzeData = async (data: string): Promise<string> => {
+    const systemInstruction = `You are a data analyst expert. Analyze the provided CSV or JSON data.
+    1. Identify key trends, patterns, and outliers.
+    2. Summarize the data's structure and content.
+    3. Provide actionable insights based on the data.
+    4. Format your response in clean Markdown with headings and bullet points.`;
+  
+    const response = await generateContentWithRetry(MODELS.primary, {
+        contents: data,
+        config: { systemInstruction }
+    });
+  
+    return response.text.trim();
+};
+  
+export const generateCode = async (prompt: string, context?: string): Promise<string> => {
+    const systemInstruction = `You are an expert software engineer and coding assistant. 
+    Your task is to write high-quality, efficient, and well-commented code based on the user's request.
+    If existing code context is provided, analyze it and suggest improvements or additions.
+    Format your response in Markdown, using code blocks for the code and text for explanations.`;
+    
+    const content = context 
+        ? `Request: ${prompt}\n\nExisting Code/Context:\n${context}`
+        : prompt;
+  
+    const response = await generateContentWithRetry(MODELS.primary, {
+        contents: content,
+        config: { systemInstruction }
+    });
+  
+    return response.text.trim();
+};
