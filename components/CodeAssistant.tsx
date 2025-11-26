@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import type { TranslationSet } from '../types';
 import { generateCode } from '../services/geminiService';
 import { SkeletonLoader } from './Loader';
+import ReactMarkdown from 'react-markdown';
 
 interface CodeAssistantProps {
   t: TranslationSet;
@@ -90,7 +91,9 @@ const CodeAssistant: React.FC<CodeAssistantProps> = ({ t }) => {
             {isLoading ? (
               <SkeletonLoader lines={8} />
             ) : result ? (
-              <pre className="text-sm font-mono text-gray-300 whitespace-pre-wrap">{result}</pre>
+              <div className="prose prose-invert max-w-none text-sm">
+                  <ReactMarkdown>{result}</ReactMarkdown>
+              </div>
             ) : (
               <div className="h-full flex items-center justify-center text-gray-600 text-sm italic">
                 Generated code will appear here...

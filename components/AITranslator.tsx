@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import type { TranslationSet } from '../types';
 import { useDebounce } from '../hooks/useDebounce';
 import { sourceLanguages, targetLanguages } from '../lib/languages';
@@ -28,6 +29,12 @@ const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete })
   
   // TTS State
   const [isSpeaking, setIsSpeaking] = useState(false);
+
+  useEffect(() => {
+    return () => {
+        window.speechSynthesis.cancel();
+    };
+  }, []);
 
   const debouncedInputText = useDebounce(inputText, 500);
 

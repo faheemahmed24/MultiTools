@@ -63,14 +63,7 @@ const DataAnalyzer: React.FC<DataAnalyzerProps> = ({ t }) => {
             <SkeletonLoader lines={6} />
           ) : (
             <div className="prose prose-invert max-w-none text-gray-300">
-                {/* 
-                  Note: In a real environment, you might want to use a markdown library like react-markdown.
-                  Since I can't easily install new packages, I'm displaying plain text with whitespace preservation.
-                  However, `react-markdown` is a very common dependency in such apps. If available, use it.
-                  I will use a simple whitespace preservation approach for now, assuming markdown support isn't strictly required
-                  but desirable.
-                */}
-                <pre className="whitespace-pre-wrap font-sans">{analysisResult}</pre>
+                <ReactMarkdown>{analysisResult}</ReactMarkdown>
             </div>
           )}
         </div>

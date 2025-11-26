@@ -118,8 +118,8 @@ function App() {
   
   // 'Dashboard' means the main grid view.
   const [activeTool, setActiveTool] = useUserLocalStorage<string>(currentUser?.id, 'activeTool', 'Dashboard');
-  const [selectedCategory, setSelectedCategory] = useState('tools'); // Default category matches prototype
-  const [searchQuery, setSearchQuery] = useState(''); // New search state
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchQuery, setSearchQuery] = useState(''); 
   
   // Transcription State
   const [transcriptions, setTranscriptions] = useUserLocalStorage<Transcription[]>(currentUser?.id, 'transcriptions', []);
@@ -134,8 +134,6 @@ function App() {
   const [imagePdfHistory, setImagePdfHistory] = useUserLocalStorage<ImagePdfHistoryItem[]>(currentUser?.id, 'imagePdfHistory', []);
   const [pdfWordHistory, setPdfWordHistory] = useUserLocalStorage<PdfWordHistoryItem[]>(currentUser?.id, 'pdfWordHistory', []);
   const [wordPdfHistory, setWordPdfHistory] = useUserLocalStorage<WordPdfHistoryItem[]>(currentUser?.id, 'wordPdfHistory', []);
-
-  // Removed isSidebarOpen as we are moving to a top-nav/dashboard layout
 
   const t = useMemo(() => getTranslations(uiLanguage), [uiLanguage]);
 
@@ -267,7 +265,7 @@ function App() {
     const mainContentClass = "flex flex-col gap-6";
     const panelGridClass = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
     
-    // History Renderers (Updated Text Colors for Light Theme)
+    // History Renderers
     const renderTranscriptionHistoryItem = (item: Transcription, isActive: boolean) => (
         <div className="flex-grow overflow-hidden">
             <p className="font-semibold truncate text-[var(--text-color)]">{item.fileName}</p>
@@ -490,6 +488,7 @@ function App() {
           {/* Categories */}
           <div className="flex gap-4 mb-6 flex-wrap">
             {[
+                { id: 'all', label: 'All' },
                 { id: 'tools', label: t.tools },
                 { id: 'media', label: 'Media' },
                 { id: 'text', label: 'Text' },
@@ -515,7 +514,7 @@ function App() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mb-8">
                 {TOOLS_CONFIG
                     .filter(tool => {
-                        const matchesCategory = selectedCategory === 'tools' || tool.category === selectedCategory;
+                        const matchesCategory = selectedCategory === 'all' || tool.category === selectedCategory;
                         const matchesSearch = tool.key.toLowerCase().includes(searchQuery.toLowerCase()) || 
                                             (tool.description && tool.description.toLowerCase().includes(searchQuery.toLowerCase()));
                         return matchesCategory && matchesSearch;
@@ -536,7 +535,7 @@ function App() {
                         );
                 })}
                 {TOOLS_CONFIG.filter(tool => {
-                        const matchesCategory = selectedCategory === 'tools' || tool.category === selectedCategory;
+                        const matchesCategory = selectedCategory === 'all' || tool.category === selectedCategory;
                         const matchesSearch = tool.key.toLowerCase().includes(searchQuery.toLowerCase()) || 
                                             (tool.description && tool.description.toLowerCase().includes(searchQuery.toLowerCase()));
                         return matchesCategory && matchesSearch;
@@ -553,7 +552,7 @@ function App() {
                     { key: 'AI Transcriber', icon: 'fas fa-file-audio', label: t.transcription },
                     { key: 'AI Translator', icon: 'fas fa-language', label: t.translate },
                     { key: 'Image Converter & OCR', icon: 'fas fa-file-image', label: 'OCR' },
-                    { key: 'Dashboard', icon: 'fas fa-cog', label: 'Settings' } // Dashboard essentially acts as home/settings here for now
+                    { key: 'Dashboard', icon: 'fas fa-cog', label: 'Home' }
                  ].map(action => (
                     <div 
                         key={action.key} 
