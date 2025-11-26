@@ -1,13 +1,8 @@
-
 import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
-import { UploadIcon } from './icons/UploadIcon';
-import { DownloadIcon } from './icons/DownloadIcon';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
 import JSZip from 'jszip';
 import { analyzeImage } from '../services/geminiService';
-import { CopyIcon } from './icons/CopyIcon';
-import { CheckIcon } from './icons/CheckIcon';
 import * as docx from 'docx';
 
 
@@ -284,7 +279,7 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         >
-          <UploadIcon className="w-12 h-12 text-gray-500 mb-4" />
+          <i className="fas fa-cloud-upload-alt w-12 h-12 text-gray-500 mb-4 text-5xl" />
           <input type="file" ref={fileInputRef} onChange={onFileChange} accept="application/pdf" className="hidden" />
           <button onClick={() => fileInputRef.current?.click()} className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors duration-200">
             {t.uploadPdf}
@@ -362,7 +357,7 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
                     {isExtracting ? (isConverting ? progress : t.analyzing) : t.extractText}
                   </button>
                   <button onClick={handleDownloadAll} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
-                    <DownloadIcon className="w-5 h-5 me-2" />
+                    <i className="fas fa-download w-5 h-5 me-2" />
                     {t.downloadAll}
                   </button>
                 </div>
@@ -382,7 +377,7 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
                         title={t.downloadPage.replace('{pageNumber}', img.pageNumber.toString())}
                         className="p-3 bg-purple-600/80 rounded-full text-white hover:bg-purple-600 mb-2"
                       >
-                        <DownloadIcon className="w-6 h-6" />
+                        <i className="fas fa-download w-6 h-6" />
                       </a>
                       <p className="text-white font-bold text-sm">Page {img.pageNumber}</p>
                     </div>
@@ -401,7 +396,7 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
                 <div className="flex items-center gap-2">
                     <div className="relative">
                         <button onClick={() => setShowTextExportMenu(!showTextExportMenu)} className="flex items-center px-3 py-1 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm">
-                            <DownloadIcon className="w-4 h-4 me-2" /> {t.export}
+                            <i className="fas fa-download w-4 h-4 me-2" /> {t.export}
                         </button>
                         {showTextExportMenu && (
                             <div onMouseLeave={() => setShowTextExportMenu(false)} className="absolute top-full mt-2 end-0 w-36 bg-gray-600 rounded-lg shadow-xl py-1 z-10 animate-slide-in-up">
@@ -411,7 +406,7 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
                         )}
                     </div>
                     <button onClick={handleCopyText} className="flex items-center px-3 py-1 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm">
-                        {isTextCopied ? <CheckIcon className="w-4 h-4 me-2"/> : <CopyIcon className="w-4 h-4 me-2" />}
+                        {isTextCopied ? <i className="fas fa-check w-4 h-4 me-2"/> : <i className="fas fa-copy w-4 h-4 me-2" />}
                         {isTextCopied ? t.copied : t.copy}
                     </button>
                 </div>

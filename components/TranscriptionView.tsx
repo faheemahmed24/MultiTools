@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import type { Transcription, TranslationSet, TranscriptionSegment } from '../types';
 import { summarizeTranscription, analyzeSentiment } from '../services/geminiService';
@@ -196,32 +195,32 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
                         placeholder={t.searchTranscription}
                         className="bg-gray-700 text-gray-200 text-sm rounded-lg pl-8 pr-3 py-1.5 focus:ring-1 focus:ring-purple-500 border-none w-48"
                     />
-                    <i className="fas fa-search w-4 h-4 text-gray-400 absolute left-2.5 top-2.5 text-xs" />
+                    <i className="fas fa-search w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" />
                 </div>
                 
                 {isEditing ? (
                     <button onClick={handleSaveChanges} className="p-2 bg-green-600 rounded-lg hover:bg-green-700 text-white" title={t.save}>
-                        <i className="fas fa-save w-5 h-5 flex items-center justify-center" />
+                        <i className="fas fa-save w-5 h-5" />
                     </button>
                 ) : (
                     <button onClick={() => setIsEditing(true)} className="p-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-white" title={t.edit}>
-                        <i className="fas fa-pen w-5 h-5 flex items-center justify-center" />
+                        <i className="fas fa-edit w-5 h-5" />
                     </button>
                 )}
 
                 <button onClick={handleCopy} className="p-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-white" title={t.copy}>
-                    {isCopied ? <i className="fas fa-check w-5 h-5 text-green-400 flex items-center justify-center" /> : <i className="fas fa-copy w-5 h-5 flex items-center justify-center" />}
+                    {isCopied ? <i className="fas fa-check w-5 h-5 text-green-400" /> : <i className="fas fa-copy w-5 h-5" />}
                 </button>
                 
                 <div className="relative">
                     <button onClick={() => setShowExportMenu(!showExportMenu)} className="p-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-white" title={t.export}>
-                        <i className="fas fa-download w-5 h-5 flex items-center justify-center" />
+                        <i className="fas fa-download w-5 h-5" />
                     </button>
                     {showExportMenu && (
                         <div className="absolute right-0 mt-2 w-40 bg-gray-800 border border-gray-700 rounded-lg shadow-xl py-1 z-10" onMouseLeave={() => setShowExportMenu(false)}>
-                            <button onClick={() => handleExport('txt')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><i className="fas fa-file-lines w-4 h-4 mr-2" /> TXT</button>
+                            <button onClick={() => handleExport('txt')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><i className="fas fa-file-alt w-4 h-4 mr-2" /> TXT</button>
                             <button onClick={() => handleExport('json')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><i className="fas fa-file-code w-4 h-4 mr-2" /> JSON</button>
-                            <button onClick={() => handleExport('srt')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><i className="fas fa-file-video w-4 h-4 mr-2" /> SRT</button>
+                            <button onClick={() => handleExport('srt')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><i className="fas fa-closed-captioning w-4 h-4 mr-2" /> SRT</button>
                             <button onClick={() => handleExport('csv')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><i className="fas fa-file-csv w-4 h-4 mr-2" /> CSV</button>
                             <button onClick={() => handleExport('pdf')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><i className="fas fa-file-pdf w-4 h-4 mr-2" /> PDF</button>
                             <button onClick={() => handleExport('docx')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><i className="fas fa-file-word w-4 h-4 mr-2" /> DOCX</button>

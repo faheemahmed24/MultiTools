@@ -1,12 +1,7 @@
-
 import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
-import { UploadIcon } from './icons/UploadIcon';
-import { DownloadIcon } from './icons/DownloadIcon';
 import * as mammoth from 'mammoth';
 import { jsPDF } from 'jspdf';
-import { CopyIcon } from './icons/CopyIcon';
-import { CheckIcon } from './icons/CheckIcon';
 import * as docx from 'docx';
 
 interface WordToPdfProps {
@@ -72,7 +67,7 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
 
     const reader = new FileReader();
     reader.onload = async (event) => {
-      const arrayBuffer = event.target?.result;
+      const arrayBuffer = event.target?.result as ArrayBuffer;
       if (!arrayBuffer) {
         setIsConverting(false);
         setProgress('Error reading file.');
@@ -122,7 +117,7 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
         await doc.html(tempDiv, {
             callback: (doc) => {
                 const url = doc.output('bloburl');
-                setPdfUrl(url as unknown as string);
+                setPdfUrl(url.toString());
                 setProgress(t.conversionComplete);
                 onConversionComplete({fileName: wordFile.name});
             },
@@ -154,7 +149,7 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
 
     const reader = new FileReader();
     reader.onload = async (event) => {
-        const arrayBuffer = event.target?.result;
+        const arrayBuffer = event.target?.result as ArrayBuffer;
         if (!arrayBuffer) {
             setIsExtracting(false);
             setExtractionError('Error reading file.');
@@ -211,7 +206,7 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
           className={`flex flex-col flex-grow items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 ${isDragging ? 'border-purple-500 bg-gray-700' : 'border-gray-600 hover:border-purple-500'}`}
           onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}
         >
-          <UploadIcon className="w-12 h-12 text-gray-500 mb-4" />
+          <i className="fas fa-cloud-upload-alt w-12 h-12 text-gray-500 mb-4 text-5xl" />
           <input type="file" ref={fileInputRef} onChange={onFileChange} accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="hidden" />
           <button onClick={() => fileInputRef.current?.click()} className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors duration-200">
             {t.uploadWord}
@@ -249,11 +244,11 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
 
             {pdfUrl && !isConverting && (
                 <a
-                    href={pdfUrl}
+                    href={pdfUrl.toString()}
                     download={`${wordFile.name.replace(/\.[^/.]+$/, "")}.pdf`}
                     className="w-full mt-4 flex items-center justify-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200"
                 >
-                    <DownloadIcon className="w-5 h-5 me-2" />
+                    <i className="fas fa-download w-5 h-5 me-2" />
                     {t.downloadPdf}
                 </a>
             )}
@@ -279,7 +274,7 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
                      <div className="flex items-center gap-2">
                         <div className="relative">
                             <button onClick={() => setShowTextExportMenu(!showTextExportMenu)} className="flex items-center px-3 py-1 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm">
-                                <DownloadIcon className="w-4 h-4 me-2" /> {t.export}
+                                <i className="fas fa-download w-4 h-4 me-2" /> {t.export}
                             </button>
                             {showTextExportMenu && (
                                 <div onMouseLeave={() => setShowTextExportMenu(false)} className="absolute top-full mt-2 end-0 w-36 bg-gray-600 rounded-lg shadow-xl py-1 z-10 animate-slide-in-up">
@@ -289,7 +284,7 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
                             )}
                         </div>
                         <button onClick={handleCopyText} className="flex items-center px-3 py-1 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm">
-                            {isTextCopied ? <CheckIcon className="w-4 h-4 me-2"/> : <CopyIcon className="w-4 h-4 me-2" />}
+                            {isTextCopied ? <i className="fas fa-check w-4 h-4 me-2"/> : <i className="fas fa-copy w-4 h-4 me-2" />}
                             {isTextCopied ? t.copied : t.copy}
                         </button>
                     </div>

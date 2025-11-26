@@ -1,32 +1,13 @@
-
 import React, { useState } from 'react';
 import type { TranslationSet } from '../types';
 import { useDebounce } from '../hooks/useDebounce';
 import { sourceLanguages, targetLanguages } from '../lib/languages';
 import type { LanguageOption } from '../lib/languages';
 import LanguageDropdown from './LanguageDropdown';
-import { SwapIcon } from './icons/SwapIcon';
-import { CopyIcon } from './icons/CopyIcon';
-import { CheckIcon } from './icons/CheckIcon';
-import { DownloadIcon } from './icons/DownloadIcon';
 import { translateText } from '../services/geminiService';
 import { jsPDF } from 'jspdf';
 import * as docx from 'docx';
-import { XCircleIcon } from './icons/XCircleIcon';
 import { SkeletonLoader } from './Loader';
-import { SpeakerWaveIcon } from './icons/SpeakerWaveIcon'; // Assuming you have this or need to add it
-
-// Simple icon component if not present in files
-const SpeakerIcon = (props: any) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
-    </svg>
-);
-const StopIcon = (props: any) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 7.5A2.25 2.25 0 017.5 5.25h9a2.25 2.25 0 012.25 2.25v9a2.25 2.25 0 01-2.25 2.25h-9a2.25 2.25 0 01-2.25-2.25v-9z" />
-    </svg>
-);
 
 interface AITranslatorProps {
     t: TranslationSet;
@@ -183,7 +164,7 @@ const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete })
           disabled={sourceLang.code === 'auto' || isLoading || isSwapping}
           className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          <SwapIcon className={`w-6 h-6 text-gray-300 transition-transform duration-500 ${isSwapping ? 'rotate-[360deg]' : ''}`} />
+          <i className={`fas fa-exchange-alt w-6 h-6 text-gray-300 transition-transform duration-500 ${isSwapping ? 'rotate-[360deg]' : ''}`} />
         </button>
         <LanguageDropdown
           languages={targetLanguages}
@@ -207,7 +188,7 @@ const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete })
             <span>{characterCount} chars / {wordCount} words</span>
             {inputText && (
                 <button onClick={handleClear} title="Clear text" className="text-gray-500 hover:text-white transition-colors">
-                    <XCircleIcon className="w-5 h-5"/>
+                    <i className="fas fa-times-circle w-5 h-5"/>
                 </button>
             )}
           </div>
@@ -234,13 +215,13 @@ const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete })
                     title={isSpeaking ? t.stop : t.listen}
                     className={`flex items-center justify-center p-1.5 rounded-lg transition-colors duration-200 ${isSpeaking ? 'bg-red-600 text-white' : 'bg-gray-700 text-white hover:bg-gray-600'}`}
                 >
-                    {isSpeaking ? <StopIcon className="w-4 h-4" /> : <SpeakerIcon className="w-4 h-4" />}
+                    {isSpeaking ? <i className="fas fa-stop w-4 h-4" /> : <i className="fas fa-volume-up w-4 h-4" />}
                 </button>
                 <button
                     onClick={handleCopy}
                     className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200"
                 >
-                    {isCopied ? <CheckIcon className="w-4 h-4 me-2" /> : <CopyIcon className="w-4 h-4 me-2" />}
+                    {isCopied ? <i className="fas fa-check w-4 h-4 me-2" /> : <i className="fas fa-copy w-4 h-4 me-2" />}
                     {isCopied ? t.copied : t.copy}
                 </button>
                 <div className="relative">
@@ -248,7 +229,7 @@ const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete })
                         onClick={() => setShowExportMenu(!showExportMenu)}
                         className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200"
                     >
-                        <DownloadIcon className="w-4 h-4 me-2" />
+                        <i className="fas fa-download w-4 h-4 me-2" />
                         {t.export}
                     </button>
                     {showExportMenu && (

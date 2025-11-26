@@ -1,27 +1,12 @@
-
 import React, { useState } from 'react';
 import type { TranslationSet, DiffPart } from '../types';
 import { correctGrammar } from '../services/geminiService';
-import { CopyIcon } from './icons/CopyIcon';
-import { CheckIcon } from './icons/CheckIcon';
-import { DownloadIcon } from './icons/DownloadIcon';
-import { GrammarIcon } from './icons/GrammarIcon';
 import { jsPDF } from 'jspdf';
 import * as docx from 'docx';
 import LanguageDropdown from './LanguageDropdown';
 import { sourceLanguages } from '../lib/languages';
 import type { LanguageOption } from '../lib/languages';
-import { XCircleIcon } from './icons/XCircleIcon';
 import { SkeletonLoader } from './Loader';
-import { ChevronDownIcon } from './icons/ChevronDownIcon';
-import { LightBulbIcon } from './icons/LightBulbIcon';
-
-// Simple icon component if not present
-const InfoIcon = (props: any) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-  </svg>
-);
 
 // Simple diffing function
 const createDiff = (original: string, corrected: string): DiffPart[] => {
@@ -212,7 +197,7 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
                     <span className="text-xs text-gray-400">{t.tone}</span>
                     <span className="font-semibold">{tones.find(to => to.key === tone)?.label}</span>
                 </div>
-                <ChevronDownIcon className={`w-5 h-5 text-gray-400 transition-transform ${isToneOpen ? 'rotate-180' : ''}`} />
+                <i className={`fas fa-chevron-down w-5 h-5 text-gray-400 transition-transform ${isToneOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {isToneOpen && (
@@ -240,7 +225,7 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex flex-col">
                 <h3 className="font-semibold mb-2 text-gray-300 flex items-center gap-2">
-                    <InfoIcon className="w-4 h-4 text-gray-500" />
+                    <i className="fas fa-info-circle w-4 h-4 text-gray-500" />
                     {t.originalText}
                 </h3>
                 <div className="relative flex-grow">
@@ -255,7 +240,7 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
                         <span>{characterCount} chars / {wordCount} words</span>
                         {inputText && (
                             <button onClick={handleClear} title="Clear text" className="text-gray-500 hover:text-white transition-colors p-1 rounded hover:bg-gray-700">
-                                <XCircleIcon className="w-4 h-4"/>
+                                <i className="fas fa-times-circle w-4 h-4"/>
                             </button>
                         )}
                     </div>
@@ -264,7 +249,7 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
             
             <div className="flex flex-col">
                 <h3 className="font-semibold mb-2 text-gray-300 flex items-center gap-2">
-                    <CheckIcon className="w-4 h-4 text-green-500" />
+                    <i className="fas fa-check w-4 h-4 text-green-500" />
                     {t.grammarResult}
                 </h3>
                 <div className="relative flex-grow flex flex-col">
@@ -273,7 +258,7 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
                             <SkeletonLoader lines={6} />
                         ) : error ? (
                             <div className="flex flex-col items-center justify-center h-full text-center">
-                                <XCircleIcon className="w-10 h-10 text-red-500 mb-2 opacity-50" />
+                                <i className="fas fa-times-circle w-10 h-10 text-red-500 mb-2 opacity-50" />
                                 <p>{error}</p>
                             </div>
                         ) : correctedText ? (
@@ -282,7 +267,7 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
                                 {explanation && (
                                     <div className="mt-4 pt-4 border-t border-gray-700/50 animate-fadeIn">
                                         <div className="flex items-center gap-2 mb-1 text-yellow-500/90">
-                                            <LightBulbIcon className="w-4 h-4" />
+                                            <i className="fas fa-lightbulb w-4 h-4" />
                                             <span className="text-xs font-bold uppercase tracking-wider">{t.explanation}</span>
                                         </div>
                                         <p className="text-sm text-gray-400 italic bg-yellow-900/10 p-3 rounded border border-yellow-500/10">
@@ -304,7 +289,7 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
                             onClick={handleCopy}
                             className="flex items-center px-3 py-1.5 bg-gray-800/80 backdrop-blur text-white text-sm font-semibold rounded-lg hover:bg-gray-700 transition-colors duration-200 shadow-sm border border-gray-700"
                         >
-                            {isCopied ? <CheckIcon className="w-4 h-4 me-2 text-green-400" /> : <CopyIcon className="w-4 h-4 me-2" />}
+                            {isCopied ? <i className="fas fa-check w-4 h-4 me-2 text-green-400" /> : <i className="fas fa-copy w-4 h-4 me-2" />}
                             {isCopied ? t.copied : t.copy}
                         </button>
                         <div className="relative">
@@ -312,7 +297,7 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
                                 onClick={() => setShowExportMenu(!showExportMenu)}
                                 className="flex items-center px-3 py-1.5 bg-gray-800/80 backdrop-blur text-white text-sm font-semibold rounded-lg hover:bg-gray-700 transition-colors duration-200 shadow-sm border border-gray-700"
                             >
-                                <DownloadIcon className="w-4 h-4 me-2" />
+                                <i className="fas fa-download w-4 h-4 me-2" />
                                 {t.export}
                             </button>
                             {showExportMenu && (
@@ -334,7 +319,7 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
                 disabled={isLoading || !inputText.trim()}
                 className="px-8 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all shadow-lg shadow-purple-900/20 flex items-center gap-2 transform hover:scale-105 active:scale-100"
             >
-                <GrammarIcon className="w-5 h-5" />
+                <i className="fas fa-spell-check w-5 h-5" />
                 {isLoading ? t.correctingGrammar : t.correctGrammar}
             </button>
         </div>

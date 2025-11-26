@@ -1,22 +1,9 @@
-
-// Fix: Import useCallback from React to resolve 'Cannot find name' errors.
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import type { LanguageOption } from '../lib/languages';
-import { UploadIcon } from './icons/UploadIcon';
 import { analyzeImage, translateText } from '../services/geminiService';
 import LanguageDropdown from './LanguageDropdown';
 import { targetLanguages } from '../lib/languages';
-import { CopyIcon } from './icons/CopyIcon';
-import { CheckIcon } from './icons/CheckIcon';
-import { DownloadIcon } from './icons/DownloadIcon';
-import { CloseIcon } from './icons/CloseIcon';
-import { PlusIcon } from './icons/PlusIcon';
-import { TrashIcon } from './icons/TrashIcon';
-import { CheckCircleIcon } from './icons/CheckCircleIcon';
-import { ClockIcon } from './icons/ClockIcon';
-import { XCircleIcon } from './icons/XCircleIcon';
-import { FolderIcon } from './icons/FolderIcon';
 import { jsPDF } from 'jspdf';
 import * as docx from 'docx';
 import { SkeletonLoader } from './Loader';
@@ -46,7 +33,7 @@ const ResultBox: React.FC<{
                             disabled={isLoading || !value}
                             className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50"
                         >
-                            <DownloadIcon className="w-4 h-4 me-2" />
+                            <i className="fas fa-download w-4 h-4 me-2" />
                             {t.export}
                         </button>
                         {showExportMenu && (
@@ -62,7 +49,7 @@ const ResultBox: React.FC<{
                         disabled={isLoading || !value}
                         className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50"
                     >
-                        {isCopied ? <CheckIcon className="w-4 h-4 me-2" /> : <CopyIcon className="w-4 h-4 me-2" />}
+                        {isCopied ? <i className="fas fa-check w-4 h-4 me-2" /> : <i className="fas fa-copy w-4 h-4 me-2" />}
                         {isCopied ? t.copied : t.copy}
                     </button>
                 </div>
@@ -351,9 +338,9 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
 
   const StatusIcon = ({ status }: { status: AnalyzableImage['status'] }) => {
       if (status === 'analyzing') return <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-400"></div>;
-      if (status === 'done') return <CheckCircleIcon className="w-5 h-5 text-green-400 bg-black/50 rounded-full" />;
-      if (status === 'error') return <XCircleIcon className="w-5 h-5 text-red-400 bg-black/50 rounded-full" />;
-      return <ClockIcon className="w-5 h-5 text-gray-400 bg-black/50 rounded-full" />;
+      if (status === 'done') return <i className="fas fa-check-circle w-5 h-5 text-green-400 bg-black/50 rounded-full" />;
+      if (status === 'error') return <i className="fas fa-times-circle w-5 h-5 text-red-400 bg-black/50 rounded-full" />;
+      return <i className="fas fa-clock w-5 h-5 text-gray-400 bg-black/50 rounded-full" />;
   };
 
   return (
@@ -385,7 +372,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
               onDragOver={handleDragOver}
               onDrop={handleDrop}
             >
-              <UploadIcon className="w-16 h-16 text-gray-500 mb-6" />
+              <i className="fas fa-cloud-upload-alt w-16 h-16 text-gray-500 mb-6 text-6xl" />
               <h3 className="text-xl font-semibold text-gray-300 mb-2">{t.uploadImages}</h3>
               <p className="text-gray-400 mb-6 text-center max-w-sm">Drag & drop images or folders here, or use the buttons below.</p>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -393,7 +380,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
                       Select Files
                   </button>
                    <button onClick={handleFolderUploadClick} className="px-6 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors flex items-center shadow-lg border border-gray-600">
-                      <FolderIcon className="w-5 h-5 me-2" />
+                      <i className="fas fa-folder w-5 h-5 me-2" />
                       Select Folder
                   </button>
               </div>
@@ -404,13 +391,13 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
              <div className="flex flex-wrap gap-2 items-center mb-4 justify-between">
                 <div className="flex gap-2">
                      <button onClick={handleUploadClick} disabled={isAnalyzing} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50">
-                        <PlusIcon className="w-5 h-5 me-2"/>{t.addMoreImages}
+                        <i className="fas fa-plus w-5 h-5 me-2"/>{t.addMoreImages}
                     </button>
                     <button onClick={handleFolderUploadClick} disabled={isAnalyzing} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50">
-                        <FolderIcon className="w-5 h-5 me-2"/>Add Folder
+                        <i className="fas fa-folder w-5 h-5 me-2"/>Add Folder
                     </button>
                     <button onClick={handleClearAll} disabled={isAnalyzing} className="flex items-center px-4 py-2 bg-red-600/20 text-red-300 font-semibold rounded-lg hover:bg-red-600/40 transition-colors duration-200 disabled:opacity-50">
-                        <TrashIcon className="w-5 h-5 me-2"/>{t.clearAll}
+                        <i className="fas fa-trash w-5 h-5 me-2"/>{t.clearAll}
                     </button>
                 </div>
                 <div className="text-sm text-gray-400">
@@ -429,7 +416,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
                                 <StatusIcon status={img.status} />
                              ) : (
                                 <button onClick={() => handleRemoveImage(img.id)} className="p-1 bg-black/60 rounded-full text-white hover:bg-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <CloseIcon className="w-4 h-4" />
+                                    <i className="fas fa-times w-4 h-4" />
                                 </button>
                              )}
                         </div>

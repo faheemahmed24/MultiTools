@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="./vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
    
     <!-- SEO Meta Tags -->
@@ -11,7 +11,7 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
    
-    <title>MultiTools - AI Tools Dashboard</title>
+    <title>MultiTools</title>
    
     <!-- Google AdSense Script -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3766117905337171"
@@ -21,6 +21,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        /* Custom Styles from Design Prototype */
         :root {
             --bg-dark: #1a1a2e;
             --bg-card: #252538;
@@ -34,7 +35,6 @@
             color: #e0e0e0;
             min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow-x: hidden;
         }
 
         /* Header Styles */
@@ -188,6 +188,10 @@
         .ad-icon {
             font-size: 24px;
             color: #9b59b6;
+        }
+        
+        .ad-text {
+            font-size: 16px;
         }
         
         .ad-title {
@@ -534,20 +538,18 @@
             }
         }
     </style>
-<script type="importmap">
+  <script type="importmap">
 {
   "imports": {
-    "pdfjs-dist/": "https://aistudiocdn.com/pdfjs-dist@^5.4.394/",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0",
-    "jspdf": "https://aistudiocdn.com/jspdf@^3.0.4",
-    "vite": "https://aistudiocdn.com/vite@^7.2.4",
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "mammoth": "https://aistudiocdn.com/mammoth@^1.11.0",
     "jszip": "https://aistudiocdn.com/jszip@^3.10.1",
-    "docx": "https://aistudiocdn.com/docx@^9.5.1"
+    "mammoth": "https://aistudiocdn.com/mammoth@^1.11.0",
+    "jspdf": "https://aistudiocdn.com/jspdf@^3.0.4",
+    "docx": "https://aistudiocdn.com/docx@^9.5.1",
+    "pdfjs-dist/": "https://aistudiocdn.com/pdfjs-dist@^5.4.394/"
   }
 }
 </script>

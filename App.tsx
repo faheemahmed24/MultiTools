@@ -23,6 +23,7 @@ import Panel from './components/Panel';
 import { LanguageOption, targetLanguages } from './lib/languages';
 import LanguageDropdown from './components/LanguageDropdown';
 import { SkeletonLoader } from './components/Loader';
+import AdUnit from './components/AdUnit';
 
 interface ProcessingFile {
   id: string;
@@ -529,6 +530,7 @@ function App() {
                 {TOOLS_CONFIG
                     .filter(tool => selectedCategory === 'all' || tool.category === selectedCategory)
                     .map(tool => {
+                        // Find user-friendly name if available in t, else use key
                         let toolName = tool.key;
                         let toolDesc = "AI powered tool";
                         
@@ -550,94 +552,102 @@ function App() {
                                 <p className="tool-description">{toolDesc}</p>
                             </div>
                         );
-                    })}
+                })}
             </section>
-
+            
             {/* Recent Activity */}
             <section className="recent-activity">
-                <h2 className="recent-activity-title">
+                 <h2 className="recent-activity-title">
                     <i className="fas fa-clock"></i>
-                    {t.history}
+                    Recent Activity
                 </h2>
                 <div className="activity-list">
-                     {(transcriptions.length === 0 && translationHistory.length === 0) ? (
-                        <div className="activity-item justify-center text-gray-500">
-                            {t.noHistory}
-                        </div>
-                     ) : (
-                        transcriptions.slice(0, 3).map(item => (
-                            <div key={item.id} className="activity-item" onClick={() => handleSelectTranscription(item)}>
-                                <div className="activity-icon">
-                                    <i className="fas fa-file-audio"></i>
-                                </div>
-                                <div className="activity-details">
-                                    <div className="activity-title">{item.fileName}</div>
-                                    <div className="activity-time">{item.date}</div>
-                                </div>
-                                <span className="activity-status status-completed">Completed</span>
+                    {transcriptions.slice(0, 1).map(item => (
+                        <div key={item.id} className="activity-item" onClick={() => { setCurrentTranscriptionId(item.id); setActiveTool('AI Transcriber'); }}>
+                            <div className="activity-icon"><i className="fas fa-file-audio"></i></div>
+                            <div className="activity-details">
+                                <div className="activity-title">Transcription: {item.fileName}</div>
+                                <div className="activity-time">{item.date}</div>
                             </div>
-                        ))
-                     )}
+                            <span className="activity-status status-completed">Completed</span>
+                        </div>
+                    ))}
+                    {translationHistory.slice(0, 1).map(item => (
+                         <div key={item.id} className="activity-item" onClick={() => setActiveTool('AI Translator')}>
+                            <div className="activity-icon"><i className="fas fa-language"></i></div>
+                            <div className="activity-details">
+                                <div className="activity-title">Translation</div>
+                                <div className="activity-time">{item.date}</div>
+                            </div>
+                            <span className="activity-status status-completed">Completed</span>
+                        </div>
+                    ))}
+                    {analysisHistory.slice(0, 1).map(item => (
+                         <div key={item.id} className="activity-item" onClick={() => setActiveTool('Image Converter & OCR')}>
+                            <div className="activity-icon"><i className="fas fa-image"></i></div>
+                            <div className="activity-details">
+                                <div className="activity-title">Image Analysis</div>
+                                <div className="activity-time">{item.date}</div>
+                            </div>
+                            <span className="activity-status status-completed">Completed</span>
+                        </div>
+                    ))}
+                     {transcriptions.length === 0 && translationHistory.length === 0 && analysisHistory.length === 0 && (
+                        <p className="text-gray-500 text-center py-4">{t.noHistory}</p>
+                    )}
                 </div>
             </section>
       </div>
   );
 
   return (
-    <div className="min-h-screen flex flex-col">
-        <Header 
-            uiLanguage={uiLanguage} 
-            setUiLanguage={setUiLanguage} 
-            activeTool={activeTool} 
-            setActiveTool={setActiveTool} 
-            t={t}
-            isSidebarOpen={isSidebarOpen} 
-            setIsSidebarOpen={setIsSidebarOpen}
-            currentUser={currentUser}
-            onLoginClick={() => setIsAuthModalOpen(true)}
-            onLogoutClick={handleLogout}
-        />
-        
-        <main className="main-container flex-grow">
-            {activeTool === 'Dashboard' ? renderDashboard() : (
-                <div className="tool-container animate-fade-in">
-                    <div className="tool-header">
-                        <div className="tool-icon-large">
-                            <i className={TOOLS_CONFIG.find(t => t.key === activeTool)?.iconClass || 'fas fa-cog'}></i>
-                        </div>
-                        <div className="tool-title-section">
-                            <h2>{activeTool === 'AI Transcriber' ? t.aiTranscriber : (activeTool === 'AI Translator' ? t.aiTranslatorTitle : (activeTool === 'Image Converter & OCR' ? t.imageConverterOcrTitle : activeTool))}</h2>
-                            <p>{TOOLS_CONFIG.find(t => t.key === activeTool)?.category}</p>
-                        </div>
-                        <button className="back-btn" onClick={() => setActiveTool('Dashboard')}>
-                            <i className="fas fa-arrow-left"></i>
-                            {t.back}
-                        </button>
-                    </div>
-                    {renderActiveTool()}
-                </div>
-            )}
-        </main>
-
-        <footer className="footer">
-            <div className="footer-content">
-                <div className="footer-links">
-                    <a href="#" className="footer-link">About</a>
-                    <a href="#" className="footer-link">Privacy Policy</a>
-                    <a href="#" className="footer-link">Terms of Service</a>
-                    <a href="#" className="footer-link">Contact</a>
-                    <a href="#" className="footer-link">API</a>
-                </div>
-                <p className="footer-text">© 2024 MultiTools. All rights reserved.</p>
+    <div className="bg-[#1a1a2e] text-[#e0e0e0] min-h-screen font-sans flex flex-col">
+      <Header 
+        uiLanguage={uiLanguage} 
+        setUiLanguage={setUiLanguage} 
+        activeTool={activeTool} 
+        setActiveTool={setActiveTool} 
+        t={t}
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+        currentUser={currentUser}
+        onLoginClick={() => setIsAuthModalOpen(true)}
+        onLogoutClick={handleLogout}
+      />
+      
+      <main className="main-container flex-grow">
+         {activeTool === 'Dashboard' ? renderDashboard() : (
+            <div className="animate-fadeIn">
+                 <div className="mb-6 flex items-center gap-2">
+                    <button onClick={() => setActiveTool('Dashboard')} className="text-gray-400 hover:text-white transition-colors">
+                        <i className="fas fa-arrow-left me-2"></i> {t.back}
+                    </button>
+                    <h2 className="text-2xl font-bold">{activeTool}</h2>
+                 </div>
+                 {renderActiveTool()}
             </div>
-        </footer>
+         )}
+      </main>
 
-        <AuthModal 
-            isOpen={isAuthModalOpen} 
-            onClose={() => setIsAuthModalOpen(false)} 
-            onLoginSuccess={handleLoginSuccess}
-            t={t}
-        />
+      <footer className="footer">
+        <div className="footer-content">
+            <div className="footer-links">
+                <a href="#" className="footer-link">About</a>
+                <a href="#" className="footer-link">Privacy Policy</a>
+                <a href="#" className="footer-link">Terms of Service</a>
+                <a href="#" className="footer-link">Contact</a>
+                <a href="#" className="footer-link">API</a>
+            </div>
+            <p className="footer-text">© 2024 MultiTools. All rights reserved.</p>
+        </div>
+      </footer>
+
+      <AuthModal 
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+        t={t}
+      />
     </div>
   );
 }

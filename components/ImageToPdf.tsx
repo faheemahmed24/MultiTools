@@ -1,18 +1,9 @@
-
 import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import { jsPDF } from 'jspdf';
 import * as docx from 'docx';
-import { UploadIcon } from './icons/UploadIcon';
-import { CloseIcon } from './icons/CloseIcon';
-import { PlusIcon } from './icons/PlusIcon';
-import { TrashIcon } from './icons/TrashIcon';
-import { DownloadIcon } from './icons/DownloadIcon';
 import ImageEditModal, { type ImageEditState, defaultEdits } from './ImageEditModal';
-import { EditIcon } from './icons/EditIcon';
 import { analyzeImage } from '../services/geminiService';
-import { CopyIcon } from './icons/CopyIcon';
-import { CheckIcon } from './icons/CheckIcon';
 
 
 interface ImageFile {
@@ -220,7 +211,7 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
     }
     
     const url = doc.output('bloburl');
-    setPdfUrl(url as unknown as string);
+    setPdfUrl(url.toString());
     setIsConverting(false);
     setConversionMessage('');
     onConversionComplete({ fileName: `${outputFilename || 'converted'}.pdf`, imageCount: images.length });
@@ -238,6 +229,13 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
         const editedImageDataUrl = await applyEditsToImage(image);
         const base64Data = editedImageDataUrl.split(',')[1];
         
+        // Convert base64 to Uint8Array
+        const binaryString = window.atob(base64Data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        
         const tempImg = new Image();
         tempImg.src = editedImageDataUrl;
         await new Promise(resolve => { tempImg.onload = resolve; });
@@ -246,11 +244,12 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
         const a4Width = 792 * 12700;
         
         const imageRun = new docx.ImageRun({
-            data: Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)),
+            data: bytes,
             transformation: {
                 width: a4Width, 
                 height: (a4Width * tempImg.height) / tempImg.width,
             },
+            type: "png"
         });
         imageParagraphs.push(new docx.Paragraph({ children: [imageRun] }));
     }
@@ -339,7 +338,7 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
       {images.length === 0 ? (
         <div className={`flex flex-col flex-grow items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 ${isDragging ? 'border-purple-500 bg-gray-700' : 'border-gray-600 hover:border-purple-500'}`}
           onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}>
-          <UploadIcon className="w-12 h-12 text-gray-500 mb-4" />
+          <i className="fas fa-cloud-upload-alt w-12 h-12 text-gray-500 mb-4 text-5xl" />
           <button onClick={() => fileInputRef.current?.click()} className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors duration-200">{t.uploadImages}</button>
           <p className="mt-2 text-sm text-gray-400">{t.dropImages}</p>
         </div>
@@ -347,10 +346,10 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
         <div className="flex flex-col flex-grow min-h-0">
           <div className="flex flex-wrap gap-2 items-center mb-4">
               <button onClick={() => fileInputRef.current?.click()} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
-                  <PlusIcon className="w-5 h-5 me-2"/>{t.addMoreImages}
+                  <i className="fas fa-plus w-5 h-5 me-2"/>{t.addMoreImages}
               </button>
               <button onClick={clearAll} className="flex items-center px-4 py-2 bg-red-600/50 text-white font-semibold rounded-lg hover:bg-red-600/80 transition-colors duration-200">
-                  <TrashIcon className="w-5 h-5 me-2"/>{t.clearAll}
+                  <i className="fas fa-trash w-5 h-5 me-2"/>{t.clearAll}
               </button>
               <p className="text-sm text-gray-400 flex-grow text-end">{t.reorderHint}</p>
           </div>
@@ -360,10 +359,10 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
                       className="group relative bg-gray-900/50 p-2 rounded-lg aspect-square cursor-move flex items-center justify-center">
                       <img src={img.preview} alt={img.file.name} className="max-w-full max-h-full object-contain rounded-md transition-transform duration-200" style={{ transform: `rotate(${img.edits.rotate}deg)` }} />
                       <button onClick={() => removeImage(img.id)} title={t.removeImage} className="absolute top-1 end-1 p-1.5 bg-black/50 rounded-full text-white hover:bg-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                          <CloseIcon className="w-4 h-4" />
+                          <i className="fas fa-times w-4 h-4" />
                       </button>
                        <button onClick={() => setEditingImage(img)} title={t.editImage} className="absolute top-1 start-1 p-1.5 bg-black/50 rounded-full text-white hover:bg-purple-500 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                          <EditIcon className="w-4 h-4" />
+                          <i className="fas fa-edit w-4 h-4" />
                       </button>
                       <div className="absolute bottom-1 start-1 px-2 py-0.5 bg-black/50 rounded-full text-white text-xs font-bold">{index + 1}</div>
                   </div>
@@ -413,8 +412,8 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
             </div>
           ) : (
              <div className="flex flex-col gap-4 mt-4">
-                <a href={pdfUrl} download={`${outputFilename || 'converted'}.pdf`} className="w-full text-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center justify-center">
-                    <DownloadIcon className="w-5 h-5 me-2" /> {t.downloadPdf}
+                <a href={pdfUrl.toString()} download={`${outputFilename || 'converted'}.pdf`} className="w-full text-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center justify-center">
+                    <i className="fas fa-download w-5 h-5 me-2" /> {t.downloadPdf}
                 </a>
                 <button onClick={handleExtractText} disabled={isExtracting} className="w-full px-6 py-3 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 disabled:bg-gray-500 transition-colors duration-200">
                     {isExtracting ? conversionMessage || t.analyzing : t.extractText}
@@ -431,7 +430,7 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
                     <div className="flex items-center gap-2">
                         <div className="relative">
                             <button onClick={() => setShowTextExportMenu(!showTextExportMenu)} className="flex items-center px-3 py-1 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm">
-                                <DownloadIcon className="w-4 h-4 me-2" /> {t.export}
+                                <i className="fas fa-download w-4 h-4 me-2" /> {t.export}
                             </button>
                             {showTextExportMenu && (
                                 <div onMouseLeave={() => setShowTextExportMenu(false)} className="absolute top-full mt-2 end-0 w-36 bg-gray-600 rounded-lg shadow-xl py-1 z-10">
@@ -441,7 +440,7 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
                             )}
                         </div>
                         <button onClick={handleCopyText} className="flex items-center px-3 py-1 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm">
-                            {isTextCopied ? <CheckIcon className="w-4 h-4 me-2"/> : <CopyIcon className="w-4 h-4 me-2" />}
+                            {isTextCopied ? <i className="fas fa-check w-4 h-4 me-2"/> : <i className="fas fa-copy w-4 h-4 me-2" />}
                             {isTextCopied ? t.copied : t.copy}
                         </button>
                     </div>

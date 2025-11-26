@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import type { TranslationSet } from '../types';
-import { DownloadIcon } from './icons/DownloadIcon';
 
 const parseCsv = (csvText: string, delimiter: string): string[][] => {
     const rows: string[][] = [];
@@ -132,7 +131,7 @@ const ExportToSheets: React.FC<{ t: TranslationSet }> = ({ t }) => {
               disabled={parsedData.length === 0}
               className="w-full flex items-center justify-center px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200"
             >
-              <DownloadIcon className="w-5 h-5 me-2" />
+              <i className="fas fa-download w-5 h-5 me-2" />
               {t.downloadCsv}
             </button>
         </div>

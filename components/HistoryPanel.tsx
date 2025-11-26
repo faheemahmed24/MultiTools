@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import type { TranslationSet } from '../types';
 
@@ -41,7 +40,7 @@ const HistoryPanel = <T extends { id: string }>({
     <div className="flex flex-col h-full">
       {items.length === 0 ? (
         <div className="flex-grow flex flex-col items-center justify-center text-center p-4">
-          <i className="fas fa-clock-rotate-left w-16 h-16 text-gray-700 mb-4 text-5xl flex items-center justify-center" />
+          <i className="fas fa-history w-16 h-16 text-gray-700 mb-4 text-5xl" />
           <h4 className="font-semibold text-gray-400">No History Yet</h4>
           <p className="text-sm text-gray-500">Your past activities will appear here.</p>
         </div>
@@ -72,7 +71,7 @@ const HistoryPanel = <T extends { id: string }>({
                   className="ms-2 p-2 rounded-full text-gray-400 hover:bg-red-500/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
                   aria-label={t.delete}
                 >
-                  <i className="fas fa-trash w-5 h-5 flex items-center justify-center" />
+                  <i className="fas fa-trash w-5 h-5" />
                 </button>
               </li>
             )

@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import type { TranslationSet } from '../types';
-import { RotateLeftIcon } from './icons/RotateLeftIcon';
-import { RotateRightIcon } from './icons/RotateRightIcon';
 
 export interface ImageEditState {
   rotate: number;
@@ -93,10 +91,10 @@ const ImageEditModal: React.FC<ImageEditModalProps> = ({ imagePreview, initialEd
                     <label className="block text-sm font-medium text-gray-300 mb-2">{t.rotate}</label>
                     <div className="flex gap-2">
                         <button onClick={() => handleRotate('left')} className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors">
-                            <RotateLeftIcon className="w-5 h-5"/> {t.rotateLeft}
+                            <i className="fas fa-undo w-5 h-5"/> {t.rotateLeft}
                         </button>
                         <button onClick={() => handleRotate('right')} className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors">
-                            <RotateRightIcon className="w-5 h-5"/> {t.rotateRight}
+                            <i className="fas fa-redo w-5 h-5"/> {t.rotateRight}
                         </button>
                     </div>
                 </div>

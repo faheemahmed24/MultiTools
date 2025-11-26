@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import type { Language, TranslationSet, User } from '../types';
 import LanguageSelector from './LanguageSelector';
@@ -34,7 +33,7 @@ const Header: React.FC<HeaderProps> = ({
                 <h1>MultiTools</h1>
             </div>
             
-            <div className="search-bar">
+            <div className="search-bar hidden md:block">
                 <input type="text" className="search-input" placeholder="Search for tools..." id="searchInput" />
                 <button className="search-btn">
                     <i className="fas fa-search"></i>
