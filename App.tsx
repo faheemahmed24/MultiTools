@@ -33,7 +33,7 @@ interface ProcessingFile {
 }
 
 const EmptyPanel: React.FC<{ message: string }> = ({ message }) => (
-    <div className="h-full flex items-center justify-center text-center text-gray-500 p-4">
+    <div className="h-full flex items-center justify-center text-center text-[var(--text-secondary)] p-4">
         <p>{message}</p>
     </div>
 );
@@ -71,8 +71,8 @@ const TranslationPanel: React.FC<{ text: string | null; t: TranslationSet }> = (
     }
 
     return (
-        <div className="flex flex-col h-full">
-            <div className="px-1">
+        <div className="flex flex-col h-full text-[var(--text-color)]">
+            <div className="px-1 mb-2">
                 <LanguageDropdown
                     languages={targetLanguages}
                     selectedLang={targetLang}
@@ -81,10 +81,10 @@ const TranslationPanel: React.FC<{ text: string | null; t: TranslationSet }> = (
                     searchPlaceholder="Search language"
                 />
             </div>
-            <div className="mt-4 p-4 bg-gray-900/50 rounded-lg flex-grow overflow-y-auto min-h-[150px]">
+            <div className="mt-2 p-4 bg-[var(--bg-color)] border border-[var(--border-color)] rounded-lg flex-grow overflow-y-auto min-h-[150px] shadow-sm">
                 {isTranslating && <SkeletonLoader lines={3} />}
-                {error && <p className="text-red-400">{error}</p>}
-                {!isTranslating && !error && <p className="text-gray-200 whitespace-pre-wrap">{translatedText}</p>}
+                {error && <p className="text-red-500">{error}</p>}
+                {!isTranslating && !error && <p className="whitespace-pre-wrap text-[var(--text-color)]">{translatedText}</p>}
             </div>
         </div>
     );
@@ -92,29 +92,30 @@ const TranslationPanel: React.FC<{ text: string | null; t: TranslationSet }> = (
 
 // Map of Tool Keys to their Display Info
 const TOOLS_CONFIG = [
-    { key: 'AI Transcriber', category: 'media', iconClass: 'fas fa-file-audio' },
-    { key: 'Image Converter & OCR', category: 'media', iconClass: 'fas fa-image' },
-    { key: 'AI Translator', category: 'text', iconClass: 'fas fa-language' },
-    { key: 'Grammar Corrector', category: 'text', iconClass: 'fas fa-spell-check' },
-    { key: 'Voice Generator', category: 'media', iconClass: 'fas fa-microphone' },
-    { key: 'Video Editor', category: 'media', iconClass: 'fas fa-video' },
-    { key: 'PDF to Image', category: 'productivity', iconClass: 'fas fa-file-pdf' },
-    { key: 'Image to PDF', category: 'productivity', iconClass: 'fas fa-images' },
-    { key: 'PDF to Word', category: 'productivity', iconClass: 'fas fa-file-word' },
-    { key: 'Word to PDF', category: 'productivity', iconClass: 'fas fa-file-pdf' },
-    { key: 'Export to Sheets', category: 'data', iconClass: 'fas fa-table' },
-    { key: 'Data Analyzer', category: 'data', iconClass: 'fas fa-chart-line' },
-    { key: 'Code Assistant', category: 'development', iconClass: 'fas fa-code' }
+    { key: 'AI Transcriber', category: 'media', iconClass: 'fas fa-file-audio', description: 'Transcribe audio & video to text' },
+    { key: 'Image Converter & OCR', category: 'media', iconClass: 'fas fa-image', description: 'Convert images and extract text' },
+    { key: 'AI Translator', category: 'text', iconClass: 'fas fa-language', description: 'Translate text between languages' },
+    { key: 'Grammar Corrector', category: 'text', iconClass: 'fas fa-spell-check', description: 'Fix grammar and improve writing' },
+    { key: 'PDF to Image', category: 'productivity', iconClass: 'fas fa-file-pdf', description: 'Convert PDF pages to images' },
+    { key: 'Image to PDF', category: 'productivity', iconClass: 'fas fa-images', description: 'Combine images into a PDF' },
+    { key: 'PDF to Word', category: 'productivity', iconClass: 'fas fa-file-word', description: 'Convert PDF to editable Word' },
+    { key: 'Word to PDF', category: 'productivity', iconClass: 'fas fa-file-pdf', description: 'Convert Word docs to PDF' },
+    { key: 'Export to Sheets', category: 'data', iconClass: 'fas fa-table', description: 'Convert data for spreadsheets' },
+    { key: 'Data Analyzer', category: 'data', iconClass: 'fas fa-chart-line', description: 'Analyze data patterns' },
+    { key: 'Code Assistant', category: 'development', iconClass: 'fas fa-code', description: 'Help with coding tasks' },
+    { key: 'Voice Generator', category: 'media', iconClass: 'fas fa-microphone', description: 'Generate speech from text' },
 ];
 
 function App() {
+  const showAd = true;
   const [uiLanguage, setUiLanguage] = useLocalStorage<Language>('uiLanguage', 'en');
   const [currentUser, setCurrentUser] = useLocalStorage<User | null>('currentUser', null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   
   // 'Dashboard' means the main grid view.
   const [activeTool, setActiveTool] = useUserLocalStorage<string>(currentUser?.id, 'activeTool', 'Dashboard');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('tools'); // Default category matches prototype
+  const [searchQuery, setSearchQuery] = useState(''); // New search state
   
   // Transcription State
   const [transcriptions, setTranscriptions] = useUserLocalStorage<Transcription[]>(currentUser?.id, 'transcriptions', []);
@@ -130,9 +131,7 @@ function App() {
   const [pdfWordHistory, setPdfWordHistory] = useUserLocalStorage<PdfWordHistoryItem[]>(currentUser?.id, 'pdfWordHistory', []);
   const [wordPdfHistory, setWordPdfHistory] = useUserLocalStorage<WordPdfHistoryItem[]>(currentUser?.id, 'wordPdfHistory', []);
 
-  // IsSidebarOpen not needed for new layout, but keeping hook for backward compat if needed or removal
-  const [isSidebarOpen, setIsSidebarOpen] = useLocalStorage<boolean>('isSidebarOpen', true);
-  const [showAd, setShowAd] = useState(true);
+  // Removed isSidebarOpen as we are moving to a top-nav/dashboard layout
 
   const t = useMemo(() => getTranslations(uiLanguage), [uiLanguage]);
 
@@ -200,8 +199,8 @@ function App() {
     processFile();
   }, [processingFiles, setTranscriptions, uiLanguage, setCurrentTranscriptionId]);
 
-  const handleUpdateTranscription = useCallback((id: string, updatedSegments: TranscriptionSegment[]) => {
-    setTranscriptions(prev => prev.map(t => t.id === id ? { ...t, segments: updatedSegments } : t));
+  const handleUpdateTranscription = useCallback((id: string, updatedSegments: TranscriptionSegment[], summary?: string, sentiment?: string) => {
+    setTranscriptions(prev => prev.map(t => t.id === id ? { ...t, segments: updatedSegments, summary, sentiment } : t));
   }, [setTranscriptions]);
 
   const handleDeleteTranscription = useCallback((id: string) => {
@@ -261,16 +260,16 @@ function App() {
   const renderActiveTool = () => {
     const fullText = currentTranscription?.segments.map(s => s.text).join('\n') || null;
 
-    const mainContentClass = "flex flex-col";
-    const panelGridClass = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 min-h-0";
+    const mainContentClass = "flex flex-col gap-6";
+    const panelGridClass = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
     
-    // History Renderers
+    // History Renderers (Updated Text Colors for Light Theme)
     const renderTranscriptionHistoryItem = (item: Transcription, isActive: boolean) => (
         <div className="flex-grow overflow-hidden">
-            <p className="font-semibold truncate text-gray-200">{item.fileName}</p>
+            <p className="font-semibold truncate text-[var(--text-color)]">{item.fileName}</p>
             <div className="flex items-center gap-2 mt-1">
-                <p className="text-xs text-gray-400">{item.date}</p>
-                <span className="bg-gray-600 text-purple-300 text-[10px] font-medium px-1.5 py-0.5 rounded">
+                <p className="text-xs text-[var(--text-secondary)]">{item.date}</p>
+                <span className="bg-purple-100 text-purple-700 text-[10px] font-medium px-1.5 py-0.5 rounded">
                     {item.detectedLanguage}
                 </span>
             </div>
@@ -279,17 +278,17 @@ function App() {
     
     const renderTranslationHistoryItem = (item: TranslationHistoryItem, isActive: boolean) => (
         <div className="flex-grow overflow-hidden">
-            <p className="font-semibold truncate text-gray-200" title={item.inputText}>{item.inputText}</p>
-            <p className="text-sm text-gray-400 mt-1">{item.sourceLang} → {item.targetLang}</p>
+            <p className="font-semibold truncate text-[var(--text-color)]" title={item.inputText}>{item.inputText}</p>
+            <p className="text-sm text-[var(--text-secondary)] mt-1">{item.sourceLang} → {item.targetLang}</p>
         </div>
     );
 
     const renderGrammarHistoryItem = (item: GrammarHistoryItem, isActive: boolean) => (
         <div className="flex-grow overflow-hidden">
-            <p className="font-semibold truncate text-gray-200" title={item.originalText}>{item.originalText}</p>
+            <p className="font-semibold truncate text-[var(--text-color)]" title={item.originalText}>{item.originalText}</p>
             <div className="flex items-center gap-2 mt-1">
-                <p className="text-xs text-gray-400">{item.date}</p>
-                <span className="bg-gray-600 text-purple-300 text-[10px] font-medium px-1.5 py-0.5 rounded">
+                <p className="text-xs text-[var(--text-secondary)]">{item.date}</p>
+                <span className="bg-purple-100 text-purple-700 text-[10px] font-medium px-1.5 py-0.5 rounded">
                     {item.language}
                 </span>
             </div>
@@ -298,17 +297,17 @@ function App() {
     
     const renderAnalysisHistoryItem = (item: AnalysisHistoryItem, isActive: boolean) => (
         <div className="flex-grow overflow-hidden">
-            <p className="font-semibold truncate text-gray-200" title={item.fileName}>{item.fileName}</p>
-            <p className="text-sm text-gray-400 mt-1">{item.date}</p>
+            <p className="font-semibold truncate text-[var(--text-color)]" title={item.fileName}>{item.fileName}</p>
+            <p className="text-sm text-[var(--text-secondary)] mt-1">{item.date}</p>
         </div>
     );
 
     const renderPdfImageHistoryItem = (item: PdfImageHistoryItem) => (
         <div className="flex-grow overflow-hidden">
-            <p className="font-semibold truncate text-gray-200" title={item.fileName}>{item.fileName}</p>
+            <p className="font-semibold truncate text-[var(--text-color)]" title={item.fileName}>{item.fileName}</p>
              <div className="flex items-center gap-2 mt-1">
-                <p className="text-xs text-gray-400">{item.date}</p>
-                <span className="bg-gray-600 text-purple-300 text-[10px] font-medium px-1.5 py-0.5 rounded">
+                <p className="text-xs text-[var(--text-secondary)]">{item.date}</p>
+                <span className="bg-purple-100 text-purple-700 text-[10px] font-medium px-1.5 py-0.5 rounded">
                     {item.pageCount} pages
                 </span>
             </div>
@@ -317,10 +316,10 @@ function App() {
 
     const renderImagePdfHistoryItem = (item: ImagePdfHistoryItem) => (
         <div className="flex-grow overflow-hidden">
-            <p className="font-semibold truncate text-gray-200" title={item.fileName}>{item.fileName}</p>
+            <p className="font-semibold truncate text-[var(--text-color)]" title={item.fileName}>{item.fileName}</p>
              <div className="flex items-center gap-2 mt-1">
-                <p className="text-xs text-gray-400">{item.date}</p>
-                <span className="bg-gray-600 text-purple-300 text-[10px] font-medium px-1.5 py-0.5 rounded">
+                <p className="text-xs text-[var(--text-secondary)]">{item.date}</p>
+                <span className="bg-purple-100 text-purple-700 text-[10px] font-medium px-1.5 py-0.5 rounded">
                     {item.imageCount} images
                 </span>
             </div>
@@ -329,8 +328,8 @@ function App() {
 
     const renderFileHistoryItem = (item: PdfWordHistoryItem | WordPdfHistoryItem) => (
         <div className="flex-grow overflow-hidden">
-            <p className="font-semibold truncate text-gray-200" title={item.fileName}>{item.fileName}</p>
-            <p className="text-xs text-gray-400 mt-1">{item.date}</p>
+            <p className="font-semibold truncate text-[var(--text-color)]" title={item.fileName}>{item.fileName}</p>
+            <p className="text-xs text-[var(--text-secondary)] mt-1">{item.date}</p>
         </div>
     );
 
@@ -339,23 +338,23 @@ function App() {
         return (
             <div className={`${mainContentClass} animate-fadeIn`}>
                 {processingFiles.length > 0 ? (
-                     <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl shadow-lg p-6 transform-gpu">
-                        <h2 className="text-xl font-bold mb-4 text-gray-200">Transcription Queue</h2>
+                     <div className="bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-2xl shadow-lg p-6">
+                        <h2 className="text-xl font-bold mb-4 text-[var(--text-color)]">Transcription Queue</h2>
                         <ul className="space-y-4">
                             {processingFiles.map(f => (
-                                <li key={f.id} className="bg-gray-700/50 p-4 rounded-lg">
+                                <li key={f.id} className="bg-[var(--bg-color)] p-4 rounded-lg border border-[var(--border-color)]">
                                     <div className="flex items-center justify-between gap-4 mb-2">
-                                        <p className="font-semibold truncate text-gray-200 flex-1">{f.file.name}</p>
-                                        <span className="text-sm text-gray-400">{f.status}</span>
+                                        <p className="font-semibold truncate text-[var(--text-color)] flex-1">{f.file.name}</p>
+                                        <span className="text-sm text-[var(--text-secondary)]">{f.status}</span>
                                     </div>
-                                    <div className="w-full bg-gray-600 rounded-full h-2">
-                                         <div className={`h-2 rounded-full transition-all duration-500 ${f.status === 'processing' ? 'bg-purple-500 w-full animate-pulse' : f.status === 'done' ? 'bg-green-500 w-full' : f.status === 'error' ? 'bg-red-500 w-full' : 'bg-gray-500 w-[10%]'}`}></div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                         <div className={`h-2 rounded-full transition-all duration-500 ${f.status === 'processing' ? 'bg-purple-500 w-full animate-pulse' : f.status === 'done' ? 'bg-green-500 w-full' : f.status === 'error' ? 'bg-red-500 w-full' : 'bg-gray-400 w-[10%]'}`}></div>
                                     </div>
                                 </li>
                             ))}
                         </ul>
                          {processingFiles.every(f => f.status === 'done' || f.status === 'error') && 
-                            <button onClick={() => setProcessingFiles([])} className="w-full mt-6 px-4 py-2 bg-purple-600 font-semibold rounded-lg hover:bg-purple-700 transition-colors">Clear Completed</button>
+                            <button onClick={() => setProcessingFiles([])} className="w-full mt-6 px-4 py-2 bg-[var(--primary-color)] text-white font-semibold rounded-lg hover:bg-[var(--hover-color)] transition-colors">Clear Completed</button>
                          }
                     </div>
                 ) : (
@@ -379,7 +378,6 @@ function App() {
             <div className={`${mainContentClass} animate-fadeIn`}>
                 <AITranslator t={t} onTranslationComplete={(data) => handleAddToHistory('AI Translator', data)} />
                  <div className={panelGridClass}>
-                     {/* Panels remain similar to before */}
                     <Panel title={t.history} defaultOpen={true} className="md:col-span-3">
                         <HistoryPanel items={translationHistory} onSelect={() => {}} onDelete={(id) => setTranslationHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderTranslationHistoryItem} />
                     </Panel>
@@ -466,181 +464,117 @@ function App() {
   };
 
   const renderDashboard = () => (
-      <div className="animate-fadeIn">
-          {/* Advertisement */}
-          {showAd && (
-            <div className="advertisement">
-                <div className="ad-content">
-                    <i className="fas fa-crown ad-icon"></i>
-                    <div>
-                        <div className="ad-title">Upgrade to Pro</div>
-                        <div className="ad-description">Unlock all premium features and unlimited processing</div>
-                    </div>
-                </div>
-                <button className="ad-close" onClick={() => setShowAd(false)}>
-                    <i className="fas fa-times"></i>
-                </button>
-            </div>
-          )}
-          
+      <div className="animate-fadeIn w-full">
           {/* Categories */}
-          <section className="categories">
-            <div className="category-tabs">
-                {['all', 'media', 'text', 'productivity', 'development', 'data'].map(cat => (
-                    <button 
-                        key={cat}
-                        className={`category-tab ${selectedCategory === cat ? 'active' : ''}`}
-                        onClick={() => setSelectedCategory(cat)}
-                        style={{textTransform: 'capitalize'}}
-                    >
-                        {cat === 'all' ? t.tools : cat}
-                    </button>
-                ))}
-            </div>
-          </section>
-
-           {/* Quick Actions */}
-            <section className="quick-actions">
-                <h2 className="quick-actions-title">
-                    <i className="fas fa-bolt"></i>
-                    Quick Actions
-                </h2>
-                <div className="quick-actions-grid">
-                    <button className="quick-action-btn" onClick={() => setActiveTool('AI Transcriber')}>
-                        <i className="fas fa-upload"></i>
-                        <span>{t.transcription}</span>
-                    </button>
-                    <button className="quick-action-btn" onClick={() => setActiveTool('AI Translator')}>
-                        <i className="fas fa-language"></i>
-                        <span>{t.translate}</span>
-                    </button>
-                    <button className="quick-action-btn" onClick={() => setActiveTool('Image Converter & OCR')}>
-                        <i className="fas fa-image"></i>
-                        <span>OCR</span>
-                    </button>
-                    <button className="quick-action-btn">
-                        <i className="fas fa-cog"></i>
-                        <span>Settings</span>
-                    </button>
-                </div>
-            </section>
+          <div className="flex gap-4 mb-6 flex-wrap">
+            {[
+                { id: 'tools', label: t.tools },
+                { id: 'media', label: 'Media' },
+                { id: 'text', label: 'Text' },
+                { id: 'productivity', label: 'Productivity' },
+                { id: 'development', label: 'Development' },
+                { id: 'data', label: 'Data' }
+            ].map(cat => (
+                <button 
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={`px-6 py-3 rounded-full font-medium transition-all duration-300 border relative overflow-hidden group 
+                        ${selectedCategory === cat.id 
+                            ? 'bg-[var(--primary-color)] text-white border-[var(--primary-color)] shadow-md' 
+                            : 'bg-[var(--secondary-bg)] text-[var(--text-color)] border-[var(--border-color)] hover:-translate-y-0.5 hover:shadow-sm'
+                        }`}
+                >
+                    <span className="capitalize relative z-10">{cat.label}</span>
+                </button>
+            ))}
+          </div>
 
            {/* Tools Grid */}
-            <section className="tools-grid">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mb-8">
                 {TOOLS_CONFIG
-                    .filter(tool => selectedCategory === 'all' || tool.category === selectedCategory)
-                    .map(tool => {
-                        // Find user-friendly name if available in t, else use key
-                        let toolName = tool.key;
-                        let toolDesc = "AI powered tool";
-                        
-                        if (tool.key === 'AI Transcriber') { toolName = t.aiTranscriber; toolDesc = t.transcription; }
-                        else if (tool.key === 'AI Translator') { toolName = t.aiTranslatorTitle; toolDesc = "Translate text between 100+ languages"; }
-                        else if (tool.key === 'Image Converter & OCR') { toolName = t.imageConverterOcrTitle; toolDesc = "Convert images and extract text"; }
-                        
+                    .filter(tool => {
+                        const matchesCategory = selectedCategory === 'tools' || tool.category === selectedCategory;
+                        const matchesSearch = tool.key.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                            (tool.description && tool.description.toLowerCase().includes(searchQuery.toLowerCase()));
+                        return matchesCategory && matchesSearch;
+                    })
+                    .map((tool, index) => {
                         return (
-                            <div key={tool.key} className="tool-card" onClick={() => setActiveTool(tool.key)}>
-                                <div className="tool-header">
-                                    <div className="tool-icon">
-                                        <i className={tool.iconClass}></i>
-                                    </div>
-                                    <div className="tool-info">
-                                        <h3 className="tool-name">{toolName}</h3>
-                                        <span className="tool-category">{tool.category}</span>
-                                    </div>
-                                </div>
-                                <p className="tool-description">{toolDesc}</p>
+                            <div 
+                                key={tool.key} 
+                                className="bg-[var(--secondary-bg)] rounded-xl p-5 text-center transition-all duration-300 cursor-pointer border border-[var(--border-color)] relative overflow-hidden group hover:-translate-y-1 hover:shadow-[var(--shadow-hover)] hover:border-[var(--primary-color)] animate-fadeIn"
+                                onClick={() => setActiveTool(tool.key)}
+                                style={{ animationDelay: `${index * 0.03}s` }}
+                            >
+                                <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-[rgba(124,58,237,0.05)] rounded-full scale-0 group-hover:scale-100 transition-transform duration-500"></div>
+                                <i className={`${tool.iconClass} text-4xl text-[var(--primary-color)] mb-3 transition-transform duration-300 group-hover:scale-110`}></i>
+                                <h3 className="mb-1.5 text-base font-bold text-[var(--text-color)]">{tool.key}</h3>
+                                <p className="text-sm text-[var(--text-secondary)] leading-tight">{tool.description}</p>
                             </div>
                         );
                 })}
-            </section>
+                {TOOLS_CONFIG.filter(tool => {
+                        const matchesCategory = selectedCategory === 'tools' || tool.category === selectedCategory;
+                        const matchesSearch = tool.key.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                            (tool.description && tool.description.toLowerCase().includes(searchQuery.toLowerCase()));
+                        return matchesCategory && matchesSearch;
+                    }).length === 0 && (
+                    <div className="col-span-full text-center py-12 text-[var(--text-secondary)]">
+                        No tools found matching your criteria.
+                    </div>
+                )}
+            </div>
             
-            {/* Recent Activity */}
-            <section className="recent-activity">
-                 <h2 className="recent-activity-title">
-                    <i className="fas fa-clock"></i>
-                    Recent Activity
-                </h2>
-                <div className="activity-list">
-                    {transcriptions.slice(0, 1).map(item => (
-                        <div key={item.id} className="activity-item" onClick={() => { setCurrentTranscriptionId(item.id); setActiveTool('AI Transcriber'); }}>
-                            <div className="activity-icon"><i className="fas fa-file-audio"></i></div>
-                            <div className="activity-details">
-                                <div className="activity-title">Transcription: {item.fileName}</div>
-                                <div className="activity-time">{item.date}</div>
-                            </div>
-                            <span className="activity-status status-completed">Completed</span>
-                        </div>
-                    ))}
-                    {translationHistory.slice(0, 1).map(item => (
-                         <div key={item.id} className="activity-item" onClick={() => setActiveTool('AI Translator')}>
-                            <div className="activity-icon"><i className="fas fa-language"></i></div>
-                            <div className="activity-details">
-                                <div className="activity-title">Translation</div>
-                                <div className="activity-time">{item.date}</div>
-                            </div>
-                            <span className="activity-status status-completed">Completed</span>
-                        </div>
-                    ))}
-                    {analysisHistory.slice(0, 1).map(item => (
-                         <div key={item.id} className="activity-item" onClick={() => setActiveTool('Image Converter & OCR')}>
-                            <div className="activity-icon"><i className="fas fa-image"></i></div>
-                            <div className="activity-details">
-                                <div className="activity-title">Image Analysis</div>
-                                <div className="activity-time">{item.date}</div>
-                            </div>
-                            <span className="activity-status status-completed">Completed</span>
-                        </div>
-                    ))}
-                     {transcriptions.length === 0 && translationHistory.length === 0 && analysisHistory.length === 0 && (
-                        <p className="text-gray-500 text-center py-4">{t.noHistory}</p>
-                    )}
-                </div>
-            </section>
+           {/* Quick Actions */}
+            <div className="flex justify-center flex-wrap gap-12 mt-8 p-8 bg-[var(--secondary-bg)] rounded-2xl shadow-[var(--shadow)] border border-[var(--border-color)]">
+                 {[
+                    { key: 'AI Transcriber', icon: 'fas fa-file-audio', label: t.transcription },
+                    { key: 'AI Translator', icon: 'fas fa-language', label: t.translate },
+                    { key: 'Image Converter & OCR', icon: 'fas fa-file-image', label: 'OCR' },
+                    { key: 'Dashboard', icon: 'fas fa-cog', label: 'Settings' } // Dashboard essentially acts as home/settings here for now
+                 ].map(action => (
+                    <div 
+                        key={action.key} 
+                        className="flex flex-col items-center gap-3 cursor-pointer transition-all duration-300 p-4 rounded-xl hover:-translate-y-1 hover:text-[var(--primary-color)] hover:bg-[var(--bg-color)]"
+                        onClick={() => setActiveTool(action.key)}
+                    >
+                        <i className={`${action.icon} text-4xl transition-transform duration-300 hover:scale-110`}></i>
+                        <span className="font-medium text-sm text-[var(--text-color)]">{action.label}</span>
+                    </div>
+                 ))}
+            </div>
       </div>
   );
 
   return (
-    <div className="bg-[#1a1a2e] text-[#e0e0e0] min-h-screen font-sans flex flex-col">
+    <div className="bg-[var(--bg-color)] text-[var(--text-color)] min-h-screen font-sans flex flex-col">
       <Header 
         uiLanguage={uiLanguage} 
         setUiLanguage={setUiLanguage} 
         activeTool={activeTool} 
         setActiveTool={setActiveTool} 
         t={t}
-        isSidebarOpen={isSidebarOpen}
-        setIsSidebarOpen={setIsSidebarOpen}
         currentUser={currentUser}
         onLoginClick={() => setIsAuthModalOpen(true)}
         onLogoutClick={handleLogout}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
       />
       
-      <main className="main-container flex-grow">
+      <main className="flex-grow p-4 md:p-8 flex flex-col gap-8 max-w-[1400px] mx-auto w-full">
          {activeTool === 'Dashboard' ? renderDashboard() : (
-            <div className="animate-fadeIn">
-                 <div className="mb-6 flex items-center gap-2">
-                    <button onClick={() => setActiveTool('Dashboard')} className="text-gray-400 hover:text-white transition-colors">
-                        <i className="fas fa-arrow-left me-2"></i> {t.back}
+            <div className="animate-fadeIn w-full">
+                 <div className="mb-6 flex items-center gap-3">
+                    <button onClick={() => setActiveTool('Dashboard')} className="text-[var(--text-secondary)] hover:text-[var(--primary-color)] transition-colors p-2 rounded-full hover:bg-[var(--secondary-bg)]">
+                        <i className="fas fa-arrow-left text-lg"></i>
                     </button>
-                    <h2 className="text-2xl font-bold">{activeTool}</h2>
+                    <h2 className="text-2xl font-bold text-[var(--text-color)]">{activeTool}</h2>
                  </div>
                  {renderActiveTool()}
             </div>
          )}
+         {showAd && activeTool !== 'Dashboard' && <AdUnit className="mt-8" />}
       </main>
-
-      <footer className="footer">
-        <div className="footer-content">
-            <div className="footer-links">
-                <a href="#" className="footer-link">About</a>
-                <a href="#" className="footer-link">Privacy Policy</a>
-                <a href="#" className="footer-link">Terms of Service</a>
-                <a href="#" className="footer-link">Contact</a>
-                <a href="#" className="footer-link">API</a>
-            </div>
-            <p className="footer-text">© 2024 MultiTools. All rights reserved.</p>
-        </div>
-      </footer>
 
       <AuthModal 
         isOpen={isAuthModalOpen}

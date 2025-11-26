@@ -91,8 +91,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess, 
     if (user) {
       // User exists, log them in
       if (user.authMethod === 'password') {
-        // In a real app, you might ask for a password or show an error.
-        // Here, we'll just log them in to keep it simple.
         console.warn('User with this email signed up with a password. Logging in...');
       }
       onLoginSuccess(user);
@@ -117,60 +115,64 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess, 
   if (!isOpen && !isRendered) return null;
 
   const backdropClasses = [
-      "fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4",
+      "fixed inset-0 bg-black/50 z-[1000] flex items-center justify-center p-4 backdrop-blur-sm",
       "transition-opacity duration-200 ease-out",
       isRendered && isOpen ? "opacity-100" : "opacity-0",
   ].join(' ');
 
   const modalClasses = [
-      "bg-gray-800 rounded-2xl shadow-lg w-full max-w-sm p-8",
-      "transition-all duration-200 ease-out",
-      isRendered && isOpen ? "opacity-100 scale-100" : "opacity-0 scale-95",
+      "bg-[var(--secondary-bg)] rounded-2xl shadow-[var(--shadow-hover)] w-full max-w-sm p-8 relative",
+      "transition-all duration-300 ease-out",
+      isRendered && isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-8",
   ].join(' ');
 
   return (
     <>
       <div className={backdropClasses} onClick={handleClose}>
         <div className={modalClasses} onClick={e => e.stopPropagation()}>
-            <div key={isLoginMode ? 'login' : 'signup'} className="animate-slide-in-right">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-100">
-                  {isLoginMode ? t.login : t.signup}
-                </h2>
-                <button onClick={handleClose} className="p-1 rounded-full text-gray-400 hover:bg-gray-700">
-                  <i className="fas fa-times w-6 h-6" />
-                </button>
-              </div>
+            <div key={isLoginMode ? 'login' : 'signup'} className="animate-fadeIn">
+              <button 
+                onClick={handleClose} 
+                className="absolute top-6 right-6 text-[var(--text-secondary)] hover:text-[var(--text-color)] transition-colors bg-[var(--bg-color)] hover:bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center"
+              >
+                <i className="fas fa-times" />
+              </button>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <h2 className="text-2xl font-bold text-[var(--text-color)] mb-6">
+                {isLoginMode ? t.login : t.signup}
+              </h2>
+
+              <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-300">{t.email}</label>
+                  <label htmlFor="email" className="block text-sm font-medium text-[var(--text-color)] mb-1.5">{t.email}</label>
                   <input
                     id="email"
                     type="email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     required
-                    className="mt-1 block w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
+                    placeholder="Enter your email"
+                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-color)] text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent transition-all"
                   />
                 </div>
                 <div>
-                  <label htmlFor="password">{t.password}</label>
+                  <label htmlFor="password" className="block text-sm font-medium text-[var(--text-color)] mb-1.5">{t.password}</label>
                   <input
                     id="password"
                     type="password"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     required
-                    className="mt-1 block w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
+                     placeholder="Enter your password"
+                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-color)] text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent transition-all"
                   />
                 </div>
                 
-                {error && <p className="text-sm text-red-400 text-center">{error}</p>}
+                {error && <p className="text-sm text-red-500 text-center bg-red-50 p-2 rounded">{error}</p>}
 
                 <button
                   type="submit"
-                  className="w-full py-3 px-4 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
+                  className="w-full py-3.5 px-4 bg-gradient-to-r from-[var(--primary-color)] to-[#a855f7] text-white font-semibold rounded-lg hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
                 >
                   {isLoginMode ? t.login : t.signup}
                 </button>
@@ -178,25 +180,25 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess, 
 
               <div className="relative flex items-center justify-center my-6">
                 <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                  <div className="w-full border-t border-gray-600" />
+                  <div className="w-full border-t border-[var(--border-color)]" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="bg-gray-800 px-2 text-gray-400">{t.orSeparator}</span>
+                  <span className="bg-[var(--secondary-bg)] px-2 text-[var(--text-secondary)]">{t.orSeparator}</span>
                 </div>
               </div>
 
               <button
                 type="button"
                 onClick={() => setIsGoogleAccountSelectorOpen(true)}
-                className="w-full flex items-center justify-center py-2.5 px-4 bg-white text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors"
+                className="w-full flex items-center justify-center py-2.5 px-4 bg-[var(--secondary-bg)] border border-[var(--border-color)] text-[var(--text-color)] font-semibold rounded-lg hover:bg-[var(--bg-color)] transition-colors shadow-sm"
               >
-                <i className="fab fa-google w-5 h-5 me-3" />
+                <i className="fab fa-google w-5 h-5 me-3 text-red-500" />
                 {t.continueWithGoogle}
               </button>
 
-              <p className="mt-6 text-center text-sm text-gray-400">
+              <p className="mt-8 text-center text-sm text-[var(--text-secondary)]">
                 {isLoginMode ? t.loginPrompt : t.signupPrompt}{' '}
-                <button onClick={handleToggleMode} className="font-medium text-purple-400 hover:underline">
+                <button onClick={handleToggleMode} className="font-semibold text-[var(--primary-color)] hover:underline">
                   {isLoginMode ? t.signup : t.login}
                 </button>
               </p>

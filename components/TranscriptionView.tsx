@@ -16,10 +16,10 @@ const Switch: React.FC<{ checked: boolean; onChange: (checked: boolean) => void;
     <label className="flex items-center cursor-pointer select-none">
         <div className="relative">
             <input type="checkbox" className="sr-only" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-            <div className="block bg-gray-600 w-10 h-6 rounded-full"></div>
-            <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${checked ? 'translate-x-full bg-purple-400' : ''}`}></div>
+            <div className="block bg-gray-300 w-10 h-6 rounded-full transition-colors peer-checked:bg-[var(--primary-color)]"></div>
+            <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${checked ? 'translate-x-full bg-white shadow-sm' : ''}`}></div>
         </div>
-        <div className="ms-3 text-sm font-medium text-gray-300">{label}</div>
+        <div className="ms-3 text-sm font-medium text-[var(--text-secondary)]">{label}</div>
     </label>
 );
 
@@ -179,8 +179,8 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   );
 
   return (
-    <div className="flex flex-col h-full bg-gray-900/50 rounded-lg overflow-hidden border border-gray-700/50">
-        <div className="p-4 border-b border-gray-700/50 bg-gray-800/30 flex flex-wrap gap-4 items-center justify-between">
+    <div className="flex flex-col h-full bg-[var(--secondary-bg)] rounded-lg overflow-hidden border border-[var(--border-color)]">
+        <div className="p-4 border-b border-[var(--border-color)] bg-[var(--bg-color)] flex flex-wrap gap-4 items-center justify-between">
             <div className="flex items-center gap-4">
                 <Switch checked={showTimestamps} onChange={setShowTimestamps} label={t.showTimestamps} />
                 <Switch checked={showSpeaker} onChange={setShowSpeaker} label={t.showSpeaker} />
@@ -193,71 +193,71 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder={t.searchTranscription}
-                        className="bg-gray-700 text-gray-200 text-sm rounded-lg pl-8 pr-3 py-1.5 focus:ring-1 focus:ring-purple-500 border-none w-48"
+                        className="bg-[var(--secondary-bg)] text-[var(--text-color)] text-sm rounded-full border border-[var(--border-color)] pl-9 pr-3 py-1.5 focus:outline-none focus:border-[var(--primary-color)] w-48 transition-colors"
                     />
-                    <i className="fas fa-search w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" />
+                    <i className="fas fa-search w-3.5 h-3.5 text-gray-400 absolute left-3 top-2.5" />
                 </div>
                 
                 {isEditing ? (
-                    <button onClick={handleSaveChanges} className="p-2 bg-green-600 rounded-lg hover:bg-green-700 text-white" title={t.save}>
-                        <i className="fas fa-save w-5 h-5" />
+                    <button onClick={handleSaveChanges} className="p-2 bg-green-500 rounded-lg hover:bg-green-600 text-white transition-colors" title={t.save}>
+                        <i className="fas fa-save w-4 h-4" />
                     </button>
                 ) : (
-                    <button onClick={() => setIsEditing(true)} className="p-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-white" title={t.edit}>
-                        <i className="fas fa-edit w-5 h-5" />
+                    <button onClick={() => setIsEditing(true)} className="p-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg hover:bg-[var(--bg-color)] text-[var(--text-color)] transition-colors" title={t.edit}>
+                        <i className="fas fa-edit w-4 h-4" />
                     </button>
                 )}
 
-                <button onClick={handleCopy} className="p-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-white" title={t.copy}>
-                    {isCopied ? <i className="fas fa-check w-5 h-5 text-green-400" /> : <i className="fas fa-copy w-5 h-5" />}
+                <button onClick={handleCopy} className="p-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg hover:bg-[var(--bg-color)] text-[var(--text-color)] transition-colors" title={t.copy}>
+                    {isCopied ? <i className="fas fa-check w-4 h-4 text-green-500" /> : <i className="fas fa-copy w-4 h-4" />}
                 </button>
                 
                 <div className="relative">
-                    <button onClick={() => setShowExportMenu(!showExportMenu)} className="p-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-white" title={t.export}>
-                        <i className="fas fa-download w-5 h-5" />
+                    <button onClick={() => setShowExportMenu(!showExportMenu)} className="p-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg hover:bg-[var(--bg-color)] text-[var(--text-color)] transition-colors" title={t.export}>
+                        <i className="fas fa-download w-4 h-4" />
                     </button>
                     {showExportMenu && (
-                        <div className="absolute right-0 mt-2 w-40 bg-gray-800 border border-gray-700 rounded-lg shadow-xl py-1 z-10" onMouseLeave={() => setShowExportMenu(false)}>
-                            <button onClick={() => handleExport('txt')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><i className="fas fa-file-alt w-4 h-4 mr-2" /> TXT</button>
-                            <button onClick={() => handleExport('json')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><i className="fas fa-file-code w-4 h-4 mr-2" /> JSON</button>
-                            <button onClick={() => handleExport('srt')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><i className="fas fa-closed-captioning w-4 h-4 mr-2" /> SRT</button>
-                            <button onClick={() => handleExport('csv')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><i className="fas fa-file-csv w-4 h-4 mr-2" /> CSV</button>
-                            <button onClick={() => handleExport('pdf')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><i className="fas fa-file-pdf w-4 h-4 mr-2" /> PDF</button>
-                            <button onClick={() => handleExport('docx')} className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-purple-600 hover:text-white"><i className="fas fa-file-word w-4 h-4 mr-2" /> DOCX</button>
+                        <div className="absolute right-0 mt-2 w-40 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg shadow-xl py-1 z-10" onMouseLeave={() => setShowExportMenu(false)}>
+                            <button onClick={() => handleExport('txt')} className="flex items-center w-full px-4 py-2 text-sm text-[var(--text-color)] hover:bg-[var(--bg-color)] hover:text-[var(--primary-color)]"><i className="fas fa-file-alt w-4 h-4 mr-2" /> TXT</button>
+                            <button onClick={() => handleExport('json')} className="flex items-center w-full px-4 py-2 text-sm text-[var(--text-color)] hover:bg-[var(--bg-color)] hover:text-[var(--primary-color)]"><i className="fas fa-file-code w-4 h-4 mr-2" /> JSON</button>
+                            <button onClick={() => handleExport('srt')} className="flex items-center w-full px-4 py-2 text-sm text-[var(--text-color)] hover:bg-[var(--bg-color)] hover:text-[var(--primary-color)]"><i className="fas fa-closed-captioning w-4 h-4 mr-2" /> SRT</button>
+                            <button onClick={() => handleExport('csv')} className="flex items-center w-full px-4 py-2 text-sm text-[var(--text-color)] hover:bg-[var(--bg-color)] hover:text-[var(--primary-color)]"><i className="fas fa-file-csv w-4 h-4 mr-2" /> CSV</button>
+                            <button onClick={() => handleExport('pdf')} className="flex items-center w-full px-4 py-2 text-sm text-[var(--text-color)] hover:bg-[var(--bg-color)] hover:text-[var(--primary-color)]"><i className="fas fa-file-pdf w-4 h-4 mr-2" /> PDF</button>
+                            <button onClick={() => handleExport('docx')} className="flex items-center w-full px-4 py-2 text-sm text-[var(--text-color)] hover:bg-[var(--bg-color)] hover:text-[var(--primary-color)]"><i className="fas fa-file-word w-4 h-4 mr-2" /> DOCX</button>
                         </div>
                     )}
                 </div>
             </div>
         </div>
         
-        <div className="p-4 border-b border-gray-700/50 bg-gray-800/20 flex gap-4">
+        <div className="p-4 border-b border-[var(--border-color)] bg-[var(--secondary-bg)] flex gap-6">
              <div className="flex-1">
                  <div className="flex justify-between items-center mb-2">
-                     <h4 className="text-sm font-semibold text-gray-300">{t.summary}</h4>
+                     <h4 className="text-sm font-semibold text-[var(--text-color)]">{t.summary}</h4>
                      <button 
                         onClick={handleGenerateSummary} 
                         disabled={isSummarizing || !!summary}
-                        className="text-xs bg-purple-600/20 text-purple-300 px-2 py-1 rounded hover:bg-purple-600/40 disabled:opacity-50"
+                        className="text-xs bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full hover:bg-purple-200 disabled:opacity-50 transition-colors font-medium"
                      >
                         {isSummarizing ? t.summarizing : (summary ? 'Regenerate' : t.summarize)}
                      </button>
                  </div>
-                 <div className="text-xs text-gray-400 bg-gray-900/50 p-2 rounded min-h-[40px] max-h-[100px] overflow-y-auto">
+                 <div className="text-xs text-[var(--text-secondary)] bg-[var(--bg-color)] p-3 rounded-lg min-h-[40px] max-h-[100px] overflow-y-auto border border-[var(--border-color)]">
                      {isSummarizing ? <SkeletonLoader lines={2} /> : (summary || "Click summarize to generate AI summary.")}
                  </div>
              </div>
              <div className="flex-1">
                  <div className="flex justify-between items-center mb-2">
-                     <h4 className="text-sm font-semibold text-gray-300">{t.sentimentAnalysis}</h4>
+                     <h4 className="text-sm font-semibold text-[var(--text-color)]">{t.sentimentAnalysis}</h4>
                      <button 
                         onClick={handleAnalyzeSentiment} 
                         disabled={isAnalyzingSentiment || !!sentiment}
-                        className="text-xs bg-purple-600/20 text-purple-300 px-2 py-1 rounded hover:bg-purple-600/40 disabled:opacity-50"
+                        className="text-xs bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full hover:bg-purple-200 disabled:opacity-50 transition-colors font-medium"
                      >
                         {isAnalyzingSentiment ? t.analyzingSentiment : (sentiment ? 'Regenerate' : t.analyze)}
                      </button>
                  </div>
-                 <div className="text-xs text-gray-400 bg-gray-900/50 p-2 rounded min-h-[40px]">
+                 <div className="text-xs text-[var(--text-secondary)] bg-[var(--bg-color)] p-3 rounded-lg min-h-[40px] border border-[var(--border-color)]">
                      {isAnalyzingSentiment ? <SkeletonLoader lines={1} /> : (sentiment || "Click analyze to get sentiment.")}
                  </div>
              </div>
@@ -265,30 +265,30 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
 
         <div className="overflow-y-auto flex-grow p-4 space-y-4">
             {filteredSegments.length > 0 ? filteredSegments.map((segment, index) => (
-                <div key={index} className="flex gap-4 group">
+                <div key={index} className="flex gap-4 group hover:bg-[var(--bg-color)] p-2 rounded-lg transition-colors">
                     {showTimestamps && (
-                        <div className="text-xs text-gray-500 font-mono pt-1 w-20 flex-shrink-0 select-none">
+                        <div className="text-xs text-[var(--text-secondary)] font-mono pt-1 w-20 flex-shrink-0 select-none opacity-80">
                             {segment.startTime}
                         </div>
                     )}
                     <div className="flex-grow">
                         {showSpeaker && (
-                            <div className="text-xs font-bold text-purple-400 mb-0.5 select-none">{segment.speaker}</div>
+                            <div className="text-xs font-bold text-[var(--primary-color)] mb-0.5 select-none">{segment.speaker}</div>
                         )}
                         {isEditing ? (
                             <textarea 
-                                className="w-full bg-gray-800 text-gray-200 text-sm p-2 rounded border border-gray-600 focus:ring-1 focus:ring-purple-500"
+                                className="w-full bg-[var(--secondary-bg)] text-[var(--text-color)] text-sm p-2 rounded border border-[var(--border-color)] focus:outline-none focus:border-[var(--primary-color)] focus:ring-1 focus:ring-[var(--primary-color)]"
                                 value={segment.text}
                                 onChange={(e) => handleSegmentChange(index, 'text', e.target.value)}
                                 rows={Math.max(2, Math.ceil(segment.text.length / 80))}
                             />
                         ) : (
-                            <p className="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap">{segment.text}</p>
+                            <p className="text-[var(--text-color)] text-sm leading-relaxed whitespace-pre-wrap">{segment.text}</p>
                         )}
                     </div>
                 </div>
             )) : (
-                <div className="text-center text-gray-500 py-10">
+                <div className="text-center text-[var(--text-secondary)] py-10">
                     No segments found matching your search.
                 </div>
             )}

@@ -150,7 +150,7 @@ const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete })
   const wordCount = inputText.trim().split(/\s+/).filter(Boolean).length;
 
   return (
-    <div className="bg-gray-800 rounded-2xl shadow-lg p-6">
+    <div className="bg-[var(--secondary-bg)] rounded-2xl shadow-[var(--shadow)] border border-[var(--border-color)] p-6">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
         <LanguageDropdown
           languages={sourceLanguages}
@@ -162,9 +162,9 @@ const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete })
         <button
           onClick={handleSwapLanguages}
           disabled={sourceLang.code === 'auto' || isLoading || isSwapping}
-          className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="p-2.5 rounded-full bg-[var(--bg-color)] hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-[var(--text-color)]"
         >
-          <i className={`fas fa-exchange-alt w-6 h-6 text-gray-300 transition-transform duration-500 ${isSwapping ? 'rotate-[360deg]' : ''}`} />
+          <i className={`fas fa-exchange-alt w-5 h-5 transition-transform duration-500 ${isSwapping ? 'rotate-[360deg]' : ''}`} />
         </button>
         <LanguageDropdown
           languages={targetLanguages}
@@ -182,19 +182,19 @@ const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete })
             onChange={(e) => setInputText(e.target.value)}
             placeholder={t.enterText}
             disabled={isLoading}
-            className="w-full h-64 bg-gray-900/50 rounded-lg p-4 text-gray-200 resize-none focus:ring-2 focus:ring-purple-500 border border-transparent focus:border-purple-500 disabled:opacity-70"
+            className="w-full h-64 bg-[var(--bg-color)] rounded-xl p-4 text-[var(--text-color)] resize-none border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent transition-all disabled:opacity-70"
           />
-          <div className="flex justify-end items-center gap-2 text-sm text-gray-400 mt-1 px-1">
+          <div className="flex justify-end items-center gap-2 text-sm text-[var(--text-secondary)] mt-1 px-1">
             <span>{characterCount} chars / {wordCount} words</span>
             {inputText && (
-                <button onClick={handleClear} title="Clear text" className="text-gray-500 hover:text-white transition-colors">
+                <button onClick={handleClear} title="Clear text" className="text-[var(--text-secondary)] hover:text-red-500 transition-colors">
                     <i className="fas fa-times-circle w-5 h-5"/>
                 </button>
             )}
           </div>
         </div>
         <div className="relative">
-           <div className={`w-full h-64 bg-gray-900/50 rounded-lg overflow-y-auto ${error ? 'text-red-400 p-4' : ''}`}>
+           <div className={`w-full h-64 bg-[var(--secondary-bg)] rounded-xl overflow-y-auto border border-[var(--border-color)] ${error ? 'text-red-500 p-4 bg-red-50' : ''}`}>
              {isLoading ? (
                 <div className="p-4"><SkeletonLoader lines={4} /></div>
              ) : error ? (
@@ -204,39 +204,37 @@ const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete })
                     value={editedTranslatedText}
                     onChange={(e) => setEditedTranslatedText(e.target.value)}
                     placeholder={t.translationResult}
-                    className="w-full h-full bg-transparent rounded-lg p-4 text-gray-200 resize-none focus:ring-0 border-0"
+                    className="w-full h-full bg-transparent rounded-lg p-4 text-[var(--text-color)] resize-none focus:outline-none border-none"
                 />
              )}
           </div>
           {!isLoading && !error && translatedText && (
-            <div className="absolute top-3 end-3 flex items-center space-x-2 rtl:space-x-reverse">
+            <div className="absolute top-3 right-3 flex items-center space-x-2 rtl:space-x-reverse">
                  <button
                     onClick={handleSpeak}
                     title={isSpeaking ? t.stop : t.listen}
-                    className={`flex items-center justify-center p-1.5 rounded-lg transition-colors duration-200 ${isSpeaking ? 'bg-red-600 text-white' : 'bg-gray-700 text-white hover:bg-gray-600'}`}
+                    className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-200 shadow-sm ${isSpeaking ? 'bg-red-500 text-white' : 'bg-[var(--secondary-bg)] text-[var(--text-secondary)] hover:bg-[var(--bg-color)] border border-[var(--border-color)]'}`}
                 >
-                    {isSpeaking ? <i className="fas fa-stop w-4 h-4" /> : <i className="fas fa-volume-up w-4 h-4" />}
+                    {isSpeaking ? <i className="fas fa-stop w-3.5 h-3.5" /> : <i className="fas fa-volume-up w-3.5 h-3.5" />}
                 </button>
                 <button
                     onClick={handleCopy}
-                    className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200"
+                    className="flex items-center justify-center w-8 h-8 bg-[var(--secondary-bg)] text-[var(--text-secondary)] rounded-full hover:bg-[var(--bg-color)] transition-colors duration-200 shadow-sm border border-[var(--border-color)]"
                 >
-                    {isCopied ? <i className="fas fa-check w-4 h-4 me-2" /> : <i className="fas fa-copy w-4 h-4 me-2" />}
-                    {isCopied ? t.copied : t.copy}
+                    {isCopied ? <i className="fas fa-check w-3.5 h-3.5 text-green-500" /> : <i className="fas fa-copy w-3.5 h-3.5" />}
                 </button>
                 <div className="relative">
                     <button
                         onClick={() => setShowExportMenu(!showExportMenu)}
-                        className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200"
+                        className="flex items-center justify-center w-8 h-8 bg-[var(--secondary-bg)] text-[var(--text-secondary)] rounded-full hover:bg-[var(--bg-color)] transition-colors duration-200 shadow-sm border border-[var(--border-color)]"
                     >
-                        <i className="fas fa-download w-4 h-4 me-2" />
-                        {t.export}
+                        <i className="fas fa-download w-3.5 h-3.5" />
                     </button>
                     {showExportMenu && (
-                      <div className="absolute top-full mt-2 end-0 w-32 bg-gray-600 rounded-lg shadow-xl py-1 z-10 animate-slide-in-up">
-                        <button onClick={() => handleExport('txt')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">TXT (.txt)</button>
-                        <button onClick={() => handleExport('docx')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">DOCX (.docx)</button>
-                        <button onClick={() => handleExport('pdf')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">PDF (.pdf)</button>
+                      <div className="absolute top-full mt-2 right-0 w-32 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg shadow-xl py-1 z-10 animate-slide-in-up">
+                        <button onClick={() => handleExport('txt')} className="block w-full text-start px-4 py-2 text-sm text-[var(--text-color)] hover:bg-[var(--bg-color)] hover:text-[var(--primary-color)]">TXT (.txt)</button>
+                        <button onClick={() => handleExport('docx')} className="block w-full text-start px-4 py-2 text-sm text-[var(--text-color)] hover:bg-[var(--bg-color)] hover:text-[var(--primary-color)]">DOCX (.docx)</button>
+                        <button onClick={() => handleExport('pdf')} className="block w-full text-start px-4 py-2 text-sm text-[var(--text-color)] hover:bg-[var(--bg-color)] hover:text-[var(--primary-color)]">PDF (.pdf)</button>
                       </div>
                     )}
                 </div>
