@@ -1,0 +1,85 @@
+# This workflow is for building, testing, and deploying a Node.js project (like a Vite/React app)
+# to GitHub Pages. It specifically targets the 'dist' folder for deployment.
+
+name: Build and Deploy
+
+# Controls when the workflow will run
+on:
+  push:
+    branches: [ "main" ]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions needed for deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  # Job 1: Build and Test (using matrix)
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+        # We only want to generate and upload the final 'dist' artifact once, 
+        # so we use a variable 'is_deploy_build' to control which matrix job handles the deployment steps.
+        is_deploy_build: [false]
+        include:
+          - node-version: 20.x
+            is_deploy_build: true
+      fail-fast: false 
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run tests
+        run: npm test
+        # Setting continue-on-error: true so that tests failing doesn't halt the deployment process immediately
+        continue-on-error: true
+      
+      # The deployment steps (build, configure, upload) only run for the matrix job where is_deploy_build is true (Node 20.x)
+      - name: Build project (for deployment)
+        if: matrix.is_deploy_build == true
+        # The 'dist' folder is created here by Vite's build command
+        run: npm run build
+        
+      - name: Setup Pages
+        if: matrix.is_deploy_build == true
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages Artifact
+        if: matrix.is_deploy_build == true
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # CRITICAL: This path points to the 'dist' folder, ensuring the built assets are uploaded.
+          path: './dist' 
+          
+  # Job 2: Deployment
+  deploy:
+    environment:
+      # Links the deployment to the GitHub Pages environment
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    # Ensures this job only runs after the 'build' job (and the artifact upload) is complete
+    needs: build
+    
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v3
