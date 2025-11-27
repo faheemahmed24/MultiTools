@@ -63,11 +63,15 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
   const folderInputRef = useRef<HTMLInputElement>(null);
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
+  
+  // Use ref to track images for cleanup
+  const imagesRef = useRef(images);
+  imagesRef.current = images;
 
   // Cleanup ObjectURLs on unmount
   useEffect(() => {
     return () => {
-        images.forEach(img => URL.revokeObjectURL(img.preview));
+        imagesRef.current.forEach(img => URL.revokeObjectURL(img.preview));
     };
   }, []);
 
@@ -104,6 +108,7 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
     if (selectedFiles) {
         processFiles(Array.from(selectedFiles));
     }
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleFolderChange = (e: React.ChangeEvent<HTMLInputElement>) => {

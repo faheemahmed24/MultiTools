@@ -134,34 +134,30 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
   const [quality, setQuality] = useState(90);
 
   const activeImage = images[activeIndex];
+  
+  // Use a ref to track images for cleanup on unmount, ensuring we have the latest list
+  const imagesRef = useRef(images);
+  imagesRef.current = images;
 
-  // Cleanup ObjectURLs on unmount
   useEffect(() => {
     return () => {
-        images.forEach(img => URL.revokeObjectURL(img.preview));
-    };
-  }, []); // Empty dependency array means this runs once on unmount (but we need to be careful with stale state if not using refs)
-  // Actually, standard practice for list of objects with URLs:
-  useEffect(() => {
-    return () => {
-        // Cleanup all existing previews when component unmounts
-        // We can't access current 'images' state safely in cleanup if it changes, 
-        // so we rely on explicit cleanup in handleRemove/Reset and this final sweep.
+        // Cleanup object URLs when component unmounts
+        imagesRef.current.forEach(img => URL.revokeObjectURL(img.preview));
     };
   }, []);
 
   // Reset results when switching active image
   useEffect(() => {
-    setAnalysisResult('');
-    setEditedAnalysisResult('');
-    setTranslatedText('');
-    setEditedTranslatedText('');
-    setError(null);
-    setTranslationError(null);
-    setIsLoading(false);
-    setIsTranslating(false);
-    setBatchProgress('');
-  }, [activeIndex]);
+    if (!isLoading && !batchProgress) {
+        setAnalysisResult('');
+        setEditedAnalysisResult('');
+        setTranslatedText('');
+        setEditedTranslatedText('');
+        setError(null);
+        setTranslationError(null);
+        setIsTranslating(false);
+    }
+  }, [activeIndex, isLoading, batchProgress]);
 
   const handleAnalyze = useCallback(async () => {
     if (!activeImage) return;
@@ -258,10 +254,13 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
           file,
           preview: URL.createObjectURL(file)
       }));
-      setImages(prev => [...prev, ...newImages]);
-      if (images.length === 0 && newImages.length > 0) {
-          setActiveIndex(0);
-      }
+      setImages(prev => {
+          const updated = [...prev, ...newImages];
+          if (prev.length === 0 && newImages.length > 0) {
+            setActiveIndex(0);
+          }
+          return updated;
+      });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -273,17 +272,18 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
   
   const handleFolderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
+        const files = Array.from(e.target.files) as File[];
         // Filter using MIME type AND extension for better reliability
-        const files = (Array.from(e.target.files) as File[]).filter((file: File) => {
+        const supportedFiles = files.filter((file: File) => {
             const type = file.type;
             const name = file.name.toLowerCase();
             return type.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp|tiff|svg|ico|heic)$/i.test(name);
         });
         
-        if (files.length > 0) {
-             processFiles(files);
+        if (supportedFiles.length > 0) {
+             processFiles(supportedFiles);
         } else {
-            alert('No image files found in the selected folder.');
+            alert('No supported image files found in the selected folder.');
         }
     }
     if (e.target) e.target.value = '';
@@ -295,8 +295,8 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
       setImages(newImages);
       if (index === activeIndex) {
           setActiveIndex(0);
-      } else if (index < activeIndex) {
-          setActiveIndex(activeIndex - 1);
+      } else if (index > newImages.length - 1) {
+          setActiveIndex(Math.max(0, newImages.length - 1));
       }
   };
 
@@ -354,7 +354,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
   const handleExport = async (format: 'txt' | 'docx' | 'pdf', type: 'analysis' | 'translation') => {
     const content = type === 'analysis' ? editedAnalysisResult : editedTranslatedText;
     if (!content || !activeImage) return;
-    const baseFilename = activeImage.file.name.split('.').slice(0, -1).join('.') || 'image-export';
+    const baseFilename = images.length > 1 && type === 'analysis' && batchProgress ? 'batch-analysis' : (activeImage.file.name.split('.').slice(0, -1).join('.') || 'image-export');
     const filename = type === 'analysis' ? `${baseFilename}-analysis` : `${baseFilename}-translation-${targetLang.code}`;
 
     if (format === 'txt') {

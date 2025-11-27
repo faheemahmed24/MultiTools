@@ -51,16 +51,17 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
 
   const handleFolderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
+        const files = Array.from(e.target.files);
         // Filter for audio and video files from the folder using MIME type or extensions
-        const files = Array.from(e.target.files).filter((file: File) => {
+        const supportedFiles = files.filter((file: File) => {
             const type = file.type;
             const name = file.name.toLowerCase();
             return type.startsWith('audio/') || type.startsWith('video/') ||
                    /\.(mp3|wav|ogg|m4a|flac|aac|mp4|webm|mov|avi|mkv|wmv|flv|m4v|3gp)$/i.test(name);
         });
         
-        if (files.length > 0) {
-            onFilesSelect(files);
+        if (supportedFiles.length > 0) {
+            onFilesSelect(supportedFiles);
         } else {
             alert('No supported audio or video files found in the selected folder.');
         }
