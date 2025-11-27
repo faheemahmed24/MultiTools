@@ -20,7 +20,6 @@ import PdfToWord from './components/PdfToWord';
 import WordToPdf from './components/WordToPdf';
 import ExportToSheets from './components/ExportToSheets';
 import AuthModal from './components/AuthModal';
-import Panel from './components/Panel';
 import { LanguageOption, targetLanguages } from './lib/languages';
 import LanguageDropdown from './components/LanguageDropdown';
 import { ClockIcon } from './components/icons/ClockIcon';
@@ -41,12 +40,6 @@ interface ProcessingFile {
   status: 'pending' | 'processing' | 'done' | 'error';
   error?: string;
 }
-
-const EmptyPanel: React.FC<{ message: string }> = ({ message }) => (
-    <div className="h-full flex items-center justify-center text-center text-gray-500 p-4">
-        <p>{message}</p>
-    </div>
-);
 
 function App() {
   const [uiLanguage, setUiLanguage] = useLocalStorage<Language>('uiLanguage', 'en');
