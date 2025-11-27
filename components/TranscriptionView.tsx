@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import type { Transcription, TranslationSet, TranscriptionSegment } from '../types';
 import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
@@ -81,6 +82,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   useEffect(() => {
     if (!isEditing || !debouncedEditedSegments.length) return;
 
+    // Check if the current state matches the history at current index (meaning it was just set by undo/redo)
     if (editHistory[currentHistoryIndex] && JSON.stringify(editHistory[currentHistoryIndex]) === JSON.stringify(debouncedEditedSegments)) {
         return;
     }
@@ -89,7 +91,48 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
     setEditHistory([...newHistory, debouncedEditedSegments]);
     setCurrentHistoryIndex(newHistory.length);
 
-  }, [debouncedEditedSegments, isEditing]);
+  }, [debouncedEditedSegments, isEditing, currentHistoryIndex, editHistory]);
+
+  const canUndo = isEditing && currentHistoryIndex > 0;
+  const canRedo = isEditing && currentHistoryIndex < editHistory.length - 1;
+
+  const handleUndo = useCallback(() => {
+    if (canUndo) {
+      const newIndex = currentHistoryIndex - 1;
+      setCurrentHistoryIndex(newIndex);
+      setEditedSegments(editHistory[newIndex]);
+    }
+  }, [canUndo, currentHistoryIndex, editHistory]);
+
+  const handleRedo = useCallback(() => {
+    if (canRedo) {
+      const newIndex = currentHistoryIndex + 1;
+      setCurrentHistoryIndex(newIndex);
+      setEditedSegments(editHistory[newIndex]);
+    }
+  }, [canRedo, currentHistoryIndex, editHistory]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if (!isEditing) return;
+        
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+            e.preventDefault();
+            if (e.shiftKey) {
+                handleRedo();
+            } else {
+                handleUndo();
+            }
+        } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+            e.preventDefault();
+            handleRedo();
+        }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isEditing, handleUndo, handleRedo]);
 
 
   const fullText = useMemo(() => {
@@ -144,25 +187,6 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
     setEditHistory([]);
     setCurrentHistoryIndex(-1);
   };
-  
-  const canUndo = isEditing && currentHistoryIndex > 0;
-  const canRedo = isEditing && currentHistoryIndex < editHistory.length - 1;
-
-  const handleUndo = () => {
-    if (canUndo) {
-      const newIndex = currentHistoryIndex - 1;
-      setCurrentHistoryIndex(newIndex);
-      setEditedSegments(editHistory[newIndex]);
-    }
-  };
-
-  const handleRedo = () => {
-    if (canRedo) {
-      const newIndex = currentHistoryIndex + 1;
-      setCurrentHistoryIndex(newIndex);
-      setEditedSegments(editHistory[newIndex]);
-    }
-  };
 
   const createDownload = (filename: string, content: string | Blob, mime?: string) => {
     const blob = content instanceof Blob ? content : new Blob([content], { type: mime });
@@ -195,6 +219,9 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
       
       context.font = FONT;
       
+      // Detect RTL languages
+      const isRTL = ['ar', 'ur', 'fa', 'he', 'sd'].some(code => transcription.detectedLanguage?.toLowerCase().includes(code));
+
       let totalHeight = PADDING;
       const lines: {y: number, parts: {text: string, color: string}[]}[] = [];
 
@@ -231,6 +258,8 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
           textLines.forEach((lineText, index) => {
               totalHeight += LINE_HEIGHT;
               if (index === 0) {
+                  // If RTL, we might want to render prefix at the end? 
+                  // For now, keeping structure simple: prefix then text, but drawn RTL if needed.
                   lines.push({ y: totalHeight, parts: [...prefixParts, { text: lineText, color: TEXT_COLOR }] });
               } else {
                   lines.push({ y: totalHeight, parts: [{ text: '    ' + lineText, color: TEXT_COLOR }] });
@@ -247,11 +276,25 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
       context.font = FONT;
       
       lines.forEach(line => {
-          let currentX = PADDING;
+          // If RTL, start from right side
+          let currentX = isRTL ? CANVAS_WIDTH - PADDING : PADDING;
+          
           line.parts.forEach(part => {
               context.fillStyle = part.color;
+              
+              // Set direction for text rendering
+              context.direction = isRTL ? 'rtl' : 'ltr';
+              context.textAlign = isRTL ? 'right' : 'left';
+              
               context.fillText(part.text, currentX, line.y);
-              currentX += context.measureText(part.text).width;
+              
+              const width = context.measureText(part.text).width;
+              
+              if (isRTL) {
+                  currentX -= width; // Move left for next part
+              } else {
+                  currentX += width; // Move right for next part
+              }
           });
       });
       
@@ -396,8 +439,8 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
         <div className="flex flex-wrap gap-2">
             {isEditing && (
               <>
-                <button onClick={handleUndo} disabled={!canUndo} title={t.undo} className="flex items-center p-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><UndoIcon className="w-5 h-5"/></button>
-                <button onClick={handleRedo} disabled={!canRedo} title={t.redo} className="flex items-center p-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><RedoIcon className="w-5 h-5"/></button>
+                <button onClick={handleUndo} disabled={!canUndo} title={`${t.undo} (Ctrl+Z)`} className="flex items-center p-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><UndoIcon className="w-5 h-5"/></button>
+                <button onClick={handleRedo} disabled={!canRedo} title={`${t.redo} (Ctrl+Y)`} className="flex items-center p-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><RedoIcon className="w-5 h-5"/></button>
                 <div className="w-px bg-gray-600 mx-1"></div>
                 <button onClick={handleSaveChanges} className="flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200"><SaveIcon className="w-5 h-5 me-2"/> {t.saveChanges}</button>
               </>

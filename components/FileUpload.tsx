@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';
-import { FolderPlusIcon } from './icons/FolderPlusIcon';
 
 interface FileUploadProps {
   onFilesSelect: (files: File[]) => void;
@@ -12,7 +11,6 @@ interface FileUploadProps {
 const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing }) => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const folderInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -46,35 +44,10 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
     if (e.target.files && e.target.files.length > 0) {
       onFilesSelect(Array.from(e.target.files));
     }
-    if (e.target) e.target.value = ''; // Reset input
   };
 
-  const handleFolderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-        const files = Array.from(e.target.files);
-        // Filter for audio and video files from the folder using MIME type or extensions
-        const supportedFiles = files.filter((file: File) => {
-            const type = file.type;
-            const name = file.name.toLowerCase();
-            return type.startsWith('audio/') || type.startsWith('video/') ||
-                   /\.(mp3|wav|ogg|m4a|flac|aac|mp4|webm|mov|avi|mkv|wmv|flv|m4v|3gp)$/i.test(name);
-        });
-        
-        if (supportedFiles.length > 0) {
-            onFilesSelect(supportedFiles);
-        } else {
-            alert('No supported audio or video files found in the selected folder.');
-        }
-    }
-    if (e.target) e.target.value = ''; // Reset input
-  };
-
-  const handleFileClick = () => {
+  const handleClick = () => {
     fileInputRef.current?.click();
-  };
-
-  const handleFolderClick = () => {
-    folderInputRef.current?.click();
   };
 
   return (
@@ -91,7 +64,6 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
             <div className="p-4 bg-gray-700/50 rounded-full mb-4 border border-gray-600">
                 <UploadIcon className="w-10 h-10 text-gray-400" />
             </div>
-            
             <input
               type="file"
               ref={fileInputRef}
@@ -101,34 +73,13 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
               multiple
               disabled={isProcessing}
             />
-            {/* Folder input using webkitdirectory */}
-            <input
-                type="file"
-                ref={folderInputRef}
-                onChange={handleFolderChange}
-                {...({ webkitdirectory: "", directory: "" } as any)}
-                className="hidden"
-                multiple
-                disabled={isProcessing}
-            />
-
-            <div className="flex flex-col sm:flex-row gap-3 mt-2">
-                <button
-                    onClick={handleFileClick}
-                    disabled={isProcessing}
-                    className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 active:scale-100"
-                >
-                    {isProcessing ? t.transcribing : t.uploadFile}
-                </button>
-                <button
-                    onClick={handleFolderClick}
-                    disabled={isProcessing}
-                    className="px-6 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 disabled:bg-gray-500 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 active:scale-100 flex items-center justify-center gap-2"
-                >
-                    <FolderPlusIcon className="w-5 h-5" />
-                    {t.uploadFolder}
-                </button>
-            </div>
+            <button
+              onClick={handleClick}
+              disabled={isProcessing}
+              className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 active:scale-100"
+            >
+              {isProcessing ? t.transcribing : t.uploadFile}
+            </button>
             <p className="mt-3 text-sm text-gray-400">{t.dropFile}</p>
         </div>
       </div>

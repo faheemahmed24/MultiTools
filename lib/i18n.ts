@@ -1,4 +1,3 @@
-
 import type { Language, TranslationSet } from '../types';
 
 const translations: Record<Language, TranslationSet> = {
@@ -10,7 +9,6 @@ const translations: Record<Language, TranslationSet> = {
     history: 'History',
     noHistory: 'No transcription history yet.',
     uploadFile: 'Upload File(s)',
-    uploadFolder: 'Upload Folder',
     dropFile: 'or drop files here',
     transcribing: 'Transcribing...',
     loadingMessage: 'This may take a few moments. Please wait.',
@@ -41,7 +39,6 @@ const translations: Record<Language, TranslationSet> = {
     imageAnalysisResult: 'Image Analysis Result',
     analyze: 'Analyze',
     reanalyze: 'Re-analyze',
-    analyzeAll: 'Analyze All',
     pdfToImage: 'PDF to Image',
     imageToPdf: 'Image to PDF',
     pdfToWord: 'PDF to Word',
@@ -155,7 +152,6 @@ const translations: Record<Language, TranslationSet> = {
     history: 'इतिहास',
     noHistory: 'अभी तक कोई प्रतिलेखन इतिहास नहीं है।',
     uploadFile: 'फ़ाइल(लें) अपलोड करें',
-    uploadFolder: 'फ़ोल्डर अपलोड करें',
     dropFile: 'या यहां फ़ाइलें छोड़ें',
     transcribing: 'प्रतिलेखन हो रहा है...',
     loadingMessage: 'इसमें कुछ क्षण लग सकते हैं। कृपया प्रतीक्षा करें।',
@@ -186,7 +182,6 @@ const translations: Record<Language, TranslationSet> = {
     imageAnalysisResult: 'छवि विश्लेषण परिणाम',
     analyze: 'विश्लेषण करें',
     reanalyze: 'पुनः विश्लेषण करें',
-    analyzeAll: 'सभी का विश्लेषण करें',
     pdfToImage: 'पीडीएफ से छवि',
     imageToPdf: 'छवि से पीडीएफ',
     pdfToWord: 'पीडीएफ से वर्ड',
@@ -300,7 +295,6 @@ const translations: Record<Language, TranslationSet> = {
     history: 'تاریخ',
     noHistory: 'ابھی تک کوئی نقل حرفی کی تاریخ نہیں ہے۔',
     uploadFile: 'فائل(یں) اپلوڈ کریں',
-    uploadFolder: 'فولڈر اپ لوڈ کریں',
     dropFile: 'یا یہاں فائلیں ڈراپ کریں',
     transcribing: 'نقل حرفی ہو رہی ہے...',
     loadingMessage: 'اس میں کچھ لمحے لگ سکتے ہیں۔ براہ مہربانی انتظار کریں۔',
@@ -331,7 +325,6 @@ const translations: Record<Language, TranslationSet> = {
     imageAnalysisResult: 'تصویری تجزیہ کا نتیجہ',
     analyze: 'تجزیہ کریں',
     reanalyze: 'دوبارہ تجزیہ کریں',
-    analyzeAll: 'سب کا تجزیہ کریں',
     pdfToImage: 'پی ڈی ایف سے تصویر',
     imageToPdf: 'تصویر سے پی ڈی ایف',
     pdfToWord: 'پی ڈی ایف سے ورڈ',
@@ -445,7 +438,6 @@ const translations: Record<Language, TranslationSet> = {
     history: 'السجل',
     noHistory: 'لا يوجد سجل نسخ صوتي حتى الآن.',
     uploadFile: 'تحميل ملف (ملفات)',
-    uploadFolder: 'تحميل مجلد',
     dropFile: 'أو قم بإسقاط الملفات هنا',
     transcribing: 'جاري النسخ الصوتي...',
     loadingMessage: 'قد يستغرق هذا بضع لحظات. يرجى الانتظار.',
@@ -476,7 +468,6 @@ const translations: Record<Language, TranslationSet> = {
     imageAnalysisResult: 'نتيجة تحليل الصورة',
     analyze: 'تحليل',
     reanalyze: 'إعادة التحليل',
-    analyzeAll: 'تحليل الكل',
     pdfToImage: 'PDF إلى صورة',
     imageToPdf: 'صورة إلى PDF',
     pdfToWord: 'PDF إلى Word',

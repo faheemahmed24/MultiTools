@@ -1,9 +1,9 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+
+import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import { jsPDF } from 'jspdf';
 import * as docx from 'docx';
 import { UploadIcon } from './icons/UploadIcon';
-import { FolderPlusIcon } from './icons/FolderPlusIcon';
 import { CloseIcon } from './icons/CloseIcon';
 import { PlusIcon } from './icons/PlusIcon';
 import { TrashIcon } from './icons/TrashIcon';
@@ -60,20 +60,8 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
   const [showTextExportMenu, setShowTextExportMenu] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const folderInputRef = useRef<HTMLInputElement>(null);
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
-  
-  // Use ref to track images for cleanup
-  const imagesRef = useRef(images);
-  imagesRef.current = images;
-
-  // Cleanup ObjectURLs on unmount
-  useEffect(() => {
-    return () => {
-        imagesRef.current.forEach(img => URL.revokeObjectURL(img.preview));
-    };
-  }, []);
 
   const resetBeforeNewUpload = () => {
       setPdfUrl(null);
@@ -81,52 +69,25 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
       setExtractionError('');
   }
 
-  const processFiles = (files: File[]) => {
-      resetBeforeNewUpload();
-      const validImages = files.filter(file => {
-             const type = file.type;
-             const name = file.name.toLowerCase();
-             return type.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp|tiff|svg|ico|heic)$/i.test(name);
-        });
-
-      if (validImages.length === 0 && files.length > 0) {
-          alert("No supported images found.");
-          return;
-      }
-      
-      setImages(prev => {
-          // Prevent duplicates
-          const existingKeys = new Set(prev.map(img => `${img.file.name}-${img.file.size}`));
-          const uniqueNewFiles = validImages.filter(file => !existingKeys.has(`${file.name}-${file.size}`));
-
-          const newImages = uniqueNewFiles.map(file => ({
-            id: `${file.name}-${file.lastModified}-${Math.random()}`,
-            file,
-            preview: URL.createObjectURL(file),
-            edits: { ...defaultEdits },
-          }));
-
-          if (prev.length === 0 && newImages.length > 0) {
-            const firstFileName = newImages[0].file.name;
-            setOutputFilename(firstFileName.split('.').slice(0, -1).join('.') || 'converted');
-          }
-          
-          return [...prev, ...newImages];
-      });
-  };
-
   const handleFileChange = (selectedFiles: FileList | null) => {
     if (selectedFiles) {
-        processFiles(Array.from(selectedFiles));
-    }
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
+      resetBeforeNewUpload();
+      const newImages: ImageFile[] = Array.from(selectedFiles)
+        .filter(file => file.type.startsWith('image/'))
+        .map(file => ({
+          id: `${file.name}-${file.lastModified}-${Math.random()}`,
+          file,
+          preview: URL.createObjectURL(file),
+          edits: { ...defaultEdits },
+        }));
 
-  const handleFolderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-        processFiles(Array.from(e.target.files));
+      if (images.length === 0 && newImages.length > 0) {
+        const firstFileName = newImages[0].file.name;
+        setOutputFilename(firstFileName.split('.').slice(0, -1).join('.') || 'converted');
+      }
+
+      setImages(prev => [...prev, ...newImages]);
     }
-    if (e.target) e.target.value = '';
   };
 
   const handleDragSort = () => {
@@ -146,9 +107,7 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        processFiles(Array.from(e.dataTransfer.files));
-    }
+    handleFileChange(e.dataTransfer.files);
   }, []);
 
   const removeImage = (id: string) => {
@@ -322,7 +281,11 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
     try {
         for (let i = 0; i < images.length; i++) {
             const img = images[i];
-            setConversionMessage(`Extracting text from image ${i + 1}...`);
+            setConversionMessage(`Extracting text from image ${i + 1} (pacing for API limits)...`);
+            
+            // Rate limiting: Add SIGNIFICANT delay between requests to avoid 429 errors (15 RPM max)
+            if (i > 0) await new Promise(resolve => setTimeout(resolve, 5000));
+            
             const text = await analyzeImage(img.file);
             allText += `--- Image ${i + 1} (${img.file.name}) ---\n${text}\n\n`;
         }
@@ -371,25 +334,13 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
   );
 
   return (
-    <div className={`bg-gray-800 rounded-2xl shadow-lg p-6 min-h-[60vh] lg:h-full flex flex-col transition-colors duration-200 ${isDragging ? 'border-2 border-dashed border-purple-500 bg-gray-700/50' : ''}`}
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-    >
+    <div className="bg-gray-800 rounded-2xl shadow-lg p-6 min-h-[60vh] lg:h-full flex flex-col">
       <input type="file" ref={fileInputRef} onChange={e => handleFileChange(e.target.files)} accept="image/*" multiple className="hidden" />
-      <input type="file" ref={folderInputRef} onChange={handleFolderChange} {...({ webkitdirectory: "", directory: "" } as any)} multiple className="hidden" />
-      
       {images.length === 0 ? (
-        <div className="flex flex-col flex-grow items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 border-gray-600 hover:border-purple-500 min-h-[400px]">
+        <div className={`flex flex-col flex-grow items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 ${isDragging ? 'border-purple-500 bg-gray-700' : 'border-gray-600 hover:border-purple-500'}`}
+          onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}>
           <UploadIcon className="w-12 h-12 text-gray-500 mb-4" />
-          <div className="flex gap-4">
-              <button onClick={() => fileInputRef.current?.click()} className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors duration-200">{t.uploadImages}</button>
-              <button onClick={() => folderInputRef.current?.click()} className="px-6 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200 flex items-center gap-2">
-                <FolderPlusIcon className="w-5 h-5"/>
-                {t.uploadFolder}
-              </button>
-          </div>
+          <button onClick={() => fileInputRef.current?.click()} className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors duration-200">{t.uploadImages}</button>
           <p className="mt-2 text-sm text-gray-400">{t.dropImages}</p>
         </div>
       ) : (
@@ -397,9 +348,6 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
           <div className="flex flex-wrap gap-2 items-center mb-4">
               <button onClick={() => fileInputRef.current?.click()} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
                   <PlusIcon className="w-5 h-5 me-2"/>{t.addMoreImages}
-              </button>
-               <button onClick={() => folderInputRef.current?.click()} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200" title={t.uploadFolder}>
-                  <FolderPlusIcon className="w-5 h-5 me-2"/>{t.uploadFolder}
               </button>
               <button onClick={clearAll} className="flex items-center px-4 py-2 bg-red-600/50 text-white font-semibold rounded-lg hover:bg-red-600/80 transition-colors duration-200">
                   <TrashIcon className="w-5 h-5 me-2"/>{t.clearAll}

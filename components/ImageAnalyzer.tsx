@@ -1,3 +1,4 @@
+
 // Fix: Import useCallback from React to resolve 'Cannot find name' errors.
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { TranslationSet } from '../types';
@@ -10,16 +11,15 @@ import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
 import { CloseIcon } from './icons/CloseIcon';
+import { PlusIcon } from './icons/PlusIcon';
+import { TrashIcon } from './icons/TrashIcon';
+import { CheckCircleIcon } from './icons/CheckCircleIcon';
+import { ClockIcon } from './icons/ClockIcon';
+import { XCircleIcon } from './icons/XCircleIcon';
+import { FolderIcon } from './icons/FolderIcon';
 import { jsPDF } from 'jspdf';
 import * as docx from 'docx';
-
-const SkeletonLoader: React.FC = () => (
-    <div className="space-y-3 animate-pulse">
-        <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-        <div className="h-4 bg-gray-700 rounded w-full"></div>
-        <div className="h-4 bg-gray-700 rounded w-5/6"></div>
-    </div>
-);
+import { SkeletonLoader } from './Loader';
 
 const ResultBox: React.FC<{ 
     title: string; 
@@ -43,7 +43,7 @@ const ResultBox: React.FC<{
                     <div className="relative">
                          <button
                             onClick={() => setShowExportMenu(!showExportMenu)}
-                            disabled={isLoading}
+                            disabled={isLoading || !value}
                             className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50"
                         >
                             <DownloadIcon className="w-4 h-4 me-2" />
@@ -59,7 +59,7 @@ const ResultBox: React.FC<{
                     </div>
                     <button
                         onClick={onCopy}
-                        disabled={isLoading}
+                        disabled={isLoading || !value}
                         className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50"
                     >
                         {isCopied ? <CheckIcon className="w-4 h-4 me-2" /> : <CopyIcon className="w-4 h-4 me-2" />}
@@ -67,15 +67,16 @@ const ResultBox: React.FC<{
                     </button>
                 </div>
             </div>
-            <div className="overflow-y-auto flex-grow bg-gray-800/50 p-3 rounded-md min-h-[120px]">
+            <div className="overflow-y-auto flex-grow bg-gray-800/50 p-3 rounded-md min-h-[150px] max-h-[400px]">
                 {isLoading ? (
-                    <SkeletonLoader />
+                    <SkeletonLoader lines={6} />
                 ) : (
                     <textarea
                         value={value}
                         readOnly={!isEditable}
                         onChange={(e) => onChange?.(e.target.value)}
-                        className="w-full h-full bg-transparent text-gray-300 p-0 resize-none border-0 focus:ring-0"
+                        className="w-full h-full bg-transparent text-gray-300 p-0 resize-y border-0 focus:ring-0 min-h-[150px]"
+                        placeholder={isLoading ? '' : "Extracted text will appear here..."}
                     />
                 )}
             </div>
@@ -86,20 +87,33 @@ const ResultBox: React.FC<{
     );
 };
 
+interface AnalyzableImage {
+    id: string;
+    file: File;
+    preview: string;
+    status: 'pending' | 'analyzing' | 'done' | 'error';
+}
+
 interface ImageConverterOcrProps {
     t: TranslationSet;
     onAnalysisComplete: (data: { fileName: string; resultText: string; }) => void;
 }
 
 const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComplete }) => {
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [images, setImages] = useState<AnalyzableImage[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  
   const [analysisResult, setAnalysisResult] = useState('');
   const [editedAnalysisResult, setEditedAnalysisResult] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [progressMessage, setProgressMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
 
+  // Translation State
   const [targetLang, setTargetLang] = useState<LanguageOption>(targetLanguages[0]);
   const [translatedText, setTranslatedText] = useState('');
   const [editedTranslatedText, setEditedTranslatedText] = useState('');
@@ -109,28 +123,65 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
   const [isOcrCopied, setIsOcrCopied] = useState(false);
   const [isTranslationCopied, setIsTranslationCopied] = useState(false);
 
-  const [targetFormat, setTargetFormat] = useState<'png' | 'jpeg'>('png');
-  const [quality, setQuality] = useState(90);
-
-  const handleAnalyze = useCallback(async () => {
-    if (!imageFile) return;
-    setIsLoading(true);
+  const handleAnalyzeAll = useCallback(async () => {
+    if (images.length === 0) return;
+    
+    setIsAnalyzing(true);
     setError(null);
     setAnalysisResult('');
     setEditedAnalysisResult('');
     setTranslatedText('');
     setEditedTranslatedText('');
+    
+    let combinedText = "";
+    
     try {
-      const result = await analyzeImage(imageFile);
-      setAnalysisResult(result);
-      setEditedAnalysisResult(result);
-      onAnalysisComplete({ fileName: imageFile.name, resultText: result });
+        for (let i = 0; i < images.length; i++) {
+            const img = images[i];
+            
+            // Update status to analyzing
+            setImages(prev => prev.map(item => item.id === img.id ? { ...item, status: 'analyzing' } : item));
+            setProgressMessage(`Analyzing image ${i + 1} of ${images.length}...`);
+
+            // Rate Limiting: Pause if not the first image
+            if (i > 0) {
+                 setProgressMessage(`Pacing request for image ${i + 1} (waiting 5s)...`);
+                 await new Promise(resolve => setTimeout(resolve, 5000));
+            }
+
+            try {
+                const text = await analyzeImage(img.file);
+                const sectionHeader = images.length > 1 ? `\n\n--- Image ${i + 1}: ${img.file.name} ---\n\n` : "";
+                combinedText += sectionHeader + text;
+                
+                // Update status to done
+                setImages(prev => prev.map(item => item.id === img.id ? { ...item, status: 'done' } : item));
+            } catch (err) {
+                console.error(err);
+                setImages(prev => prev.map(item => item.id === img.id ? { ...item, status: 'error' } : item));
+                const sectionHeader = images.length > 1 ? `\n\n--- Image ${i + 1}: ${img.file.name} ---\n\n` : "";
+                combinedText += sectionHeader + "[Error extracting text from this image]";
+            }
+        }
+
+        setAnalysisResult(combinedText.trim());
+        setEditedAnalysisResult(combinedText.trim());
+        
+        // Notify parent of completion (using first filename as reference)
+        if (images.length > 0) {
+            onAnalysisComplete({ 
+                fileName: images.length === 1 ? images[0].file.name : `Batch Scan (${images.length} files)`, 
+                resultText: combinedText.trim() 
+            });
+        }
+
     } catch (err: any) {
-      setError(err.message || 'An error occurred during analysis.');
+      setError(err.message || 'An error occurred during batch analysis.');
     } finally {
-      setIsLoading(false);
+      setIsAnalyzing(false);
+      setProgressMessage('');
     }
-  }, [imageFile, onAnalysisComplete]);
+  }, [images, onAnalysisComplete]);
   
   const handleTranslate = useCallback(async () => {
     if (!editedAnalysisResult) return;
@@ -149,51 +200,84 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
     }
   }, [editedAnalysisResult, targetLang.name]);
 
+  // Auto-translate only if a single image was analyzed and result appeared newly, 
+  // otherwise for bulk, user should manually click (to save quota).
   useEffect(() => {
-    if (imageFile && !analysisResult) {
-      handleAnalyze();
-    }
-  }, [imageFile, analysisResult, handleAnalyze]);
-
-  useEffect(() => {
-    if (editedAnalysisResult && !isTranslating) {
+    if (editedAnalysisResult && !isTranslating && !translatedText && images.length === 1) {
       handleTranslate();
     }
-  }, [editedAnalysisResult, targetLang, handleTranslate, isTranslating]);
+  }, [editedAnalysisResult, targetLang, handleTranslate, isTranslating, translatedText, images.length]);
 
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-      setAnalysisResult('');
-      setEditedAnalysisResult('');
-      setTranslatedText('');
-      setEditedTranslatedText('');
-      setError(null);
-      setTranslationError(null);
+    if (e.target.files && e.target.files.length > 0) {
+        const newFiles: AnalyzableImage[] = (Array.from(e.target.files) as File[])
+            .filter((file: File) => file.type.startsWith('image/'))
+            .map((file: File) => ({
+                id: `${file.name}-${Date.now()}-${Math.random()}`,
+                file,
+                preview: URL.createObjectURL(file),
+                status: 'pending'
+            }));
+        
+        // If adding new files, reset previous results
+        setAnalysisResult('');
+        setEditedAnalysisResult('');
+        setTranslatedText('');
+        setEditedTranslatedText('');
+        setError(null);
+        
+        setImages(prev => [...prev, ...newFiles]);
     }
+    if (e.target) e.target.value = '';
   };
   
-  const handleReset = () => {
-    setImageFile(null);
-    setImagePreview(null);
+  const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); }, []);
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); }, []);
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); }, []);
+  
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+         const newFiles: AnalyzableImage[] = (Array.from(e.dataTransfer.files) as File[])
+            .filter((f: File) => f.type.startsWith('image/'))
+            .map((file: File) => ({
+                id: `${file.name}-${Date.now()}-${Math.random()}`,
+                file,
+                preview: URL.createObjectURL(file),
+                status: 'pending'
+            }));
+            
+        if (newFiles.length > 0) {
+             setAnalysisResult('');
+             setEditedAnalysisResult('');
+             setTranslatedText('');
+             setEditedTranslatedText('');
+             setError(null);
+             setImages(prev => [...prev, ...newFiles]);
+        }
+    }
+  }, []);
+
+  const handleRemoveImage = (id: string) => {
+    const img = images.find(i => i.id === id);
+    if (img) URL.revokeObjectURL(img.preview);
+    setImages(prev => prev.filter(i => i.id !== id));
+  };
+
+  const handleClearAll = () => {
+    images.forEach(img => URL.revokeObjectURL(img.preview));
+    setImages([]);
     setAnalysisResult('');
     setEditedAnalysisResult('');
-    setIsLoading(false);
-    setError(null);
     setTranslatedText('');
     setEditedTranslatedText('');
-    setIsTranslating(false);
+    setError(null);
     setTranslationError(null);
-    if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-    }
+    setIsAnalyzing(false);
   };
 
   const createDownload = (filename: string, blob: Blob) => {
@@ -207,36 +291,15 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
     URL.revokeObjectURL(url);
   };
 
-  const handleDownloadImage = () => {
-    if (!imagePreview || !imageFile) return;
-  
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    const img = new Image();
-    img.onload = () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-      const mimeType = `image/${targetFormat}`;
-      const qualityValue = targetFormat === 'jpeg' ? quality / 100 : undefined;
-      
-      canvas.toBlob((blob) => {
-          if (blob) {
-            const fileName = `${imageFile.name.split('.').slice(0, -1).join('.') || 'image'}.${targetFormat}`;
-            createDownload(fileName, blob);
-          }
-      }, mimeType, qualityValue);
-    };
-    img.src = imagePreview;
-  };
-
   const handleExport = async (format: 'txt' | 'docx' | 'pdf', type: 'analysis' | 'translation') => {
     const content = type === 'analysis' ? editedAnalysisResult : editedTranslatedText;
-    if (!content || !imageFile) return;
-    const baseFilename = imageFile.name.split('.').slice(0, -1).join('.') || 'image-export';
-    const filename = type === 'analysis' ? `${baseFilename}-analysis` : `${baseFilename}-translation-${targetLang.code}`;
+    if (!content) return;
+    
+    const baseFilename = images.length === 1 
+        ? images[0].file.name.split('.').slice(0, -1).join('.') 
+        : `batch-scan-${images.length}-files`;
+        
+    const filename = type === 'analysis' ? `${baseFilename}-ocr` : `${baseFilename}-translation-${targetLang.code}`;
 
     if (format === 'txt') {
       const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
@@ -251,7 +314,16 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
       createDownload(`${filename}.docx`, blob);
     } else if (format === 'pdf') {
       const doc = new jsPDF();
-      doc.text(content, 10, 10);
+      const splitText = doc.splitTextToSize(content, 180);
+      let y = 10;
+      splitText.forEach((line: string) => {
+          if (y > 280) {
+              doc.addPage();
+              y = 10;
+          }
+          doc.text(line, 10, y);
+          y += 7;
+      });
       const blob = doc.output('blob');
       createDownload(`${filename}.pdf`, blob);
     }
@@ -273,127 +345,166 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
     fileInputRef.current?.click();
   };
 
+  const handleFolderUploadClick = () => {
+    folderInputRef.current?.click();
+  };
+
+  const StatusIcon = ({ status }: { status: AnalyzableImage['status'] }) => {
+      if (status === 'analyzing') return <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-400"></div>;
+      if (status === 'done') return <CheckCircleIcon className="w-5 h-5 text-green-400 bg-black/50 rounded-full" />;
+      if (status === 'error') return <XCircleIcon className="w-5 h-5 text-red-400 bg-black/50 rounded-full" />;
+      return <ClockIcon className="w-5 h-5 text-gray-400 bg-black/50 rounded-full" />;
+  };
+
   return (
     <div className="bg-gray-800 rounded-2xl shadow-lg p-6 min-h-[60vh] lg:h-full flex flex-col">
-      <div className="flex-grow">
-        {imagePreview ? (
-            <div className="relative mb-4 text-center">
-                <img src={imagePreview} alt="Preview" className={`w-auto mx-auto rounded-lg max-h-60 object-contain transition-opacity duration-300 ${isLoading ? 'opacity-30' : ''}`}/>
-                 {isLoading && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-lg">
-                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-400"></div>
-                        <p className="mt-3 text-white font-semibold">{t.analyzing}</p>
-                    </div>
-                )}
-                <button
-                    onClick={handleReset}
-                    title={t.clearImage}
-                    className="absolute top-2 end-2 p-1.5 bg-black/60 rounded-full text-white hover:bg-red-500 transition-colors duration-200"
-                >
-                    <CloseIcon className="w-5 h-5" />
-                </button>
-            </div>
-        ) : (
-            <div
-              onClick={handleUploadClick}
-              className="flex flex-grow flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 border-gray-600 hover:border-purple-500 cursor-pointer mb-4"
-            >
-              <UploadIcon className="w-12 h-12 text-gray-500 mb-4" />
-              <p className="text-gray-400">{t.uploadImage}</p>
-            </div>
-        )}
-      </div>
-        <input
+       <input
           type="file"
           ref={fileInputRef}
           onChange={handleFileChange}
           accept="image/*"
+          multiple
           className="hidden"
         />
-        {imageFile && (
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">{t.imageFormat}</label>
-                    <div className="flex bg-gray-700 rounded-lg p-1">
-                        <button onClick={() => setTargetFormat('png')} className={`w-full py-2 rounded-md transition-colors ${targetFormat === 'png' ? 'bg-purple-600 text-white' : 'hover:bg-gray-600'}`}>PNG</button>
-                        <button onClick={() => setTargetFormat('jpeg')} className={`w-full py-2 rounded-md transition-colors ${targetFormat === 'jpeg' ? 'bg-purple-600 text-white' : 'hover:bg-gray-600'}`}>JPEG</button>
-                    </div>
-                </div>
-                {targetFormat === 'jpeg' && (
-                    <div>
-                    <label htmlFor="quality" className="block text-sm font-medium text-gray-300 mb-2">{t.qualityScale} ({quality}%)</label>
-                    <input
-                        id="quality"
-                        type="range"
-                        min="1"
-                        max="100"
-                        value={quality}
-                        onChange={(e) => setQuality(parseInt(e.target.value, 10))}
-                        className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
-                    />
-                    </div>
-                )}
+        <input
+          type="file"
+          ref={folderInputRef}
+          onChange={handleFileChange}
+          accept="image/*"
+          multiple
+          {...({ webkitdirectory: "", directory: "" } as any)}
+          className="hidden"
+        />
+
+      {images.length === 0 ? (
+         <div className="flex-grow flex flex-col">
+            <div
+              className={`flex flex-grow flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 mb-4 min-h-[300px] ${isDragging ? 'border-purple-500 bg-gray-700/50' : 'border-gray-600'}`}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            >
+              <UploadIcon className="w-16 h-16 text-gray-500 mb-6" />
+              <h3 className="text-xl font-semibold text-gray-300 mb-2">{t.uploadImages}</h3>
+              <p className="text-gray-400 mb-6 text-center max-w-sm">Drag & drop images or folders here, or use the buttons below.</p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                  <button onClick={handleUploadClick} className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors shadow-lg">
+                      Select Files
+                  </button>
+                   <button onClick={handleFolderUploadClick} className="px-6 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors flex items-center shadow-lg border border-gray-600">
+                      <FolderIcon className="w-5 h-5 me-2" />
+                      Select Folder
+                  </button>
+              </div>
             </div>
-        )}
-        <div className="flex flex-col sm:flex-row gap-4">
-            <button
-                onClick={handleDownloadImage}
-                disabled={!imageFile}
-                className="w-full sm:w-1/2 px-6 py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200"
-            >
-                {t.downloadImage}
-            </button>
-            <button
-                onClick={handleAnalyze}
-                disabled={isLoading || !imageFile}
-                className="w-full sm:w-1/2 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200"
-            >
-                {isLoading ? t.analyzing : (analysisResult ? t.reanalyze : t.analyze)}
-            </button>
         </div>
-
-
-        {error && <div className="text-red-400 mt-4 text-center">{error}</div>}
-        
-        {(analysisResult || isLoading) && (
-            <>
-                <ResultBox 
-                    title={t.imageAnalysisResult} 
-                    value={editedAnalysisResult} 
-                    t={t} 
-                    onCopy={() => handleCopy('ocr')} 
-                    isCopied={isOcrCopied} 
-                    onExport={(format) => handleExport(format, 'analysis')}
-                    onChange={setEditedAnalysisResult}
-                    isLoading={isLoading}
-                />
-                
-                <div className="flex flex-col sm:flex-row items-center gap-4 mt-6">
-                    <LanguageDropdown
-                      languages={targetLanguages}
-                      selectedLang={targetLang}
-                      onSelectLang={setTargetLang}
-                      title={t.targetLanguage}
-                      searchPlaceholder="Search target language"
-                    />
+      ) : (
+        <div className="flex-grow">
+             <div className="flex flex-wrap gap-2 items-center mb-4 justify-between">
+                <div className="flex gap-2">
+                     <button onClick={handleUploadClick} disabled={isAnalyzing} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50">
+                        <PlusIcon className="w-5 h-5 me-2"/>{t.addMoreImages}
+                    </button>
+                    <button onClick={handleFolderUploadClick} disabled={isAnalyzing} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50">
+                        <FolderIcon className="w-5 h-5 me-2"/>Add Folder
+                    </button>
+                    <button onClick={handleClearAll} disabled={isAnalyzing} className="flex items-center px-4 py-2 bg-red-600/20 text-red-300 font-semibold rounded-lg hover:bg-red-600/40 transition-colors duration-200 disabled:opacity-50">
+                        <TrashIcon className="w-5 h-5 me-2"/>{t.clearAll}
+                    </button>
                 </div>
+                <div className="text-sm text-gray-400">
+                    {images.length} {images.length === 1 ? 'image' : 'images'} selected
+                </div>
+             </div>
 
-                {translationError && <div className="text-red-400 mt-4 text-center">{translationError}</div>}
-                
-                {(isTranslating || translatedText || (isLoading && !error)) && (
+             {/* Image Grid */}
+             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6 max-h-[40vh] overflow-y-auto p-1">
+                {images.map((img, index) => (
+                    <div key={img.id} className="group relative bg-gray-900/50 p-2 rounded-lg aspect-square flex items-center justify-center border border-gray-700">
+                        <img src={img.preview} alt={img.file.name} className="max-w-full max-h-full object-contain rounded-md" />
+                        
+                        <div className="absolute top-1 right-1">
+                             {isAnalyzing || img.status !== 'pending' ? (
+                                <StatusIcon status={img.status} />
+                             ) : (
+                                <button onClick={() => handleRemoveImage(img.id)} className="p-1 bg-black/60 rounded-full text-white hover:bg-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <CloseIcon className="w-4 h-4" />
+                                </button>
+                             )}
+                        </div>
+                        
+                        <div className="absolute bottom-1 left-1 bg-black/60 px-2 py-0.5 rounded text-xs text-white truncate max-w-[90%]">
+                            {index + 1}. {img.file.name}
+                        </div>
+                    </div>
+                ))}
+             </div>
+
+             {/* Action Button */}
+             <div className="flex justify-center mb-6">
+                <button
+                    onClick={handleAnalyzeAll}
+                    disabled={isAnalyzing || images.length === 0}
+                    className="w-full md:w-auto min-w-[200px] px-8 py-3 bg-purple-600 text-white font-bold text-lg rounded-xl hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all shadow-lg shadow-purple-900/20"
+                >
+                    {isAnalyzing ? (progressMessage || t.analyzing) : (analysisResult ? t.reanalyze : t.analyze)}
+                </button>
+             </div>
+
+             {error && <div className="text-red-400 mb-4 text-center bg-red-900/20 p-3 rounded-lg border border-red-800">{error}</div>}
+
+             {/* Results Section */}
+             {(analysisResult || isAnalyzing) && (
+                <div className="animate-fadeIn">
                     <ResultBox 
-                        title={t.translationResult} 
-                        value={editedTranslatedText} 
+                        title={t.imageAnalysisResult} 
+                        value={editedAnalysisResult} 
                         t={t} 
-                        onCopy={() => handleCopy('translation')} 
-                        isCopied={isTranslationCopied} 
-                        onExport={(format) => handleExport(format, 'translation')}
-                        onChange={setEditedTranslatedText}
-                        isLoading={isTranslating}
+                        onCopy={() => handleCopy('ocr')} 
+                        isCopied={isOcrCopied} 
+                        onExport={(format) => handleExport(format, 'analysis')}
+                        onChange={setEditedAnalysisResult}
+                        isLoading={isAnalyzing}
                     />
-                )}
-            </>
-        )}
+                    
+                    <div className="flex flex-col sm:flex-row items-center gap-4 mt-8 border-t border-gray-700 pt-6">
+                        <div className="flex-grow w-full">
+                             <LanguageDropdown
+                                languages={targetLanguages}
+                                selectedLang={targetLang}
+                                onSelectLang={setTargetLang}
+                                title={t.targetLanguage}
+                                searchPlaceholder="Search target language"
+                                />
+                        </div>
+                        <button 
+                            onClick={handleTranslate}
+                            disabled={isTranslating || !editedAnalysisResult}
+                            className="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors h-[42px] mt-auto"
+                        >
+                            {isTranslating ? t.translating : t.translate}
+                        </button>
+                    </div>
+
+                    {translationError && <div className="text-red-400 mt-4 text-center">{translationError}</div>}
+                    
+                    {(isTranslating || translatedText) && (
+                        <ResultBox 
+                            title={t.translationResult} 
+                            value={editedTranslatedText} 
+                            t={t} 
+                            onCopy={() => handleCopy('translation')} 
+                            isCopied={isTranslationCopied} 
+                            onExport={(format) => handleExport(format, 'translation')}
+                            onChange={setEditedTranslatedText}
+                            isLoading={isTranslating}
+                        />
+                    )}
+                </div>
+            )}
+        </div>
+      )}
     </div>
   );
 };

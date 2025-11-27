@@ -1,6 +1,6 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import type { Language, TranslationSet, User } from '../types';
-import LanguageSelector from './LanguageSelector';
 import { SidebarCollapseIcon } from './icons/SidebarCollapseIcon';
 import { SidebarExpandIcon } from './icons/SidebarExpandIcon';
 import { TranscriberIcon } from './icons/TranscriberIcon';
@@ -11,8 +11,6 @@ import { ImageToPdfIcon } from './icons/ImageToPdfIcon';
 import { PdfToWordIcon } from './icons/PdfToWordIcon';
 import { WordToPdfIcon } from './icons/WordToPdfIcon';
 import { SheetIcon } from './icons/SheetIcon';
-import { UserIcon } from './icons/UserIcon';
-import { LogoutIcon } from './icons/LogoutIcon';
 import { GrammarIcon } from './icons/GrammarIcon';
 
 interface HeaderProps {
@@ -153,39 +151,6 @@ const Header: React.FC<HeaderProps> = ({
           )
         })}
       </nav>
-
-      <div className="mt-auto pt-6 border-t border-gray-700/50">
-        {currentUser ? (
-          <div className="flex items-center gap-3">
-             <div className={`p-2 bg-gray-700 rounded-full transition-all duration-300 ${isSidebarOpen ? '' : 'md:w-full'}`}>
-              <UserIcon className="w-6 h-6 text-purple-400 mx-auto" />
-            </div>
-            <div className={`flex-grow overflow-hidden transition-all duration-300 ${isSidebarOpen ? 'max-w-full opacity-100' : 'max-w-0 opacity-0'}`}>
-              <p className="text-sm font-semibold text-gray-200 truncate">{currentUser.email}</p>
-            </div>
-            <button onClick={onLogoutClick} title={t.logout} className={`p-2 rounded-full text-gray-400 hover:text-white hover:bg-red-500/20 hover:text-red-400 transition-colors ${isSidebarOpen ? '' : 'hidden'}`}>
-              <LogoutIcon className="w-5 h-5" />
-            </button>
-          </div>
-        ) : (
-           <button 
-                onClick={onLoginClick}
-                className={`w-full flex items-center h-12 pe-4 text-sm rounded-lg whitespace-nowrap transition-all duration-300 text-gray-400 font-medium hover:text-white hover:bg-gray-700/50 ${ isSidebarOpen ? 'ps-6 justify-start' : 'md:ps-0 md:justify-center' }`}
-            >
-                 {isSidebarOpen ? (
-                    <span className="flex items-center gap-3">
-                        <UserIcon className="w-5 h-5" />
-                        {t.login}
-                    </span>
-                 ) : (
-                    <UserIcon className="w-6 h-6" />
-                 )}
-            </button>
-        )}
-        <div className={`mt-4 transition-opacity duration-300 ease-in-out ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none h-auto'}`}>
-            <LanguageSelector selectedLanguage={uiLanguage} onSelectLanguage={setUiLanguage} />
-        </div>
-      </div>
     </aside>
   );
 };
