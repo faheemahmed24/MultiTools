@@ -1,5 +1,8 @@
 import React, { useState, useEffect, FormEvent } from 'react';
 import type { TranslationSet, User } from '../types';
+import { GoogleIcon } from './icons/GoogleIcon';
+import { UserCircleIcon } from './icons/UserCircleIcon';
+import { ArrowLeftIcon } from './icons/ArrowLeftIcon';
 
 interface GoogleAccountSelectorModalProps {
   isOpen: boolean;
@@ -69,7 +72,7 @@ const GoogleAccountSelectorModal: React.FC<GoogleAccountSelectorModalProps> = ({
         onClick={e => e.stopPropagation()}
       >
         <div className="text-center mb-6">
-          <i className="fab fa-google w-10 h-10 mx-auto mb-4 text-4xl" />
+          <GoogleIcon className="w-10 h-10 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-100">{t.chooseAnAccount}</h2>
           <p className="text-base text-gray-400">{t.continueToAppName}</p>
         </div>
@@ -82,7 +85,7 @@ const GoogleAccountSelectorModal: React.FC<GoogleAccountSelectorModalProps> = ({
                   onClick={() => handleSelectExisting(email)}
                   className="w-full flex items-center gap-4 p-3 rounded-lg hover:bg-gray-700/50 transition-colors text-left"
                 >
-                  <i className="fas fa-user-circle w-10 h-10 text-gray-400 flex-shrink-0 text-4xl" />
+                  <UserCircleIcon className="w-10 h-10 text-gray-400 flex-shrink-0" />
                   <span className="font-semibold text-gray-200 text-lg truncate">{email}</span>
                 </button>
               </li>
@@ -92,7 +95,7 @@ const GoogleAccountSelectorModal: React.FC<GoogleAccountSelectorModalProps> = ({
                 onClick={() => setShowNewAccountForm(true)}
                 className="w-full flex items-center gap-4 p-3 rounded-lg hover:bg-gray-700/50 transition-colors text-left"
               >
-                <i className="fas fa-user-circle w-10 h-10 text-gray-400 flex-shrink-0 text-4xl" />
+                <UserCircleIcon className="w-10 h-10 text-gray-400 flex-shrink-0" />
                 <span className="font-semibold text-gray-200 text-lg">{t.useAnotherAccount}</span>
               </button>
             </li>
@@ -126,7 +129,7 @@ const GoogleAccountSelectorModal: React.FC<GoogleAccountSelectorModalProps> = ({
                 }}
                 className="flex items-center gap-2 px-4 py-2 text-purple-400 font-semibold rounded-lg hover:bg-purple-600/20 transition-colors"
               >
-                <i className="fas fa-arrow-left w-5 h-5" />
+                <ArrowLeftIcon className="w-5 h-5" />
                 {accounts.length > 0 ? t.back : t.cancel}
               </button>
               <button

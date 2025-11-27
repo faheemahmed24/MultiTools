@@ -1,25 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import type { Transcription, TranslationSet, TranscriptionSegment } from '../types';
-import { summarizeTranscription, analyzeSentiment } from '../services/geminiService';
-import { SkeletonLoader } from './Loader';
+import { CopyIcon } from './icons/CopyIcon';
+import { CheckIcon } from './icons/CheckIcon';
+import { EditIcon } from './icons/EditIcon';
+import { SaveIcon } from './icons/SaveIcon';
+import { DownloadIcon } from './icons/DownloadIcon';
+import { UndoIcon } from './icons/UndoIcon';
+import { RedoIcon } from './icons/RedoIcon';
+import { useDebounce } from '../hooks/useDebounce';
 import { jsPDF } from 'jspdf';
 import * as docx from 'docx';
+import { TxtIcon } from './icons/TxtIcon';
+import { JsonIcon } from './icons/JsonIcon';
+import { SrtIcon } from './icons/SrtIcon';
+import { CsvIcon } from './icons/CsvIcon';
+import { PdfIcon } from './icons/PdfIcon';
+import { DocxIcon } from './icons/DocxIcon';
+import { PngIcon } from './icons/PngIcon';
+import { JpgIcon } from './icons/JpgIcon';
 
 interface TranscriptionViewProps {
   transcription: Transcription;
   onSave: () => void;
-  onUpdate: (id: string, updatedSegments: TranscriptionSegment[], summary?: string, sentiment?: string) => void;
+  onUpdate: (id: string, updatedSegments: TranscriptionSegment[]) => void;
   t: TranslationSet;
 }
 
 const Switch: React.FC<{ checked: boolean; onChange: (checked: boolean) => void; label: string; }> = ({ checked, onChange, label }) => (
-    <label className="flex items-center cursor-pointer select-none">
+    <label className="flex items-center cursor-pointer">
         <div className="relative">
             <input type="checkbox" className="sr-only" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-            <div className="block bg-gray-300 w-10 h-6 rounded-full transition-colors peer-checked:bg-[var(--primary-color)]"></div>
-            <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${checked ? 'translate-x-full bg-white shadow-sm' : ''}`}></div>
+            <div className="block bg-gray-600 w-10 h-6 rounded-full"></div>
+            <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${checked ? 'translate-x-full bg-purple-400' : ''}`}></div>
         </div>
-        <div className="ms-3 text-sm font-medium text-[var(--text-secondary)]">{label}</div>
+        <div className="ms-3 text-sm font-medium text-gray-300">{label}</div>
     </label>
 );
 
@@ -31,268 +45,368 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   const [isEditing, setIsEditing] = useState(false);
   const [editedSegments, setEditedSegments] = useState<TranscriptionSegment[]>([]);
   const [showExportMenu, setShowExportMenu] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  const [summary, setSummary] = useState(transcription.summary || '');
-  const [sentiment, setSentiment] = useState(transcription.sentiment || '');
-  const [isSummarizing, setIsSummarizing] = useState(false);
-  const [isAnalyzingSentiment, setIsAnalyzingSentiment] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+
+  // State for undo/redo
+  const [editHistory, setEditHistory] = useState<TranscriptionSegment[][]>([]);
+  const [currentHistoryIndex, setCurrentHistoryIndex] = useState(-1);
+  const debouncedEditedSegments = useDebounce(editedSegments, 500);
 
   useEffect(() => {
-    setEditedSegments(transcription.segments || []);
-    setSummary(transcription.summary || '');
-    setSentiment(transcription.sentiment || '');
-  }, [transcription]);
+    // Reset state when a new transcription is loaded
+    setIsSaved(false);
+    setIsEditing(false);
+    setShowExportMenu(false);
+    setEditHistory([]);
+    setCurrentHistoryIndex(-1);
+    // Scroll to top when a new transcription is loaded
+    if (containerRef.current) {
+        containerRef.current.scrollTop = 0;
+    }
+  }, [transcription.id]);
 
-  const handleSegmentChange = (index: number, field: keyof TranscriptionSegment, value: string) => {
+  // Click outside listener for export menu
+   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Effect to update history on debounced changes
+  useEffect(() => {
+    if (!isEditing || !debouncedEditedSegments.length) return;
+
+    if (editHistory[currentHistoryIndex] && JSON.stringify(editHistory[currentHistoryIndex]) === JSON.stringify(debouncedEditedSegments)) {
+        return;
+    }
+    
+    const newHistory = editHistory.slice(0, currentHistoryIndex + 1);
+    setEditHistory([...newHistory, debouncedEditedSegments]);
+    setCurrentHistoryIndex(newHistory.length);
+
+  }, [debouncedEditedSegments, isEditing]);
+
+
+  const fullText = useMemo(() => {
+    return transcription.segments
+      .map(segment => {
+        const timestamp = showTimestamps ? `[${segment.startTime} - ${segment.endTime}]` : '';
+        const speaker = showSpeaker ? `${segment.speaker}:` : '';
+        return [timestamp, speaker, segment.text].filter(Boolean).join(' ').trim();
+      })
+      .join('\n');
+  }, [transcription.segments, showTimestamps, showSpeaker]);
+
+  const characterCount = useMemo(() => {
+    const segmentsToCount = isEditing ? editedSegments : transcription.segments;
+    return segmentsToCount.reduce((acc, segment) => acc + segment.text.length, 0);
+  }, [isEditing, editedSegments, transcription.segments]);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(fullText);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+  
+  const handleSave = () => {
+    onSave();
+    setIsSaved(true);
+  };
+
+  const handleEditToggle = () => {
+    if (isEditing) {
+      setIsEditing(false);
+      setEditHistory([]);
+      setCurrentHistoryIndex(-1);
+    } else {
+      const initialSegments = JSON.parse(JSON.stringify(transcription.segments));
+      setEditedSegments(initialSegments);
+      setEditHistory([initialSegments]);
+      setCurrentHistoryIndex(0);
+      setIsEditing(true);
+    }
+  };
+
+  const handleSegmentChange = (index: number, newText: string) => {
     const newSegments = [...editedSegments];
-    newSegments[index] = { ...newSegments[index], [field]: value };
+    newSegments[index].text = newText;
     setEditedSegments(newSegments);
   };
 
   const handleSaveChanges = () => {
-    onUpdate(transcription.id, editedSegments, summary, sentiment);
+    onUpdate(transcription.id, editedSegments);
     setIsEditing(false);
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 2000);
-    onSave();
+    setEditHistory([]);
+    setCurrentHistoryIndex(-1);
+  };
+  
+  const canUndo = isEditing && currentHistoryIndex > 0;
+  const canRedo = isEditing && currentHistoryIndex < editHistory.length - 1;
+
+  const handleUndo = () => {
+    if (canUndo) {
+      const newIndex = currentHistoryIndex - 1;
+      setCurrentHistoryIndex(newIndex);
+      setEditedSegments(editHistory[newIndex]);
+    }
   };
 
-  const handleCopy = () => {
-    const text = editedSegments.map(s => {
-        const time = showTimestamps ? `[${s.startTime}] ` : '';
-        const speaker = showSpeaker ? `${s.speaker}: ` : '';
-        return `${time}${speaker}${s.text}`;
-    }).join('\n');
-    navigator.clipboard.writeText(text);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
+  const handleRedo = () => {
+    if (canRedo) {
+      const newIndex = currentHistoryIndex + 1;
+      setCurrentHistoryIndex(newIndex);
+      setEditedSegments(editHistory[newIndex]);
+    }
   };
 
-  const handleGenerateSummary = async () => {
-      if (summary) return;
-      setIsSummarizing(true);
-      try {
-          const fullText = transcription.segments.map(s => s.text).join(' ');
-          const result = await summarizeTranscription(fullText);
-          setSummary(result);
-          onUpdate(transcription.id, editedSegments, result, sentiment);
-      } catch (e) {
-          console.error(e);
-      } finally {
-          setIsSummarizing(false);
-      }
+  const createDownload = (filename: string, content: string | Blob, mime?: string) => {
+    const blob = content instanceof Blob ? content : new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setShowExportMenu(false);
   };
+  
+  const renderTranscriptionToCanvas = (format: 'png' | 'jpeg') => {
+      const PADDING = 25;
+      const LINE_HEIGHT = 28;
+      const FONT_SIZE = 16;
+      const FONT = `${FONT_SIZE}px monospace`;
+      const CANVAS_WIDTH = 1200;
 
-  const handleAnalyzeSentiment = async () => {
-      if (sentiment) return;
-      setIsAnalyzingSentiment(true);
-      try {
-          const fullText = transcription.segments.map(s => s.text).join(' ');
-          const result = await analyzeSentiment(fullText);
-          setSentiment(result);
-          onUpdate(transcription.id, editedSegments, summary, result);
-      } catch (e) {
-          console.error(e);
-      } finally {
-          setIsAnalyzingSentiment(false);
-      }
-  };
+      const BG_COLOR = '#1f2937';
+      const TIMESTAMP_COLOR = '#A78BFA';
+      const SPEAKER_COLOR = '#F472B6';
+      const TEXT_COLOR = '#E5E7EB';
 
-  const handleExport = async (format: 'txt' | 'json' | 'srt' | 'csv' | 'pdf' | 'docx') => {
-      const filename = (transcription.fileName || 'transcription').split('.')[0];
-      let content = '';
-      let mimeType = 'text/plain';
-      let blob: Blob | null = null;
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      if (!context) return;
+      
+      context.font = FONT;
+      
+      let totalHeight = PADDING;
+      const lines: {y: number, parts: {text: string, color: string}[]}[] = [];
 
-      switch (format) {
-          case 'txt':
-              content = editedSegments.map(s => {
-                  const time = showTimestamps ? `[${s.startTime}] ` : '';
-                  const speaker = showSpeaker ? `${s.speaker}: ` : '';
-                  return `${time}${speaker}${s.text}`;
-              }).join('\n');
-              blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-              break;
-          case 'json':
-              content = JSON.stringify(transcription, null, 2);
-              mimeType = 'application/json';
-              blob = new Blob([content], { type: mimeType });
-              break;
-          case 'srt':
-             content = editedSegments.map((s, i) => {
-                 return `${i + 1}\n${s.startTime.replace('.', ',')} --> ${s.endTime.replace('.', ',')}\n${s.speaker ? s.speaker + ': ' : ''}${s.text}\n`;
-             }).join('\n');
-             blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-             break;
-          case 'csv':
-              content = 'Start Time,End Time,Speaker,Text\n' + editedSegments.map(s => `"${s.startTime}","${s.endTime}","${s.speaker}","${s.text.replace(/"/g, '""')}"`).join('\n');
-              mimeType = 'text/csv';
-              blob = new Blob([content], { type: mimeType });
-              break;
-          case 'pdf': {
-               const doc = new jsPDF();
-               let y = 10;
-               editedSegments.forEach(s => {
-                   if (y > 280) { doc.addPage(); y = 10; }
-                   const line = `${showTimestamps ? `[${s.startTime}] ` : ''}${showSpeaker ? `${s.speaker}: ` : ''}${s.text}`;
-                   const splitText = doc.splitTextToSize(line, 190);
-                   doc.text(splitText, 10, y);
-                   y += (splitText.length * 7) + 5;
-               });
-               blob = doc.output('blob');
-               break;
+      transcription.segments.forEach(segment => {
+          const prefixParts: {text: string, color: string}[] = [];
+          if (showTimestamps) prefixParts.push({ text: `[${segment.startTime} - ${segment.endTime}] `, color: TIMESTAMP_COLOR });
+          if (showSpeaker) prefixParts.push({ text: `${segment.speaker}: `, color: SPEAKER_COLOR });
+          
+          const prefixWidth = prefixParts.reduce((acc, part) => acc + context.measureText(part.text).width, 0);
+          const availableWidth = CANVAS_WIDTH - PADDING * 2;
+          
+          const words = segment.text.split(' ');
+          let currentLineText = '';
+          const textLines: string[] = [];
+          
+          words.forEach((word) => {
+              const testLine = currentLineText + word + ' ';
+              const widthLimit = textLines.length === 0 ? availableWidth - prefixWidth : availableWidth;
+              const testWidth = context.measureText(testLine).width;
+
+              if (testWidth > widthLimit && currentLineText) {
+                  textLines.push(currentLineText.trim());
+                  currentLineText = word + ' ';
+              } else {
+                  currentLineText = testLine;
+              }
+          });
+          if (currentLineText.trim()) {
+              textLines.push(currentLineText.trim());
           }
-          case 'docx': {
-              const paragraphs = editedSegments.map(s => {
-                  return new docx.Paragraph({
-                      children: [
-                          new docx.TextRun({ text: showTimestamps ? `[${s.startTime}] ` : '', bold: true, color: "888888" }),
-                          new docx.TextRun({ text: showSpeaker ? `${s.speaker}: ` : '', bold: true }),
-                          new docx.TextRun({ text: s.text }),
-                      ],
-                      spacing: { after: 200 }
-                  });
-              });
-              const doc = new docx.Document({ sections: [{ children: paragraphs }] });
-              blob = await docx.Packer.toBlob(doc);
-              break;
-          }
-      }
 
-      if (blob) {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${filename}.${format}`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-      }
-      setShowExportMenu(false);
+          if(textLines.length === 0) textLines.push('');
+
+          textLines.forEach((lineText, index) => {
+              totalHeight += LINE_HEIGHT;
+              if (index === 0) {
+                  lines.push({ y: totalHeight, parts: [...prefixParts, { text: lineText, color: TEXT_COLOR }] });
+              } else {
+                  lines.push({ y: totalHeight, parts: [{ text: '    ' + lineText, color: TEXT_COLOR }] });
+              }
+          });
+      });
+      
+      totalHeight += PADDING;
+
+      canvas.width = CANVAS_WIDTH;
+      canvas.height = totalHeight;
+      context.fillStyle = BG_COLOR;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.font = FONT;
+      
+      lines.forEach(line => {
+          let currentX = PADDING;
+          line.parts.forEach(part => {
+              context.fillStyle = part.color;
+              context.fillText(part.text, currentX, line.y);
+              currentX += context.measureText(part.text).width;
+          });
+      });
+      
+      return canvas.toDataURL(`image/${format}`, format === 'jpeg' ? 0.9 : undefined);
+  }
+
+  const handleExport = async (format: 'txt' | 'json' | 'srt' | 'png' | 'jpg' | 'docx' | 'pdf' | 'csv') => {
+    const baseFilename = transcription.fileName.split('.').slice(0, -1).join('.') || transcription.fileName;
+    if (format === 'txt') createDownload(`${baseFilename}.txt`, fullText, 'text/plain;charset=utf-8');
+    else if (format === 'json') createDownload(`${baseFilename}.json`, JSON.stringify(transcription, null, 2), 'application/json;charset=utf-8');
+    else if (format === 'srt') {
+      const toSrtTime = (time: string) => time.replace('.', ',');
+      const srtContent = transcription.segments.map((seg, i) => `${i + 1}\n${toSrtTime(seg.startTime)} --> ${toSrtTime(seg.endTime)}\n${seg.text}`).join('\n\n');
+      createDownload(`${baseFilename}.srt`, srtContent, 'application/x-subrip;charset=utf-8');
+    } else if (format === 'png' || format === 'jpg') {
+        const dataUrl = renderTranscriptionToCanvas(format === 'jpg' ? 'jpeg' : 'png');
+        if (dataUrl) {
+            const a = document.createElement('a'); a.href = dataUrl; a.download = `${baseFilename}.${format}`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); setShowExportMenu(false);
+        }
+    } else if (format === 'csv') {
+        const header = "startTime,endTime,speaker,text\n";
+        const rows = transcription.segments.map(s => `"${s.startTime}","${s.endTime}","${s.speaker}","${s.text.replace(/"/g, '""')}"`).join('\n');
+        createDownload(`${baseFilename}.csv`, header + rows, 'text/csv;charset=utf-8');
+    } else if (format === 'docx') {
+        const paragraphs = transcription.segments.map(seg => {
+            const parts = [];
+            if (showTimestamps) parts.push(new docx.TextRun({ text: `[${seg.startTime} - ${seg.endTime}] `, color: "A78BFA" }));
+            if (showSpeaker) parts.push(new docx.TextRun({ text: `${seg.speaker}: `, bold: true, color: "F472B6"}));
+            parts.push(new docx.TextRun(seg.text));
+            return new docx.Paragraph({ children: parts });
+        });
+        const doc = new docx.Document({ sections: [{ children: paragraphs }] });
+        const blob = await docx.Packer.toBlob(doc);
+        createDownload(`${baseFilename}.docx`, blob);
+    } else if (format === 'pdf') {
+        const doc = new jsPDF();
+        const margin = 15;
+        const usableWidth = doc.internal.pageSize.getWidth() - margin * 2;
+        const lineHeight = 6;
+        let y = margin;
+
+        doc.setFontSize(11);
+        
+        transcription.segments.forEach(seg => {
+            const line = (showTimestamps ? `[${seg.startTime} - ${seg.endTime}] ` : '') + (showSpeaker ? `${seg.speaker}: ` : '') + seg.text;
+            
+            const splitLines = doc.splitTextToSize(line, usableWidth);
+            const segmentHeight = splitLines.length * lineHeight;
+
+            if (y + segmentHeight > doc.internal.pageSize.getHeight() - margin) {
+                doc.addPage();
+                y = margin;
+            }
+            
+            doc.text(splitLines, margin, y);
+            y += segmentHeight + 4; // Add a small gap between segments
+        });
+        createDownload(`${baseFilename}.pdf`, doc.output('blob'));
+    }
   };
 
-  const filteredSegments = editedSegments.filter(s => 
-      s.text.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      (s.speaker && s.speaker.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const exportOptions = [
+    { format: 'txt', icon: TxtIcon }, { format: 'json', icon: JsonIcon }, 
+    { format: 'srt', icon: SrtIcon }, { format: 'csv', icon: CsvIcon },
+    { format: 'pdf', icon: PdfIcon, separator: true }, { format: 'docx', icon: DocxIcon },
+    { format: 'png', icon: PngIcon, separator: true }, { format: 'jpg', icon: JpgIcon }
+  ];
 
   return (
-    <div className="flex flex-col h-full bg-[var(--secondary-bg)] rounded-lg overflow-hidden border border-[var(--border-color)]">
-        <div className="p-4 border-b border-[var(--border-color)] bg-[var(--bg-color)] flex flex-wrap gap-4 items-center justify-between">
-            <div className="flex items-center gap-4">
-                <Switch checked={showTimestamps} onChange={setShowTimestamps} label={t.showTimestamps} />
-                <Switch checked={showSpeaker} onChange={setShowSpeaker} label={t.showSpeaker} />
-            </div>
-            
-            <div className="flex items-center gap-2">
-                 <div className="relative">
-                    <input 
-                        type="text" 
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder={t.searchTranscription}
-                        className="bg-[var(--secondary-bg)] text-[var(--text-color)] text-sm rounded-full border border-[var(--border-color)] pl-9 pr-3 py-1.5 focus:outline-none focus:border-[var(--primary-color)] w-48 transition-colors"
-                    />
-                    <i className="fas fa-search w-3.5 h-3.5 text-gray-400 absolute left-3 top-2.5" />
-                </div>
-                
-                {isEditing ? (
-                    <button onClick={handleSaveChanges} className="p-2 bg-green-500 rounded-lg hover:bg-green-600 text-white transition-colors" title={t.save}>
-                        <i className="fas fa-save w-4 h-4" />
-                    </button>
-                ) : (
-                    <button onClick={() => setIsEditing(true)} className="p-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg hover:bg-[var(--bg-color)] text-[var(--text-color)] transition-colors" title={t.edit}>
-                        <i className="fas fa-edit w-4 h-4" />
-                    </button>
-                )}
-
-                <button onClick={handleCopy} className="p-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg hover:bg-[var(--bg-color)] text-[var(--text-color)] transition-colors" title={t.copy}>
-                    {isCopied ? <i className="fas fa-check w-4 h-4 text-green-500" /> : <i className="fas fa-copy w-4 h-4" />}
-                </button>
-                
-                <div className="relative">
-                    <button onClick={() => setShowExportMenu(!showExportMenu)} className="p-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg hover:bg-[var(--bg-color)] text-[var(--text-color)] transition-colors" title={t.export}>
-                        <i className="fas fa-download w-4 h-4" />
-                    </button>
-                    {showExportMenu && (
-                        <div className="absolute right-0 mt-2 w-40 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg shadow-xl py-1 z-10" onMouseLeave={() => setShowExportMenu(false)}>
-                            <button onClick={() => handleExport('txt')} className="flex items-center w-full px-4 py-2 text-sm text-[var(--text-color)] hover:bg-[var(--bg-color)] hover:text-[var(--primary-color)]"><i className="fas fa-file-alt w-4 h-4 mr-2" /> TXT</button>
-                            <button onClick={() => handleExport('json')} className="flex items-center w-full px-4 py-2 text-sm text-[var(--text-color)] hover:bg-[var(--bg-color)] hover:text-[var(--primary-color)]"><i className="fas fa-file-code w-4 h-4 mr-2" /> JSON</button>
-                            <button onClick={() => handleExport('srt')} className="flex items-center w-full px-4 py-2 text-sm text-[var(--text-color)] hover:bg-[var(--bg-color)] hover:text-[var(--primary-color)]"><i className="fas fa-closed-captioning w-4 h-4 mr-2" /> SRT</button>
-                            <button onClick={() => handleExport('csv')} className="flex items-center w-full px-4 py-2 text-sm text-[var(--text-color)] hover:bg-[var(--bg-color)] hover:text-[var(--primary-color)]"><i className="fas fa-file-csv w-4 h-4 mr-2" /> CSV</button>
-                            <button onClick={() => handleExport('pdf')} className="flex items-center w-full px-4 py-2 text-sm text-[var(--text-color)] hover:bg-[var(--bg-color)] hover:text-[var(--primary-color)]"><i className="fas fa-file-pdf w-4 h-4 mr-2" /> PDF</button>
-                            <button onClick={() => handleExport('docx')} className="flex items-center w-full px-4 py-2 text-sm text-[var(--text-color)] hover:bg-[var(--bg-color)] hover:text-[var(--primary-color)]"><i className="fas fa-file-word w-4 h-4 mr-2" /> DOCX</button>
-                        </div>
-                    )}
-                </div>
-            </div>
+    <div className="flex flex-col h-full">
+      <div className="flex flex-wrap items-start justify-between mb-4 gap-4">
+        <div className="flex-1">
+            <h2 className="text-xl font-bold text-gray-200">{t.transcription}</h2>
+            <p className="text-sm text-gray-400 truncate max-w-xs" title={transcription.fileName}>{transcription.fileName}</p>
+            <p className="text-xs text-purple-400 mt-1">{t.detectedLanguage}: <span className="font-semibold">{transcription.detectedLanguage}</span></p>
         </div>
-        
-        <div className="p-4 border-b border-[var(--border-color)] bg-[var(--secondary-bg)] flex gap-6">
-             <div className="flex-1">
-                 <div className="flex justify-between items-center mb-2">
-                     <h4 className="text-sm font-semibold text-[var(--text-color)]">{t.summary}</h4>
-                     <button 
-                        onClick={handleGenerateSummary} 
-                        disabled={isSummarizing || !!summary}
-                        className="text-xs bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full hover:bg-purple-200 disabled:opacity-50 transition-colors font-medium"
-                     >
-                        {isSummarizing ? t.summarizing : (summary ? 'Regenerate' : t.summarize)}
-                     </button>
-                 </div>
-                 <div className="text-xs text-[var(--text-secondary)] bg-[var(--bg-color)] p-3 rounded-lg min-h-[40px] max-h-[100px] overflow-y-auto border border-[var(--border-color)]">
-                     {isSummarizing ? <SkeletonLoader lines={2} /> : (summary || "Click summarize to generate AI summary.")}
-                 </div>
-             </div>
-             <div className="flex-1">
-                 <div className="flex justify-between items-center mb-2">
-                     <h4 className="text-sm font-semibold text-[var(--text-color)]">{t.sentimentAnalysis}</h4>
-                     <button 
-                        onClick={handleAnalyzeSentiment} 
-                        disabled={isAnalyzingSentiment || !!sentiment}
-                        className="text-xs bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full hover:bg-purple-200 disabled:opacity-50 transition-colors font-medium"
-                     >
-                        {isAnalyzingSentiment ? t.analyzingSentiment : (sentiment ? 'Regenerate' : t.analyze)}
-                     </button>
-                 </div>
-                 <div className="text-xs text-[var(--text-secondary)] bg-[var(--bg-color)] p-3 rounded-lg min-h-[40px] border border-[var(--border-color)]">
-                     {isAnalyzingSentiment ? <SkeletonLoader lines={1} /> : (sentiment || "Click analyze to get sentiment.")}
-                 </div>
-             </div>
+        <div className="flex items-center space-x-4 rtl:space-x-reverse">
+          <Switch checked={showTimestamps} onChange={setShowTimestamps} label={showTimestamps ? t.hideTimestamps : t.showTimestamps} />
+          <Switch checked={showSpeaker} onChange={setShowSpeaker} label={showSpeaker ? t.hideSpeaker : t.showSpeaker} />
         </div>
+      </div>
 
-        <div className="overflow-y-auto flex-grow p-4 space-y-4">
-            {filteredSegments.length > 0 ? filteredSegments.map((segment, index) => (
-                <div key={index} className="flex gap-4 group hover:bg-[var(--bg-color)] p-2 rounded-lg transition-colors">
-                    {showTimestamps && (
-                        <div className="text-xs text-[var(--text-secondary)] font-mono pt-1 w-20 flex-shrink-0 select-none opacity-80">
-                            {segment.startTime}
-                        </div>
-                    )}
-                    <div className="flex-grow">
-                        {showSpeaker && (
-                            <div className="text-xs font-bold text-[var(--primary-color)] mb-0.5 select-none">{segment.speaker}</div>
-                        )}
-                        {isEditing ? (
-                            <textarea 
-                                className="w-full bg-[var(--secondary-bg)] text-[var(--text-color)] text-sm p-2 rounded border border-[var(--border-color)] focus:outline-none focus:border-[var(--primary-color)] focus:ring-1 focus:ring-[var(--primary-color)]"
-                                value={segment.text}
-                                onChange={(e) => handleSegmentChange(index, 'text', e.target.value)}
-                                rows={Math.max(2, Math.ceil(segment.text.length / 80))}
-                            />
-                        ) : (
-                            <p className="text-[var(--text-color)] text-sm leading-relaxed whitespace-pre-wrap">{segment.text}</p>
-                        )}
-                    </div>
-                </div>
-            )) : (
-                <div className="text-center text-[var(--text-secondary)] py-10">
-                    No segments found matching your search.
-                </div>
+      <div ref={containerRef} className="flex-grow bg-gray-900/50 rounded-lg p-4 overflow-y-auto mb-4 min-h-[200px]">
+        <div className="text-gray-200 whitespace-pre-wrap leading-relaxed font-mono text-sm">
+          {isEditing ? (
+            editedSegments.map((segment, index) => (
+              <div key={index} className="mb-2 flex items-start gap-3">
+                {showTimestamps && <span className="text-purple-400 whitespace-nowrap pt-1">[{segment.startTime}]</span>}
+                {showSpeaker && <strong className="text-pink-400 whitespace-nowrap pt-1">{segment.speaker}:</strong>}
+                <textarea
+                  value={segment.text}
+                  onChange={(e) => handleSegmentChange(index, e.target.value)}
+                  className="w-full bg-gray-700/80 text-gray-200 border border-gray-600 rounded-md p-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-y"
+                  rows={Math.max(1, segment.text.split('\n').length)}
+                />
+              </div>
+            ))
+          ) : (
+            transcription.segments.map((segment, index) => (
+              <div key={index} className="mb-2 flex flex-row flex-wrap">
+                {showTimestamps && <span className="text-purple-400 me-3">[{segment.startTime} - {segment.endTime}]</span>}
+                <p className="flex-1 min-w-[200px]">
+                  {showSpeaker && <strong className="text-pink-400 me-2">{segment.speaker}:</strong>}
+                  {segment.text}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+      
+      <div className="text-end text-sm text-gray-400 mb-4 px-1">
+        {characterCount} characters
+      </div>
+
+      <div className="flex flex-wrap gap-2 justify-between">
+        <div className="flex flex-wrap gap-2">
+           <button onClick={handleCopy} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
+            {isCopied ? <CheckIcon className="w-5 h-5 me-2"/> : <CopyIcon className="w-5 h-5 me-2" />}
+            {isCopied ? t.copied : t.copy}
+          </button>
+          <div className="relative" ref={exportMenuRef}>
+            <button onClick={() => setShowExportMenu(!showExportMenu)} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
+              <DownloadIcon className="w-5 h-5 me-2" />
+              {t.export}
+            </button>
+            {showExportMenu && (
+              <div className="absolute bottom-full mb-2 w-48 bg-gray-700 border border-gray-600 rounded-lg shadow-xl py-1 z-10 animate-slide-in-up">
+                {exportOptions.map(({ format, icon: Icon, separator }) => (
+                  <React.Fragment key={format}>
+                    {separator && <div className="h-px bg-gray-600 my-1"></div>}
+                    <button onClick={() => handleExport(format as any)} className="flex items-center gap-3 w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600 rounded-md mx-1 w-[calc(100%-0.5rem)]">
+                      <Icon className="w-5 h-5 text-gray-400" /> {format.toUpperCase()}
+                    </button>
+                  </React.Fragment>
+                ))}
+              </div>
             )}
+          </div>
         </div>
+        <div className="flex flex-wrap gap-2">
+            {isEditing && (
+              <>
+                <button onClick={handleUndo} disabled={!canUndo} title={t.undo} className="flex items-center p-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><UndoIcon className="w-5 h-5"/></button>
+                <button onClick={handleRedo} disabled={!canRedo} title={t.redo} className="flex items-center p-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><RedoIcon className="w-5 h-5"/></button>
+                <div className="w-px bg-gray-600 mx-1"></div>
+                <button onClick={handleSaveChanges} className="flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200"><SaveIcon className="w-5 h-5 me-2"/> {t.saveChanges}</button>
+              </>
+            )}
+            <button onClick={handleEditToggle} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
+              <EditIcon className="w-5 h-5 me-2"/> {isEditing ? t.cancel : t.edit}
+            </button>
+        </div>
+      </div>
     </div>
   );
 };

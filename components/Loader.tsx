@@ -16,16 +16,4 @@ const Loader: React.FC<LoaderProps> = ({ t }) => {
   );
 };
 
-export const SkeletonLoader: React.FC<{ lines?: number; className?: string }> = ({ lines = 3, className = '' }) => (
-  <div className={`space-y-3 animate-pulse ${className}`}>
-    {Array.from({ length: lines }).map((_, i) => (
-      <div 
-        key={i} 
-        className="h-4 bg-gray-700 rounded" 
-        style={{ width: `${Math.floor(Math.random() * (100 - 70 + 1) + 70)}%` }}
-      ></div>
-    ))}
-  </div>
-);
-
 export default Loader;

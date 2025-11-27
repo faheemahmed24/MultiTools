@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { LanguageOption } from '../lib/languages';
+import { ChevronDownIcon } from './icons/ChevronDownIcon';
 
 interface LanguageDropdownProps {
   languages: LanguageOption[];
@@ -44,7 +45,7 @@ const LanguageDropdown: React.FC<LanguageDropdownProps> = ({ languages, selected
             <span className="text-xs text-gray-400">{title}</span>
             <span className="font-semibold">{selectedLang.name}</span>
         </div>
-        <i className={`fas fa-chevron-down w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDownIcon className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
