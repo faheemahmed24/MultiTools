@@ -117,6 +117,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
   const [isLoading, setIsLoading] = useState(false);
   const [batchProgress, setBatchProgress] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
@@ -159,6 +160,18 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
     }
   }, [activeIndex, isLoading, batchProgress]);
 
+  const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); }, []);
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); }, []);
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); }, []);
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        processFiles(Array.from(e.dataTransfer.files));
+    }
+  }, []);
+
   const handleAnalyze = useCallback(async () => {
     if (!activeImage) return;
     setIsLoading(true);
@@ -197,9 +210,15 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
               setBatchProgress(`${t.analyzing} (${i + 1}/${images.length})`);
               setActiveIndex(i); // Show the image being analyzed
               
-              const result = await analyzeImage(img.file);
               const header = `--- ${img.file.name} ---\n`;
-              const chunk = `${header}${result}\n\n`;
+              let chunk = '';
+              try {
+                  const result = await analyzeImage(img.file);
+                  chunk = `${header}${result}\n\n`;
+              } catch (e: any) {
+                  chunk = `${header}[Error: ${e.message || 'Failed to analyze'}]\n\n`;
+              }
+              
               combinedResult += chunk;
               
               // Update UI progressively
@@ -249,12 +268,30 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
 
 
   const processFiles = (files: File[]) => {
-      const newImages = files.map(file => ({
-          id: `${file.name}-${file.lastModified}-${Math.random()}`,
-          file,
-          preview: URL.createObjectURL(file)
-      }));
+      // Filter for valid image types
+      const validFiles = files.filter(file => {
+          const type = file.type;
+          const name = file.name.toLowerCase();
+          return type.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp|tiff|svg|ico|heic)$/i.test(name);
+      });
+
+      if (validFiles.length === 0) {
+          if (files.length > 0) alert('No supported image files found.');
+          return;
+      }
+
       setImages(prev => {
+          // Check for duplicates based on name and size to be reasonably unique without reading content
+          const existingKeys = new Set(prev.map(img => `${img.file.name}-${img.file.size}`));
+          
+          const uniqueNewFiles = validFiles.filter(file => !existingKeys.has(`${file.name}-${file.size}`));
+          
+          const newImages = uniqueNewFiles.map(file => ({
+            id: `${file.name}-${file.lastModified}-${Math.random()}`,
+            file,
+            preview: URL.createObjectURL(file)
+          }));
+
           const updated = [...prev, ...newImages];
           if (prev.length === 0 && newImages.length > 0) {
             setActiveIndex(0);
@@ -272,19 +309,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
   
   const handleFolderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-        const files = Array.from(e.target.files) as File[];
-        // Filter using MIME type AND extension for better reliability
-        const supportedFiles = files.filter((file: File) => {
-            const type = file.type;
-            const name = file.name.toLowerCase();
-            return type.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp|tiff|svg|ico|heic)$/i.test(name);
-        });
-        
-        if (supportedFiles.length > 0) {
-             processFiles(supportedFiles);
-        } else {
-            alert('No supported image files found in the selected folder.');
-        }
+        processFiles(Array.from(e.target.files));
     }
     if (e.target) e.target.value = '';
   };
@@ -397,7 +422,13 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
   };
 
   return (
-    <div className="bg-gray-800 rounded-2xl shadow-lg p-6 min-h-[60vh] lg:h-full flex flex-col">
+    <div 
+        className={`bg-gray-800 rounded-2xl shadow-lg p-6 min-h-[60vh] lg:h-full flex flex-col transition-colors duration-200 ${isDragging ? 'border-2 border-dashed border-purple-500 bg-gray-700/50' : ''}`}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+    >
        <input
           type="file"
           ref={fileInputRef}

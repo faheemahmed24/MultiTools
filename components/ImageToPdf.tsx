@@ -83,25 +83,36 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
 
   const processFiles = (files: File[]) => {
       resetBeforeNewUpload();
-      const newImages: ImageFile[] = files
-        .filter(file => {
+      const validImages = files.filter(file => {
              const type = file.type;
              const name = file.name.toLowerCase();
              return type.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp|tiff|svg|ico|heic)$/i.test(name);
-        })
-        .map(file => ({
-          id: `${file.name}-${file.lastModified}-${Math.random()}`,
-          file,
-          preview: URL.createObjectURL(file),
-          edits: { ...defaultEdits },
-        }));
+        });
 
-      if (images.length === 0 && newImages.length > 0) {
-        const firstFileName = newImages[0].file.name;
-        setOutputFilename(firstFileName.split('.').slice(0, -1).join('.') || 'converted');
+      if (validImages.length === 0 && files.length > 0) {
+          alert("No supported images found.");
+          return;
       }
+      
+      setImages(prev => {
+          // Prevent duplicates
+          const existingKeys = new Set(prev.map(img => `${img.file.name}-${img.file.size}`));
+          const uniqueNewFiles = validImages.filter(file => !existingKeys.has(`${file.name}-${file.size}`));
 
-      setImages(prev => [...prev, ...newImages]);
+          const newImages = uniqueNewFiles.map(file => ({
+            id: `${file.name}-${file.lastModified}-${Math.random()}`,
+            file,
+            preview: URL.createObjectURL(file),
+            edits: { ...defaultEdits },
+          }));
+
+          if (prev.length === 0 && newImages.length > 0) {
+            const firstFileName = newImages[0].file.name;
+            setOutputFilename(firstFileName.split('.').slice(0, -1).join('.') || 'converted');
+          }
+          
+          return [...prev, ...newImages];
+      });
   };
 
   const handleFileChange = (selectedFiles: FileList | null) => {
@@ -135,7 +146,9 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-    handleFileChange(e.dataTransfer.files);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        processFiles(Array.from(e.dataTransfer.files));
+    }
   }, []);
 
   const removeImage = (id: string) => {
@@ -358,13 +371,17 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
   );
 
   return (
-    <div className="bg-gray-800 rounded-2xl shadow-lg p-6 min-h-[60vh] lg:h-full flex flex-col">
+    <div className={`bg-gray-800 rounded-2xl shadow-lg p-6 min-h-[60vh] lg:h-full flex flex-col transition-colors duration-200 ${isDragging ? 'border-2 border-dashed border-purple-500 bg-gray-700/50' : ''}`}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+    >
       <input type="file" ref={fileInputRef} onChange={e => handleFileChange(e.target.files)} accept="image/*" multiple className="hidden" />
       <input type="file" ref={folderInputRef} onChange={handleFolderChange} {...({ webkitdirectory: "", directory: "" } as any)} multiple className="hidden" />
       
       {images.length === 0 ? (
-        <div className={`flex flex-col flex-grow items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 ${isDragging ? 'border-purple-500 bg-gray-700' : 'border-gray-600 hover:border-purple-500'}`}
-          onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}>
+        <div className="flex flex-col flex-grow items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 border-gray-600 hover:border-purple-500 min-h-[400px]">
           <UploadIcon className="w-12 h-12 text-gray-500 mb-4" />
           <div className="flex gap-4">
               <button onClick={() => fileInputRef.current?.click()} className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors duration-200">{t.uploadImages}</button>
