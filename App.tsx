@@ -48,59 +48,6 @@ const EmptyPanel: React.FC<{ message: string }> = ({ message }) => (
     </div>
 );
 
-const TranslationPanel: React.FC<{ text: string | null; t: TranslationSet }> = ({ text, t }) => {
-    const [targetLang, setTargetLang] = useState<LanguageOption>(targetLanguages[0]);
-    const [translatedText, setTranslatedText] = useState('');
-    const [isTranslating, setIsTranslating] = useState(false);
-    const [error, setError] = useState('');
-
-    useEffect(() => {
-        if (!text) {
-            setTranslatedText('');
-            setError('');
-            return;
-        }
-        const doTranslate = async () => {
-            setIsTranslating(true);
-            setError('');
-            try {
-                const result = await translateText(text, 'auto', targetLang.name);
-                setTranslatedText(result);
-            } catch (err) {
-                setError('Failed to translate.');
-                console.error(err);
-            } finally {
-                setIsTranslating(false);
-            }
-        };
-        doTranslate();
-    }, [text, targetLang.name]);
-
-    if (!text) {
-        return <EmptyPanel message="No text to translate." />;
-    }
-
-    return (
-        <div className="flex flex-col h-full">
-            <div className="px-1">
-                <LanguageDropdown
-                    languages={targetLanguages}
-                    selectedLang={targetLang}
-                    onSelectLang={setTargetLang}
-                    title={t.targetLanguage}
-                    searchPlaceholder="Search language"
-                />
-            </div>
-            <div className="mt-4 p-4 bg-gray-900/50 rounded-lg flex-grow overflow-y-auto min-h-[150px]">
-                {isTranslating && <SkeletonLoader lines={3} />}
-                {error && <p className="text-red-400">{error}</p>}
-                {!isTranslating && !error && <p className="text-gray-200 whitespace-pre-wrap">{translatedText}</p>}
-            </div>
-        </div>
-    );
-};
-
-
 function App() {
   const [uiLanguage, setUiLanguage] = useLocalStorage<Language>('uiLanguage', 'en');
   const [currentUser, setCurrentUser] = useLocalStorage<User | null>('currentUser', null);
@@ -122,6 +69,9 @@ function App() {
   const [imagePdfHistory, setImagePdfHistory] = useUserLocalStorage<ImagePdfHistoryItem[]>(currentUser?.id, 'imagePdfHistory', []);
   const [pdfWordHistory, setPdfWordHistory] = useUserLocalStorage<PdfWordHistoryItem[]>(currentUser?.id, 'pdfWordHistory', []);
   const [wordPdfHistory, setWordPdfHistory] = useUserLocalStorage<WordPdfHistoryItem[]>(currentUser?.id, 'wordPdfHistory', []);
+  
+  // History tab state
+  const [historyTab, setHistoryTab] = useState('transcriptions');
 
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
   const [isSidebarOpen, setIsSidebarOpen] = useLocalStorage<boolean>('isSidebarOpen', window.innerWidth >= 768);
@@ -269,8 +219,7 @@ function App() {
   const renderActiveTool = () => {
     const fullText = currentTranscription?.segments.map(s => s.text).join('\n') || null;
 
-    const mainContentClass = "flex flex-col";
-    const panelGridClass = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 min-h-0";
+    const mainContentClass = "flex flex-col h-full";
     
     const renderTranscriptionHistoryItem = (item: Transcription, isActive: boolean) => (
         <div className="flex-grow overflow-hidden">
@@ -343,6 +292,19 @@ function App() {
 
     switch (activeTool) {
       case 'AI Transcriber':
+        if (currentTranscription) {
+             return (
+                 <div className="h-full animate-fadeIn">
+                     <TranscriptionView 
+                        transcription={currentTranscription} 
+                        onSave={() => {}} 
+                        onUpdate={handleUpdateTranscription} 
+                        onClose={() => setCurrentTranscriptionId(null)}
+                        t={t} 
+                    />
+                 </div>
+             )
+        }
         return (
             <div className={`${mainContentClass} animate-fadeIn`}>
                 {processingFiles.length > 0 ? (
@@ -388,129 +350,119 @@ function App() {
                 ) : (
                     <FileUpload onFilesSelect={handleFilesSelect} t={t} isProcessing={false} />
                 )}
-                <div className={panelGridClass}>
-                    <Panel title={t.transcription} defaultOpen={true} className="md:col-span-2 lg:col-span-1">
-                        {currentTranscription ? <TranscriptionView transcription={currentTranscription} onSave={() => {}} onUpdate={handleUpdateTranscription} t={t} /> : <EmptyPanel message="No transcription selected or available." />}
-                    </Panel>
-                    <Panel title={t.aiTranslatorTitle} defaultOpen={true}>
-                        <TranslationPanel text={fullText} t={t} />
-                    </Panel>
-                    <Panel title={t.history} defaultOpen={true}>
-                        <HistoryPanel items={transcriptions} onSelect={handleSelectTranscription} onDelete={handleDeleteTranscription} activeId={currentTranscription?.id} t={t} renderItem={renderTranscriptionHistoryItem} />
-                    </Panel>
-                </div>
             </div>
         );
       case 'AI Translator':
         return (
             <div className={`${mainContentClass} animate-fadeIn`}>
                 <AITranslator t={t} onTranslationComplete={(data) => handleAddToHistory('AI Translator', data)} />
-                 <div className={panelGridClass}>
-                    <Panel title={t.translationResult} defaultOpen={true} className="md:col-span-2 lg:col-span-1">
-                        <EmptyPanel message="Result is shown in the main tool above." />
-                    </Panel>
-                    <Panel title="Further Translation" defaultOpen={true}>
-                        <EmptyPanel message="Not applicable for this tool." />
-                    </Panel>
-                    <Panel title={t.history} defaultOpen={true}>
-                        <HistoryPanel items={translationHistory} onSelect={() => {}} onDelete={(id) => setTranslationHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderTranslationHistoryItem} />
-                    </Panel>
-                </div>
             </div>
         );
       case 'Grammar Corrector':
         return (
             <div className={`${mainContentClass} animate-fadeIn`}>
                 <GrammarCorrector t={t} onCorrectionComplete={(data) => handleAddToHistory('Grammar Corrector', data)} />
-                 <div className={panelGridClass}>
-                    <Panel title={t.grammarResult} defaultOpen={true} className="md:col-span-2 lg:col-span-1">
-                        <EmptyPanel message="Result is shown in the main tool above." />
-                    </Panel>
-                    <Panel title={t.history} defaultOpen={true} className="md:col-span-2 lg:col-span-2">
-                        <HistoryPanel items={grammarHistory} onSelect={() => {}} onDelete={(id) => setGrammarHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderGrammarHistoryItem} />
-                    </Panel>
-                </div>
             </div>
         );
        case 'Image Converter & OCR':
         return (
             <div className={`${mainContentClass} animate-fadeIn`}>
                 <ImageConverterOcr t={t} onAnalysisComplete={(data) => handleAddToHistory('Image Converter & OCR', data)}/>
-                <div className="mt-8 flex flex-col gap-6">
-                    <Panel title={t.imageAnalysisResult} defaultOpen={true}>
-                         <EmptyPanel message="Analysis results will appear in the main tool above once an image is processed." />
-                    </Panel>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Panel title={t.translationResult} defaultOpen={true}>
-                             <EmptyPanel message="Translation will appear in the main tool above." />
-                        </Panel>
-                        <Panel title={t.history} defaultOpen={true}>
-                            <HistoryPanel items={analysisHistory} onSelect={() => {}} onDelete={(id) => setAnalysisHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderAnalysisHistoryItem} />
-                        </Panel>
-                    </div>
-                </div>
             </div>
         );
       case 'PDF to Image':
         return (
              <div className={`${mainContentClass} animate-fadeIn`}>
                 <PdfToImage t={t} onConversionComplete={(data) => handleAddToHistory('PDF to Image', data)} />
-                <div className={panelGridClass}>
-                    <Panel title="Result" defaultOpen={true} className="md:col-span-2 lg:col-span-1"><EmptyPanel message="Converted images will appear in the tool above." /></Panel>
-                    <Panel title="Translation" defaultOpen={true}><EmptyPanel message="Not applicable for this tool." /></Panel>
-                    <Panel title={t.history} defaultOpen={true}>
-                        <HistoryPanel items={pdfImageHistory} onSelect={() => {}} onDelete={(id) => setPdfImageHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderPdfImageHistoryItem} />
-                    </Panel>
-                </div>
             </div>
         );
       case 'Image to PDF':
         return (
              <div className={`${mainContentClass} animate-fadeIn`}>
                 <ImageToPdf t={t} onConversionComplete={(data) => handleAddToHistory('Image to PDF', data)}/>
-                 <div className={panelGridClass}>
-                    <Panel title="Result" defaultOpen={true} className="md:col-span-2 lg:col-span-1"><EmptyPanel message="The PDF download link will appear in the tool above." /></Panel>
-                    <Panel title="Translation" defaultOpen={true}><EmptyPanel message="Not applicable for this tool." /></Panel>
-                    <Panel title={t.history} defaultOpen={true}>
-                        <HistoryPanel items={imagePdfHistory} onSelect={() => {}} onDelete={(id) => setImagePdfHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderImagePdfHistoryItem} />
-                    </Panel>
-                </div>
             </div>
         );
       case 'PDF to Word':
          return (
              <div className={`${mainContentClass} animate-fadeIn`}>
                 <PdfToWord t={t} onConversionComplete={(data) => handleAddToHistory('PDF to Word', data)} />
-                 <div className={panelGridClass}>
-                    <Panel title="Result" defaultOpen={true} className="md:col-span-2 lg:col-span-1"><EmptyPanel message="The document download link will appear in the tool above." /></Panel>
-                    <Panel title="Translation" defaultOpen={true}><EmptyPanel message="Translation feature coming soon." /></Panel>
-                    <Panel title={t.history} defaultOpen={true}>
-                        <HistoryPanel items={pdfWordHistory} onSelect={() => {}} onDelete={(id) => setPdfWordHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderFileHistoryItem} />
-                    </Panel>
-                </div>
             </div>
         );
       case 'Word to PDF':
         return (
              <div className={`${mainContentClass} animate-fadeIn`}>
                 <WordToPdf t={t} onConversionComplete={(data) => handleAddToHistory('Word to PDF', data)} />
-                 <div className={panelGridClass}>
-                    <Panel title="Result" defaultOpen={true} className="md:col-span-2 lg:col-span-1"><EmptyPanel message="The PDF download link will appear in the tool above." /></Panel>
-                    <Panel title="Translation" defaultOpen={true}><EmptyPanel message="Not applicable for this tool." /></Panel>
-                    <Panel title={t.history} defaultOpen={true}>
-                        <HistoryPanel items={wordPdfHistory} onSelect={() => {}} onDelete={(id) => setWordPdfHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderFileHistoryItem} />
-                    </Panel>
-                </div>
             </div>
         );
       case 'Export to Sheets':
         return (
              <div className={`${mainContentClass} animate-fadeIn`}>
                 <ExportToSheets t={t} />
-                 <div className={panelGridClass}>
-                    <Panel title="Result" defaultOpen={true} className="md:col-span-2 lg:col-span-3">
-                        <EmptyPanel message="The CSV file will be downloaded directly to your device." />
-                    </Panel>
+            </div>
+        );
+      case 'History':
+        const tabs = [
+            { id: 'transcriptions', label: t.transcription },
+            { id: 'translations', label: t.aiTranslatorTitle },
+            { id: 'grammar', label: t.grammarCorrector },
+            { id: 'analysis', label: t.imageConverterOcrTitle },
+            { id: 'pdfimage', label: t.pdfToImage },
+            { id: 'imagepdf', label: t.imageToPdf },
+            { id: 'pdfword', label: t.pdfToWord },
+            { id: 'wordpdf', label: t.wordToPdf },
+        ];
+        
+        return (
+             <div className={`${mainContentClass} animate-fadeIn h-full overflow-hidden`}>
+                <div className="mb-6 overflow-x-auto pb-2">
+                    <div className="flex space-x-2">
+                    {tabs.map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setHistoryTab(tab.id)}
+                            className={`px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors ${
+                                historyTab === tab.id 
+                                ? 'bg-purple-600 text-white' 
+                                : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-200'
+                            }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                    </div>
+                </div>
+                <div className="flex-grow bg-gray-800 rounded-2xl p-4 overflow-hidden shadow-lg border border-gray-700/50">
+                     {historyTab === 'transcriptions' && (
+                        <HistoryPanel 
+                            items={transcriptions} 
+                            onSelect={handleSelectTranscription} 
+                            onDelete={handleDeleteTranscription} 
+                            activeId={currentTranscription?.id} 
+                            t={t} 
+                            renderItem={renderTranscriptionHistoryItem} 
+                        />
+                     )}
+                     {historyTab === 'translations' && (
+                        <HistoryPanel items={translationHistory} onSelect={() => {}} onDelete={(id) => setTranslationHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderTranslationHistoryItem} />
+                     )}
+                     {historyTab === 'grammar' && (
+                        <HistoryPanel items={grammarHistory} onSelect={() => {}} onDelete={(id) => setGrammarHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderGrammarHistoryItem} />
+                     )}
+                     {historyTab === 'analysis' && (
+                        <HistoryPanel items={analysisHistory} onSelect={() => {}} onDelete={(id) => setAnalysisHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderAnalysisHistoryItem} />
+                     )}
+                     {historyTab === 'pdfimage' && (
+                        <HistoryPanel items={pdfImageHistory} onSelect={() => {}} onDelete={(id) => setPdfImageHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderPdfImageHistoryItem} />
+                     )}
+                     {historyTab === 'imagepdf' && (
+                        <HistoryPanel items={imagePdfHistory} onSelect={() => {}} onDelete={(id) => setImagePdfHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderImagePdfHistoryItem} />
+                     )}
+                     {historyTab === 'pdfword' && (
+                        <HistoryPanel items={pdfWordHistory} onSelect={() => {}} onDelete={(id) => setPdfWordHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderFileHistoryItem} />
+                     )}
+                     {historyTab === 'wordpdf' && (
+                        <HistoryPanel items={wordPdfHistory} onSelect={() => {}} onDelete={(id) => setWordPdfHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={renderFileHistoryItem} />
+                     )}
                 </div>
             </div>
         );

@@ -8,6 +8,7 @@ import { SaveIcon } from './icons/SaveIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
 import { UndoIcon } from './icons/UndoIcon';
 import { RedoIcon } from './icons/RedoIcon';
+import { ArrowLeftIcon } from './icons/ArrowLeftIcon';
 import { useDebounce } from '../hooks/useDebounce';
 import { jsPDF } from 'jspdf';
 import * as docx from 'docx';
@@ -24,6 +25,7 @@ interface TranscriptionViewProps {
   transcription: Transcription;
   onSave: () => void;
   onUpdate: (id: string, updatedSegments: TranscriptionSegment[]) => void;
+  onClose: () => void;
   t: TranslationSet;
 }
 
@@ -38,7 +40,7 @@ const Switch: React.FC<{ checked: boolean; onChange: (checked: boolean) => void;
     </label>
 );
 
-const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, onSave, onUpdate, t }) => {
+const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, onSave, onUpdate, onClose, t }) => {
   const [showTimestamps, setShowTimestamps] = useState(true);
   const [showSpeaker, setShowSpeaker] = useState(true);
   const [isCopied, setIsCopied] = useState(false);
@@ -365,12 +367,17 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   ];
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl shadow-lg p-6">
       <div className="flex flex-wrap items-start justify-between mb-4 gap-4">
-        <div className="flex-1">
-            <h2 className="text-xl font-bold text-gray-200">{t.transcription}</h2>
-            <p className="text-sm text-gray-400 truncate max-w-xs" title={transcription.fileName}>{transcription.fileName}</p>
-            <p className="text-xs text-purple-400 mt-1">{t.detectedLanguage}: <span className="font-semibold">{transcription.detectedLanguage}</span></p>
+        <div className="flex items-center gap-3 flex-1">
+             <button onClick={onClose} className="p-2 hover:bg-gray-700 rounded-full text-gray-400 hover:text-white transition-colors" title="Back to Upload">
+                <ArrowLeftIcon className="w-6 h-6" />
+            </button>
+            <div className="min-w-0">
+                <h2 className="text-xl font-bold text-gray-200">{t.transcription}</h2>
+                <p className="text-sm text-gray-400 truncate max-w-xs" title={transcription.fileName}>{transcription.fileName}</p>
+                <p className="text-xs text-purple-400 mt-1">{t.detectedLanguage}: <span className="font-semibold">{transcription.detectedLanguage}</span></p>
+            </div>
         </div>
         <div className="flex items-center space-x-4 rtl:space-x-reverse">
           <Switch checked={showTimestamps} onChange={setShowTimestamps} label={showTimestamps ? t.hideTimestamps : t.showTimestamps} />

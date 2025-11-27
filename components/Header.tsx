@@ -12,6 +12,7 @@ import { PdfToWordIcon } from './icons/PdfToWordIcon';
 import { WordToPdfIcon } from './icons/WordToPdfIcon';
 import { SheetIcon } from './icons/SheetIcon';
 import { GrammarIcon } from './icons/GrammarIcon';
+import { HistoryIcon } from './icons/HistoryIcon';
 
 interface HeaderProps {
   uiLanguage: Language;
@@ -52,7 +53,8 @@ const Header: React.FC<HeaderProps> = ({
     { key: 'Image to PDF', label: t.imageToPdf, icon: ImageToPdfIcon },
     { key: 'PDF to Word', label: t.pdfToWord, icon: PdfToWordIcon },
     { key: 'Word to PDF', label: t.wordToPdf, icon: WordToPdfIcon },
-    { key: 'Export to Sheets', label: t.exportToSheets, icon: SheetIcon }
+    { key: 'Export to Sheets', label: t.exportToSheets, icon: SheetIcon },
+    { key: 'History', label: t.history, icon: HistoryIcon }
   ];
 
   useEffect(() => {
