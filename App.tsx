@@ -1,10 +1,9 @@
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useUserLocalStorage } from './hooks/useUserLocalStorage';
 import { getTranslations } from './lib/i18n';
 import type { Language, TranslationSet, User, Transcription, TranscriptionSegment, TranslationHistoryItem, AnalysisHistoryItem, PdfImageHistoryItem, ImagePdfHistoryItem, PdfWordHistoryItem, WordPdfHistoryItem, GrammarHistoryItem } from './types';
-import { transcribeAudio, translateText } from './services/geminiService';
+import { transcribeAudio } from './services/geminiService';
 
 import Header from './components/Header';
 import FileUpload from './components/FileUpload';
@@ -20,13 +19,10 @@ import PdfToWord from './components/PdfToWord';
 import WordToPdf from './components/WordToPdf';
 import ExportToSheets from './components/ExportToSheets';
 import AuthModal from './components/AuthModal';
-import { LanguageOption, targetLanguages } from './lib/languages';
-import LanguageDropdown from './components/LanguageDropdown';
 import { ClockIcon } from './components/icons/ClockIcon';
 import { CheckCircleIcon } from './components/icons/CheckCircleIcon';
 import { XCircleIcon } from './components/icons/XCircleIcon';
 import { UserIcon } from './components/icons/UserIcon';
-import { SkeletonLoader } from './components/Loader';
 
 
 const HamburgerIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -34,6 +30,7 @@ const HamburgerIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
       <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
     </svg>
 );
+
 interface ProcessingFile {
   id: string;
   file: File;
@@ -210,8 +207,6 @@ function App() {
   };
 
   const renderActiveTool = () => {
-    const fullText = currentTranscription?.segments.map(s => s.text).join('\n') || null;
-
     const mainContentClass = "flex flex-col h-full";
     
     const renderTranscriptionHistoryItem = (item: Transcription, isActive: boolean) => (
