@@ -1,28 +1,28 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { useLocalStorage } from './hooks/useLocalStorage';
-import { useUserLocalStorage } from './hooks/useUserLocalStorage';
-import { getTranslations } from './lib/i18n';
-import type { Language, TranslationSet, User, Transcription, TranscriptionSegment, TranslationHistoryItem, AnalysisHistoryItem, PdfImageHistoryItem, ImagePdfHistoryItem, PdfWordHistoryItem, WordPdfHistoryItem, GrammarHistoryItem } from './types';
-import { transcribeAudio } from './services/geminiService';
+import { useLocalStorage } from './hooks/useLocalStorage.ts';
+import { useUserLocalStorage } from './hooks/useUserLocalStorage.ts';
+import { getTranslations } from './lib/i18n.ts';
+import type { Language, User, Transcription, TranscriptionSegment, TranslationHistoryItem, AnalysisHistoryItem, PdfImageHistoryItem, ImagePdfHistoryItem, PdfWordHistoryItem, WordPdfHistoryItem, GrammarHistoryItem } from './types.ts';
+import { transcribeAudio } from './services/geminiService.ts';
 
-import Header from './components/Header';
-import FileUpload from './components/FileUpload';
-import TranscriptionView from './components/TranscriptionView';
-import HistoryPanel from './components/HistoryPanel';
-import ComingSoon from './components/ComingSoon';
-import AITranslator from './components/AITranslator';
-import GrammarCorrector from './components/GrammarCorrector';
-import ImageConverterOcr from './components/ImageAnalyzer';
-import PdfToImage from './components/PdfToImage';
-import ImageToPdf from './components/ImageToPdf';
-import PdfToWord from './components/PdfToWord';
-import WordToPdf from './components/WordToPdf';
-import ExportToSheets from './components/ExportToSheets';
-import AuthModal from './components/AuthModal';
-import { ClockIcon } from './components/icons/ClockIcon';
-import { CheckCircleIcon } from './components/icons/CheckCircleIcon';
-import { XCircleIcon } from './components/icons/XCircleIcon';
-import { UserIcon } from './components/icons/UserIcon';
+import Header from './components/Header.tsx';
+import FileUpload from './components/FileUpload.tsx';
+import TranscriptionView from './components/TranscriptionView.tsx';
+import HistoryPanel from './components/HistoryPanel.tsx';
+import ComingSoon from './components/ComingSoon.tsx';
+import AITranslator from './components/AITranslator.tsx';
+import GrammarCorrector from './components/GrammarCorrector.tsx';
+import ImageConverterOcr from './components/ImageAnalyzer.tsx';
+import PdfToImage from './components/PdfToImage.tsx';
+import ImageToPdf from './components/ImageToPdf.tsx';
+import PdfToWord from './components/PdfToWord.tsx';
+import WordToPdf from './components/WordToPdf.tsx';
+import ExportToSheets from './components/ExportToSheets.tsx';
+import AuthModal from './components/AuthModal.tsx';
+import { ClockIcon } from './components/icons/ClockIcon.tsx';
+import { CheckCircleIcon } from './components/icons/CheckCircleIcon.tsx';
+import { XCircleIcon } from './components/icons/XCircleIcon.tsx';
+import { UserIcon } from './components/icons/UserIcon.tsx';
 
 
 const HamburgerIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
