@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef } from 'react';
 import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';
@@ -73,6 +74,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
         if (!filename.includes('.')) {
              if (contentType.includes('audio/mpeg')) filename += '.mp3';
              else if (contentType.includes('audio/wav')) filename += '.wav';
+             else if (contentType.includes('audio/ogg')) filename += '.ogg';
              else if (contentType.includes('video/mp4')) filename += '.mp4';
         }
 
@@ -104,7 +106,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
               type="file"
               ref={fileInputRef}
               onChange={handleFileChange}
-              accept="audio/*,video/*"
+              accept="audio/*,video/*,.ogg,.mp3,.wav,.m4a,.aac,.flac,.mp4,.mov,.webm"
               className="hidden"
               multiple
               disabled={isProcessing}

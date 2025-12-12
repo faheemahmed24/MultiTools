@@ -207,7 +207,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
       const PADDING = 25;
       const LINE_HEIGHT = 28;
       const FONT_SIZE = 16;
-      const FONT = `${FONT_SIZE}px monospace`;
+      const FONT = `${FONT_SIZE}px sans-serif`;
       const CANVAS_WIDTH = 1200;
 
       const BG_COLOR = '#1f2937';
@@ -260,13 +260,12 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
           textLines.forEach((lineText, index) => {
               totalHeight += LINE_HEIGHT;
               if (index === 0) {
-                  // If RTL, we might want to render prefix at the end? 
-                  // For now, keeping structure simple: prefix then text, but drawn RTL if needed.
                   lines.push({ y: totalHeight, parts: [...prefixParts, { text: lineText, color: TEXT_COLOR }] });
               } else {
                   lines.push({ y: totalHeight, parts: [{ text: '    ' + lineText, color: TEXT_COLOR }] });
               }
           });
+          totalHeight += 8; // Extra spacing between segments
       });
       
       totalHeight += PADDING;
@@ -327,7 +326,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
             if (showTimestamps) parts.push(new docx.TextRun({ text: `[${seg.startTime} - ${seg.endTime}] `, color: "A78BFA" }));
             if (showSpeaker) parts.push(new docx.TextRun({ text: `${seg.speaker}: `, bold: true, color: "F472B6"}));
             parts.push(new docx.TextRun(seg.text));
-            return new docx.Paragraph({ children: parts });
+            return new docx.Paragraph({ children: parts, spacing: { after: 120 } });
         });
         const doc = new docx.Document({ sections: [{ children: paragraphs }] });
         const blob = await docx.Packer.toBlob(doc);
@@ -386,26 +385,32 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
       </div>
 
       <div ref={containerRef} className="flex-grow bg-gray-900/50 rounded-lg p-4 overflow-y-auto mb-4 min-h-[200px]">
-        <div className="text-gray-200 whitespace-pre-wrap leading-relaxed font-mono text-sm">
+        <div className="text-gray-200 whitespace-pre-wrap leading-relaxed text-base">
           {isEditing ? (
             editedSegments.map((segment, index) => (
-              <div key={index} className="mb-2 flex items-start gap-3">
-                {showTimestamps && <span className="text-purple-400 whitespace-nowrap pt-1">[{segment.startTime}]</span>}
-                {showSpeaker && <strong className="text-pink-400 whitespace-nowrap pt-1">{segment.speaker}:</strong>}
+              <div key={index} className="mb-4 flex items-start gap-3 p-2 bg-gray-800/30 rounded-lg border border-gray-700/30 hover:border-purple-500/30 transition-colors">
+                <div className="flex flex-col gap-1 min-w-[140px] text-xs pt-1">
+                    {showTimestamps && <span className="text-purple-400 font-mono">[{segment.startTime}]</span>}
+                    {showSpeaker && <strong className="text-pink-400">{segment.speaker}</strong>}
+                </div>
                 <textarea
                   value={segment.text}
                   onChange={(e) => handleSegmentChange(index, e.target.value)}
-                  className="w-full bg-gray-700/80 text-gray-200 border border-gray-600 rounded-md p-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-y"
-                  rows={Math.max(1, segment.text.split('\n').length)}
+                  className="flex-grow bg-gray-700/80 text-gray-200 border border-gray-600 rounded-md p-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-y"
+                  rows={Math.max(2, segment.text.split('\n').length)}
                 />
               </div>
             ))
           ) : (
             transcription.segments.map((segment, index) => (
-              <div key={index} className="mb-2 flex flex-row flex-wrap">
-                {showTimestamps && <span className="text-purple-400 me-3">[{segment.startTime} - {segment.endTime}]</span>}
-                <p className="flex-1 min-w-[200px]">
-                  {showSpeaker && <strong className="text-pink-400 me-2">{segment.speaker}:</strong>}
+              <div key={index} className="mb-4 flex flex-col sm:flex-row hover:bg-gray-800/30 p-2 rounded-lg transition-colors">
+                 {(showTimestamps || showSpeaker) && (
+                    <div className="flex sm:flex-col flex-row gap-2 sm:gap-1 text-sm min-w-[140px] text-gray-400 select-none mb-1 sm:mb-0 me-4">
+                        {showTimestamps && <span className="text-purple-400 font-mono text-xs whitespace-nowrap">[{segment.startTime} - {segment.endTime}]</span>}
+                        {showSpeaker && <strong className="text-pink-400 text-xs truncate" title={segment.speaker}>{segment.speaker}</strong>}
+                    </div>
+                 )}
+                <p className="flex-1 text-gray-200 leading-relaxed">
                   {segment.text}
                 </p>
               </div>

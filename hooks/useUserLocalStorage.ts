@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 
 // A modified version of useLocalStorage that scopes keys to a specific user ID.
 export function useUserLocalStorage<T>(
@@ -11,6 +12,13 @@ export function useUserLocalStorage<T>(
   const effectiveUserId = userId || 'guest';
   const scopedKey = `user-${effectiveUserId}-${key}`;
 
+  // Use ref to keep track of initialValue without triggering effects when it changes (if it's an object/array)
+  const initialValueRef = useRef(initialValue);
+
+  useEffect(() => {
+      initialValueRef.current = initialValue;
+  });
+
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
       const item = window.localStorage.getItem(scopedKey);
@@ -22,15 +30,17 @@ export function useUserLocalStorage<T>(
   });
 
   // Effect to update the state if the user changes (e.g., login/logout)
+  // We remove initialValue from dependency array to prevent resetting state on every render 
+  // when initialValue is an unstable reference (like [] or {}).
   useEffect(() => {
     try {
         const item = window.localStorage.getItem(scopedKey);
-        setStoredValue(item ? JSON.parse(item) : initialValue);
+        setStoredValue(item ? JSON.parse(item) : initialValueRef.current);
     } catch (error) {
         console.error(error);
-        setStoredValue(initialValue);
+        setStoredValue(initialValueRef.current);
     }
-  }, [scopedKey, initialValue]);
+  }, [scopedKey]);
 
 
   // Effect to save the value to local storage whenever it changes
@@ -38,7 +48,7 @@ export function useUserLocalStorage<T>(
     try {
       const valueToStore =
         typeof storedValue === 'function'
-          ? storedValue(storedValue)
+          ? (storedValue as any)(storedValue)
           : storedValue;
       window.localStorage.setItem(scopedKey, JSON.stringify(valueToStore));
     } catch (error) {

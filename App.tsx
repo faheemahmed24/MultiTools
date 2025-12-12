@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useUserLocalStorage } from './hooks/useUserLocalStorage';
@@ -23,6 +24,7 @@ import { ClockIcon } from './components/icons/ClockIcon';
 import { CheckCircleIcon } from './components/icons/CheckCircleIcon';
 import { XCircleIcon } from './components/icons/XCircleIcon';
 import { UserIcon } from './components/icons/UserIcon';
+import { ArrowLeftIcon } from './components/icons/ArrowLeftIcon'; // Assuming available or reuse icon
 
 const HamburgerIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -35,6 +37,7 @@ interface ProcessingFile {
   file: File;
   status: 'pending' | 'processing' | 'done' | 'error';
   error?: string;
+  transcriptionId?: string;
 }
 
 function App() {
@@ -74,10 +77,10 @@ function App() {
   
   useEffect(() => {
     if (!currentUser) {
-      setCurrentTranscriptionId(null);
+      // Don't reset currentTranscriptionId here to avoid UX flickering on reload if guest
       setProcessingFiles([]);
     }
-  }, [currentUser, setCurrentTranscriptionId]);
+  }, [currentUser]);
 
    useEffect(() => {
     const handleResize = () => {
@@ -103,7 +106,9 @@ function App() {
   
   const handleFilesSelect = (files: File[]) => {
     const newFilesToProcess: ProcessingFile[] = files.map(file => {
-      const isSupported = file.type.startsWith('audio/') || file.type.startsWith('video/');
+      const isSupported = file.type.startsWith('audio/') || file.type.startsWith('video/') || 
+                          file.name.endsWith('.ogg') || file.name.endsWith('.mp3') || 
+                          file.name.endsWith('.wav') || file.name.endsWith('.m4a');
       return {
         id: `${file.name}-${file.lastModified}-${Math.random()}`,
         file,
@@ -113,6 +118,7 @@ function App() {
     });
     setProcessingFiles(current => [...newFilesToProcess]);
     setActiveTool('AI Transcriber');
+    setCurrentTranscriptionId(null); // Clear current view to show queue
   };
 
   useEffect(() => {
@@ -132,9 +138,14 @@ function App() {
           id: new Date().toISOString() + Math.random(),
           date: new Date().toLocaleDateString(uiLanguage, { year: 'numeric', month: 'long', day: 'numeric' }),
         };
+        
+        // Update transcriptions first
         setTranscriptions(prev => [newTranscription, ...prev]);
+        
+        // Then update queue status and set current ID
+        setProcessingFiles(prev => prev.map(f => f.id === fileToProcess.id ? { ...f, status: 'done', transcriptionId: newTranscription.id } : f));
         setCurrentTranscriptionId(newTranscription.id);
-        setProcessingFiles(prev => prev.map(f => f.id === fileToProcess.id ? { ...f, status: 'done' } : f));
+        
       } catch (err: any) {
         setProcessingFiles(prev => prev.map(f => (
           f.id === fileToProcess.id 
@@ -286,7 +297,9 @@ function App() {
                         transcription={currentTranscription} 
                         onSave={() => {}} 
                         onUpdate={handleUpdateTranscription} 
-                        onClose={() => setCurrentTranscriptionId(null)}
+                        onClose={() => {
+                            setCurrentTranscriptionId(null);
+                        }}
                         t={t} 
                     />
                  </div>
@@ -322,6 +335,14 @@ function App() {
                                                 <div className="flex items-center justify-between gap-4 mb-2">
                                                     <p className="font-semibold truncate text-gray-200 flex-1" title={f.file.name}>{f.file.name}</p>
                                                     <StatusIndicator status={f.status} error={f.error} />
+                                                    {f.status === 'done' && f.transcriptionId && (
+                                                        <button 
+                                                            onClick={() => setCurrentTranscriptionId(f.transcriptionId!)}
+                                                            className="text-sm bg-purple-600 hover:bg-purple-500 px-3 py-1 rounded transition-colors text-white"
+                                                        >
+                                                            View
+                                                        </button>
+                                                    )}
                                                 </div>
                                                 <div className="w-full bg-gray-600 rounded-full h-2 overflow-hidden">
                                                     <div className={`h-2 rounded-full transition-all duration-500 ${classes} ${width}`}></div>
@@ -330,7 +351,12 @@ function App() {
                                         )
                                     })}
                                 </ul>
-                                {allDone && <button onClick={() => setProcessingFiles([])} className="w-full mt-6 px-4 py-2 bg-purple-600 font-semibold rounded-lg hover:bg-purple-700 transition-colors">Clear Completed</button>}
+                                {allDone && (
+                                    <div className="flex gap-4 mt-6">
+                                        <button onClick={() => setProcessingFiles([])} className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 font-semibold rounded-lg transition-colors text-white">Upload New Files</button>
+                                        <button onClick={() => setProcessingFiles([])} className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 font-semibold rounded-lg transition-colors text-white">Clear Completed</button>
+                                    </div>
+                                )}
                             </div>
                         );
                     })()
