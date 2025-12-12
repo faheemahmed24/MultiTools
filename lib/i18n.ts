@@ -143,6 +143,9 @@ const translations: Record<Language, TranslationSet> = {
     noDataToPreview: 'Paste data above to see a preview.',
     language: 'Language',
     outputFilename: 'Output Filename',
+    pasteLinkPlaceholder: 'Paste file URL (e.g., .mp3, .mp4)...',
+    addLink: 'Add',
+    linkError: 'Could not load file. It may be blocked by CORS or invalid.',
   },
   hi: {
     transcription: 'प्रतिलेखन',
@@ -286,6 +289,9 @@ const translations: Record<Language, TranslationSet> = {
     noDataToPreview: 'पूर्वावलोकन देखने के लिए ऊपर डेटा पेस्ट करें।',
     language: 'भाषा',
     outputFilename: 'आउटपुट फ़ाइलनाम',
+    pasteLinkPlaceholder: 'फ़ाइल URL पेस्ट करें (जैसे, .mp3, .mp4)...',
+    addLink: 'जोड़ें',
+    linkError: 'फ़ाइल लोड नहीं हो सकी। यह CORS या अमान्य URL के कारण हो सकता है।',
   },
   ur: {
     transcription: 'نقل حرفی',
@@ -429,6 +435,9 @@ const translations: Record<Language, TranslationSet> = {
     noDataToPreview: 'پیش نظارہ دیکھنے کے لیے اوپر ڈیٹا پیسٹ کریں۔',
     language: 'زبان',
     outputFilename: 'آؤٹ پٹ فائل کا نام',
+    pasteLinkPlaceholder: 'فائل کا یو آر ایل پیسٹ کریں (جیسے .mp3, .mp4)...',
+    addLink: 'شامل کریں',
+    linkError: 'فائل لوڈ نہیں ہوسکی۔ یہ CORS یا غلط URL کی وجہ سے ہوسکتا ہے۔',
   },
   ar: {
     transcription: 'النسخ الصوتي',
@@ -572,6 +581,9 @@ const translations: Record<Language, TranslationSet> = {
     noDataToPreview: 'الصق البيانات أعلاه لرؤية معاينة.',
     language: 'اللغة',
     outputFilename: 'اسم ملف الإخراج',
+    pasteLinkPlaceholder: 'الصق رابط الملف (مثل .mp3, .mp4)...',
+    addLink: 'إضافة',
+    linkError: 'تعذر تحميل الملف. قد يكون محظورًا بواسطة CORS أو الرابط غير صالح.',
   }
 };
 
