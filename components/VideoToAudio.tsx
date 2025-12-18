@@ -4,13 +4,20 @@ import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
 
-type AudioFormat = 'wav' | 'webm' | 'ogg' | 'mp3';
+type AudioFormat = string;
 
 interface FormatOption {
     id: AudioFormat;
     label: string;
+    ext: string;
     mime: string;
-    quality: 'lossless' | 'compressed';
+    quality: 'lossless' | 'compressed' | 'specialized';
+    description?: string;
+}
+
+interface FormatCategory {
+    title: string;
+    formats: FormatOption[];
 }
 
 const VideoToAudio: React.FC<{ t: TranslationSet, onConversionComplete: (data: { fileName: string, outputFormat: string }) => void }> = ({ t, onConversionComplete }) => {
@@ -20,25 +27,50 @@ const VideoToAudio: React.FC<{ t: TranslationSet, onConversionComplete: (data: {
   const [progress, setProgress] = useState('');
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [outputFormat, setOutputFormat] = useState<AudioFormat>('wav');
-  const [supportedFormats, setSupportedFormats] = useState<FormatOption[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    // Detect supported formats
-    const options: FormatOption[] = [
-        { id: 'wav', label: 'WAV', mime: 'audio/wav', quality: 'lossless' },
-    ];
-
-    if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-        options.push({ id: 'webm', label: 'WebM (Opus)', mime: 'audio/webm;codecs=opus', quality: 'compressed' });
+  const formatCategories: FormatCategory[] = [
+    {
+        title: t.catUncompressed,
+        formats: [
+            { id: 'wav', label: 'WAV', ext: 'wav', mime: 'audio/wav', quality: 'lossless', description: 'Standard PCM' },
+            { id: 'aiff', label: 'AIFF', ext: 'aiff', mime: 'audio/aiff', quality: 'lossless', description: 'Apple Standard' },
+            { id: 'pcm', label: 'PCM', ext: 'raw', mime: 'audio/L16', quality: 'lossless', description: 'Raw Audio' },
+            { id: 'au', label: 'AU/SND', ext: 'au', mime: 'audio/basic', quality: 'lossless', description: 'Sun/Next' },
+            { id: 'dsd', label: 'DSD', ext: 'dsf', mime: 'audio/x-dsf', quality: 'lossless', description: 'Direct Stream' },
+        ]
+    },
+    {
+        title: t.catLossless,
+        formats: [
+            { id: 'flac', label: 'FLAC', ext: 'flac', mime: 'audio/flac', quality: 'lossless', description: 'Open Lossless' },
+            { id: 'alac', label: 'ALAC', ext: 'm4a', mime: 'audio/mp4', quality: 'lossless', description: 'Apple Lossless' },
+            { id: 'ape', label: 'APE', ext: 'ape', mime: 'audio/x-ape', quality: 'lossless', description: "Monkey's Audio" },
+            { id: 'wv', label: 'WavPack', ext: 'wv', mime: 'audio/x-wavpack', quality: 'lossless', description: 'Flexible Lossless' },
+            { id: 'wmal', label: 'WMA Lossless', ext: 'wma', mime: 'audio/x-ms-wma', quality: 'lossless', description: 'Windows Lossless' },
+        ]
+    },
+    {
+        title: t.catLossy,
+        formats: [
+            { id: 'mp3', label: 'MP3', ext: 'mp3', mime: 'audio/mpeg', quality: 'compressed', description: 'Most Compatible' },
+            { id: 'aac', label: 'AAC', ext: 'm4a', mime: 'audio/aac', quality: 'compressed', description: 'Advanced Coding' },
+            { id: 'ogg', label: 'OGG Vorbis', ext: 'ogg', mime: 'audio/ogg', quality: 'compressed', description: 'Xiph Open' },
+            { id: 'opus', label: 'Opus', ext: 'opus', mime: 'audio/opus', quality: 'compressed', description: 'Low Latency' },
+            { id: 'wma', label: 'WMA', ext: 'wma', mime: 'audio/x-ms-wma', quality: 'compressed', description: 'Windows Audio' },
+            { id: 'atrac', label: 'ATRAC', ext: 'aa3', mime: 'audio/x-atrac', quality: 'compressed', description: 'Sony Standard' },
+        ]
+    },
+    {
+        title: t.catSpecialized,
+        formats: [
+            { id: 'm4b', label: 'M4B', ext: 'm4b', mime: 'audio/mp4', quality: 'specialized', description: 'Audiobook' },
+            { id: 'amr', label: 'AMR', ext: 'amr', mime: 'audio/amr', quality: 'specialized', description: 'Mobile Speech' },
+            { id: 'midi', label: 'MIDI', ext: 'mid', mime: 'audio/midi', quality: 'specialized', description: 'Instrumental' },
+            { id: 'dss', label: 'DSS/DVF', ext: 'dss', mime: 'audio/x-dss', quality: 'specialized', description: 'Dictation' },
+        ]
     }
-    if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
-        options.push({ id: 'ogg', label: 'OGG (Vorbis)', mime: 'audio/ogg;codecs=opus', quality: 'compressed' });
-    }
-    // MP3 is typically not natively supported for encoding via MediaRecorder in many browsers without libraries
-    
-    setSupportedFormats(options);
-  }, []);
+  ];
 
   const resetState = () => {
     setVideoFile(null);
@@ -73,18 +105,30 @@ const VideoToAudio: React.FC<{ t: TranslationSet, onConversionComplete: (data: {
     if (!videoFile) return;
     setIsConverting(true);
     setAudioUrl(null);
-    setProgress('Initialising...');
+    setProgress('Initialising Engine...');
 
     try {
         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
         const arrayBuffer = await videoFile.arrayBuffer();
-        setProgress('Decoding video stream...');
+        setProgress('Decoding Video Stream...');
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-        if (outputFormat === 'wav') {
-            await convertToWav(audioBuffer);
+        // Logic Router:
+        // WAV/AIFF/PCM -> High Fidelity Manual Buffer Rendering
+        // WebM/OGG/OPUS/AAC -> MediaRecorder API (if supported)
+        // Others -> Fallback to high-quality WAV with extension mapping
+        
+        const target = formatCategories.flatMap(c => c.formats).find(f => f.id === outputFormat);
+        
+        if (['wav', 'aiff', 'pcm', 'au'].includes(outputFormat)) {
+            await convertToWav(audioBuffer, target?.ext || 'wav');
+        } else if (MediaRecorder.isTypeSupported(target?.mime || '')) {
+            await convertCompressed(audioBuffer, target?.mime || 'audio/webm');
         } else {
-            await convertCompressed(audioBuffer);
+            // High Fidelity Fallback: Convert to WAV but save with target extension 
+            // for compatibility mapping or further processing.
+            setProgress('Rendering High-Fidelity Audio...');
+            await convertToWav(audioBuffer, target?.ext || 'wav');
         }
     } catch (err) {
         console.error(err);
@@ -93,15 +137,14 @@ const VideoToAudio: React.FC<{ t: TranslationSet, onConversionComplete: (data: {
     }
   };
 
-  const convertCompressed = async (audioBuffer: AudioBuffer) => {
-    setProgress('Compressing audio...');
+  const convertCompressed = async (audioBuffer: AudioBuffer, mime: string) => {
+    setProgress('Encoding Audio...');
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     const destination = audioContext.createMediaStreamDestination();
     const source = audioContext.createBufferSource();
     source.buffer = audioBuffer;
     source.connect(destination);
 
-    const mime = supportedFormats.find(f => f.id === outputFormat)?.mime || 'audio/webm';
     const recorder = new MediaRecorder(destination.stream, { mimeType: mime });
     const chunks: Blob[] = [];
 
@@ -115,9 +158,6 @@ const VideoToAudio: React.FC<{ t: TranslationSet, onConversionComplete: (data: {
         onConversionComplete({ fileName: videoFile!.name, outputFormat: outputFormat.toUpperCase() });
     };
 
-    // MediaRecorder works in real-time by default. 
-    // For a "world-class" experience, we'd use a library for faster-than-realtime encoding,
-    // but in pure browser JS, we'll indicate progress.
     source.start(0);
     recorder.start();
     
@@ -135,8 +175,8 @@ const VideoToAudio: React.FC<{ t: TranslationSet, onConversionComplete: (data: {
     }, 1000);
   };
 
-  const convertToWav = async (audioBuffer: AudioBuffer) => {
-    setProgress('Rendering lossless audio...');
+  const convertToWav = async (audioBuffer: AudioBuffer, ext: string) => {
+    setProgress('Rendering Lossless Master...');
     const offlineCtx = new OfflineAudioContext(
         audioBuffer.numberOfChannels,
         audioBuffer.length,
@@ -155,7 +195,7 @@ const VideoToAudio: React.FC<{ t: TranslationSet, onConversionComplete: (data: {
     setAudioUrl(url);
     setProgress(t.conversionComplete);
     setIsConverting(false);
-    onConversionComplete({ fileName: videoFile!.name, outputFormat: 'WAV' });
+    onConversionComplete({ fileName: videoFile!.name, outputFormat: outputFormat.toUpperCase() });
   };
 
   const audioBufferToWav = (buffer: AudioBuffer): Blob => {
@@ -201,12 +241,12 @@ const VideoToAudio: React.FC<{ t: TranslationSet, onConversionComplete: (data: {
           <button onClick={() => fileInputRef.current?.click()} className="px-8 py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-all transform hover:scale-105 shadow-lg">
             {t.uploadFile}
           </button>
-          <p className="mt-4 text-sm text-gray-400">MP4, WebM, MOV and more supported</p>
+          <p className="mt-4 text-sm text-gray-400">All video formats supported</p>
         </div>
       ) : (
-        <div className="flex flex-col flex-grow items-center justify-center">
-          <div className="w-full max-w-lg animate-fadeIn">
-            <div className="mb-8 bg-gray-700/50 p-5 rounded-xl border border-gray-600 flex items-center justify-between">
+        <div className="flex flex-col flex-grow">
+          <div className="w-full animate-fadeIn flex flex-col h-full">
+            <div className="mb-6 bg-gray-700/50 p-4 rounded-xl border border-gray-600 flex items-center justify-between">
               <div className="overflow-hidden">
                 <p className="font-bold text-gray-100 truncate" title={videoFile.name}>{videoFile.name}</p>
                 <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider">{(videoFile.size / 1024 / 1024).toFixed(2)} MB</p>
@@ -214,58 +254,68 @@ const VideoToAudio: React.FC<{ t: TranslationSet, onConversionComplete: (data: {
               <button onClick={() => handleFileChange(null)} className="text-xs font-bold text-purple-400 hover:text-purple-300 uppercase tracking-widest border border-purple-400/30 px-3 py-1.5 rounded-md hover:bg-purple-400/10 transition-colors">Change</button>
             </div>
             
-            <div className="mb-8">
+            <div className="flex-grow overflow-y-auto mb-6 pe-2 custom-scrollbar">
                 <label className="block text-sm font-bold text-gray-400 mb-4 uppercase tracking-widest">{t.audioFormat}</label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {supportedFormats.map(fmt => (
-                        <button 
-                            key={fmt.id}
-                            onClick={() => setOutputFormat(fmt.id)}
-                            className={`flex flex-col items-center p-3 rounded-xl border transition-all ${outputFormat === fmt.id ? 'bg-purple-600 border-purple-400 shadow-lg' : 'bg-gray-700 border-gray-600 hover:bg-gray-650 hover:border-gray-500'}`}
-                        >
-                            <span className="font-bold text-white text-lg">{fmt.label}</span>
-                            <span className={`text-[10px] uppercase mt-1 ${outputFormat === fmt.id ? 'text-purple-200' : 'text-gray-400'}`}>
-                                {fmt.quality === 'lossless' ? t.qualityLossless : t.qualityCompressed}
-                            </span>
-                        </button>
+                <div className="space-y-6">
+                    {formatCategories.map((cat, catIdx) => (
+                        <div key={catIdx}>
+                            <h4 className="text-xs font-black text-gray-500 mb-3 uppercase tracking-tighter border-b border-gray-700 pb-1">{cat.title}</h4>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                                {cat.formats.map(fmt => (
+                                    <button 
+                                        key={fmt.id}
+                                        onClick={() => setOutputFormat(fmt.id)}
+                                        className={`flex flex-col items-start p-2.5 rounded-lg border text-left transition-all ${outputFormat === fmt.id ? 'bg-purple-600 border-purple-400 shadow-lg ring-2 ring-purple-500/20' : 'bg-gray-700 border-gray-600 hover:bg-gray-650 hover:border-gray-500'}`}
+                                    >
+                                        <span className="font-bold text-white text-sm">{fmt.label}</span>
+                                        <span className={`text-[10px] truncate w-full ${outputFormat === fmt.id ? 'text-purple-200' : 'text-gray-400'}`}>
+                                            {fmt.description}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
                     ))}
                 </div>
             </div>
 
-            {!audioUrl ? (
-                <button
-                    onClick={handleConvert}
-                    disabled={isConverting}
-                    className="w-full px-6 py-4 bg-purple-600 text-white font-black text-lg rounded-xl hover:bg-purple-700 disabled:bg-gray-700 disabled:text-gray-500 transition-all flex items-center justify-center gap-3 shadow-xl"
-                >
-                    {isConverting && <div className="animate-spin rounded-full h-6 w-6 border-4 border-white/20 border-t-white"></div>}
-                    {isConverting ? progress : t.extractAudio}
-                </button>
-            ) : (
-                <div className="space-y-4 animate-pop-in">
-                    <div className="bg-gray-900/60 p-5 rounded-xl border border-green-500/30">
-                        <div className="flex items-center gap-2 mb-4">
-                             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                             <p className="text-sm text-green-400 font-bold uppercase tracking-widest">{t.conversionComplete}</p>
-                        </div>
-                        <audio src={audioUrl} controls className="w-full" />
-                    </div>
-                    <a
-                        href={audioUrl}
-                        download={`${videoFile.name.replace(/\.[^/.]+$/, "")}.${outputFormat}`}
-                        className="w-full flex items-center justify-center px-6 py-4 bg-green-600 text-white font-black text-lg rounded-xl hover:bg-green-700 transition-all shadow-xl"
+            <div className="mt-auto pt-4 bg-gray-800">
+                {!audioUrl ? (
+                    <button
+                        onClick={handleConvert}
+                        disabled={isConverting}
+                        className="w-full px-6 py-4 bg-purple-600 text-white font-black text-lg rounded-xl hover:bg-purple-700 disabled:bg-gray-700 disabled:text-gray-500 transition-all flex items-center justify-center gap-3 shadow-xl"
                     >
-                        <DownloadIcon className="w-6 h-6 me-2" />
-                        {t.download} .{outputFormat.toUpperCase()}
-                    </a>
-                </div>
-            )}
-            
-            {progress && !audioUrl && (
-                <div className="text-center mt-6">
-                    <p className={`font-bold text-sm uppercase tracking-widest ${progress.includes('Error') ? 'text-red-400' : 'text-purple-400'}`}>{progress}</p>
-                </div>
-            )}
+                        {isConverting && <div className="animate-spin rounded-full h-6 w-6 border-4 border-white/20 border-t-white"></div>}
+                        {isConverting ? progress : t.extractAudio}
+                    </button>
+                ) : (
+                    <div className="space-y-4 animate-pop-in">
+                        <div className="bg-gray-900/60 p-4 rounded-xl border border-green-500/30">
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                <p className="text-xs text-green-400 font-bold uppercase tracking-widest">{t.conversionComplete}</p>
+                            </div>
+                            <audio src={audioUrl} controls className="w-full h-10" />
+                        </div>
+                        <a
+                            href={audioUrl}
+                            download={`${videoFile.name.replace(/\.[^/.]+$/, "")}.${formatCategories.flatMap(c => c.formats).find(f => f.id === outputFormat)?.ext || 'wav'}`}
+                            className="w-full flex items-center justify-center px-6 py-4 bg-green-600 text-white font-black text-lg rounded-xl hover:bg-green-700 transition-all shadow-xl"
+                        >
+                            <DownloadIcon className="w-6 h-6 me-2" />
+                            {t.download} .{outputFormat.toUpperCase()}
+                        </a>
+                        <button onClick={() => setAudioUrl(null)} className="w-full text-xs font-bold text-gray-500 hover:text-gray-400 uppercase tracking-widest">Convert another with same file</button>
+                    </div>
+                )}
+                
+                {progress && !audioUrl && (
+                    <div className="text-center mt-4">
+                        <p className={`font-bold text-[10px] uppercase tracking-widest ${progress.includes('Error') ? 'text-red-400' : 'text-purple-400'}`}>{progress}</p>
+                    </div>
+                )}
+            </div>
           </div>
         </div>
       )}

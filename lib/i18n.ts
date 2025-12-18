@@ -162,6 +162,10 @@ const translations: Record<Language, TranslationSet> = {
     qualityLossless: 'Lossless (Original Quality)',
     qualityCompressed: 'Compressed (Smaller Size)',
     unsupportedFormat: 'Unsupported format on this browser',
+    catUncompressed: 'Uncompressed',
+    catLossless: 'Lossless Compressed',
+    catLossy: 'Lossy Compressed',
+    catSpecialized: 'Specialized & Voice',
   },
   hi: {
     transcription: 'प्रतिलेखन',
@@ -323,6 +327,10 @@ const translations: Record<Language, TranslationSet> = {
     qualityLossless: 'हानिरहित (मूल गुणवत्ता)',
     qualityCompressed: 'संकुचित (छोटा आकार)',
     unsupportedFormat: 'इस ब्राउज़र पर असमर्थित प्रारूप',
+    catUncompressed: 'असम्पीडित (Uncompressed)',
+    catLossless: 'हानिरहित सम्पीड़ित',
+    catLossy: 'सहानि सम्पीड़ित',
+    catSpecialized: 'विशेषज्ञ और आवाज',
   },
   ur: {
     transcription: 'نقل حرفی',
@@ -390,7 +398,6 @@ const translations: Record<Language, TranslationSet> = {
     invalidPageRange: 'غلط یا خالی صفحہ کی حد۔ براہ کرم اپنا ان پٹ چیک کریں۔',
     uploadImages: 'تصاویر اپ لوڈ کریں',
     dropImages: 'یا یہاں تصاویر ڈراپ کریں',
-    // Fix: Key reorderAudioHint duplicated at line 388, should be reorderHint
     reorderHint: 'تصویروں کو دوبارہ ترتیب دینے کے لیے گھسیٹیں اور چھوڑیں۔',
     pageSize: 'صفحہ کا سائز',
     orientation: 'سمت',
@@ -458,7 +465,7 @@ const translations: Record<Language, TranslationSet> = {
     originalText: 'اصل متن',
     noTextToCorrect: 'گرامر درست کرنے کے لیے اوپر متن درج کریں۔',
     tools: 'ٹولز',
-    pasteDataPlaceholder: 'اپنا ڈیٹا یہاں پیسٹ کریں (جیسے، ایکسل، شیٹس، یا سی ایس وی فائل سے)...',
+    pasteDataPlaceholder: 'اپنا ڈیٹا یہاں پیسٹ کریں (جیسے، ایکسل, شیٹس، یا سی ایس وی فائل سے)...',
     delimiter: 'ڈیلیمیٹر',
     comma: 'کوما (,)',
     tab: 'ٹیب',
@@ -485,6 +492,10 @@ const translations: Record<Language, TranslationSet> = {
     qualityLossless: 'بے نقصان (اصل معیار)',
     qualityCompressed: 'کمپریسڈ (چھوٹا سائز)',
     unsupportedFormat: 'اس براؤزر پر غیر تعاون یافتہ فارمیٹ',
+    catUncompressed: 'غیر کمپریسڈ',
+    catLossless: 'بے نقصان کمپریسڈ',
+    catLossy: 'نقصان دہ کمپریسڈ',
+    catSpecialized: 'خصوصی اور آواز',
   },
   ar: {
     transcription: 'النسخ الصوتي',
@@ -646,6 +657,10 @@ const translations: Record<Language, TranslationSet> = {
     qualityLossless: 'بدون فقدان (الجودة الأصلية)',
     qualityCompressed: 'مضغوط (حجم أصغر)',
     unsupportedFormat: 'تنسيق غير مدعوم في هذا المتصفح',
+    catUncompressed: 'غير مضغوط',
+    catLossless: 'مضغوط بدون فقدان',
+    catLossy: 'مضغوط مع فقدان',
+    catSpecialized: 'متخصص وصوتي',
   }
 };
 
