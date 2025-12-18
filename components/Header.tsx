@@ -10,6 +10,8 @@ import { PdfToImageIcon } from './icons/PdfToImageIcon';
 import { ImageToPdfIcon } from './icons/ImageToPdfIcon';
 import { PdfToWordIcon } from './icons/PdfToWordIcon';
 import { WordToPdfIcon } from './icons/WordToPdfIcon';
+import { VideoToAudioIcon } from './icons/VideoToAudioIcon';
+import { AudioMergerIcon } from './icons/AudioMergerIcon';
 import { SheetIcon } from './icons/SheetIcon';
 import { GrammarIcon } from './icons/GrammarIcon';
 import { HistoryIcon } from './icons/HistoryIcon';
@@ -53,6 +55,8 @@ const Header: React.FC<HeaderProps> = ({
     { key: 'Image to PDF', label: t.imageToPdf, icon: ImageToPdfIcon },
     { key: 'PDF to Word', label: t.pdfToWord, icon: PdfToWordIcon },
     { key: 'Word to PDF', label: t.wordToPdf, icon: WordToPdfIcon },
+    { key: 'Video to Audio', label: t.videoToAudio, icon: VideoToAudioIcon },
+    { key: 'Audio Merger', label: t.audioMerger, icon: AudioMergerIcon },
     { key: 'Export to Sheets', label: t.exportToSheets, icon: SheetIcon },
     { key: 'History', label: t.history, icon: HistoryIcon }
   ];

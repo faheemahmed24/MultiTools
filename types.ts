@@ -1,4 +1,5 @@
 
+// Supported UI languages for the application
 export type Language = 'en' | 'hi' | 'ur' | 'ar';
 
 export interface TranslationSet {
@@ -23,7 +24,7 @@ export interface Transcription {
 export interface User {
   id: string;
   email: string;
-  password?: string; // Stored locally, only for 'password' authMethod
+  password?: string;
   authMethod?: 'password' | 'google';
 }
 
@@ -83,4 +84,18 @@ export interface WordPdfHistoryItem {
     id: string;
     date: string;
     fileName: string;
+}
+
+export interface VideoAudioHistoryItem {
+    id: string;
+    date: string;
+    fileName: string;
+    outputFormat: string;
+}
+
+export interface AudioMergerHistoryItem {
+    id: string;
+    date: string;
+    fileName: string;
+    fileCount: number;
 }
