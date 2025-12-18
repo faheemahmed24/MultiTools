@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useUserLocalStorage } from './hooks/useUserLocalStorage';
@@ -201,7 +200,7 @@ function App() {
                     (() => {
                         const allDone = processingFiles.every(f => f.status === 'done' || f.status === 'error');
                         return (
-                            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl shadow-lg p-6">
+                            <section className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl shadow-lg p-6">
                                 <h2 className="text-xl font-bold mb-4 text-gray-200">Transcription Queue</h2>
                                 <ul className="space-y-4">
                                     {processingFiles.map(f => (
@@ -237,7 +236,7 @@ function App() {
                                         <button onClick={() => setProcessingFiles([])} className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 font-semibold rounded-lg transition-colors text-white">Clear Queue</button>
                                     </div>
                                 )}
-                            </div>
+                            </section>
                         );
                     })()
                 ) : (
@@ -320,16 +319,66 @@ function App() {
 
   return (
     <div className="bg-gray-900 text-white h-screen font-sans flex overflow-hidden">
-      <Header uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} activeTool={activeTool} setActiveTool={setActiveTool} t={t} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} currentUser={currentUser} onLoginClick={() => setIsAuthModalOpen(true)} onLogoutClick={handleLogout} />
-      {isSidebarOpen && !isDesktop && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/60 z-30 md:hidden" aria-hidden="true" />}
+      {/* SEMANTIC HEADER & NAV */}
+      <header className="contents">
+        <Header uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} activeTool={activeTool} setActiveTool={setActiveTool} t={t} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} currentUser={currentUser} onLoginClick={() => setIsAuthModalOpen(true)} onLogoutClick={handleLogout} />
+        {isSidebarOpen && !isDesktop && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/60 z-30 md:hidden" aria-hidden="true" />}
+      </header>
+
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="md:hidden flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700 h-16">
+        {/* MOBILE NAV BAR */}
+        <nav className="md:hidden flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700 h-16">
           <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ms-2 rounded-lg text-gray-400 hover:text-white" aria-label="Open menu"><HamburgerIcon className="w-6 h-6" /></button>
-          <h1 className="text-xl font-bold"><span className="text-purple-400">Multi</span><span className="text-pink-500">Tools</span></h1>
+          <div className="text-xl font-bold"><a href="/"><span className="text-purple-400">Multi</span><span className="text-pink-500">Tools</span></a></div>
           {currentUser ? <div className="p-1 bg-gray-700 rounded-full"><UserIcon className="w-6 h-6 text-purple-400"/></div> : <button onClick={() => setIsAuthModalOpen(true)} className="p-1"><UserIcon className="w-6 h-6 text-gray-400" /></button>}
-        </div>
-        <main className="flex-grow p-4 sm:p-6 md:p-8 overflow-y-auto">{renderActiveTool()}</main>
+        </nav>
+
+        {/* MAIN CONTENT AREA */}
+        <main id="main-content" className="flex-grow p-4 sm:p-6 md:p-8 overflow-y-auto">
+          {/* SEO SECTION (INTEGRATED) */}
+          {!currentTranscription && activeTool === 'AI Transcriber' && (
+             <section className="mb-8 animate-fadeIn">
+                <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 mb-4">Welcome to MultiTools</h1>
+                <div className="bg-gray-800/40 border border-gray-700/50 rounded-2xl p-6 flex flex-col md:flex-row gap-6 items-center">
+                    <div className="flex-shrink-0">
+                        <img 
+                            src="https://images.unsplash.com/photo-1589254065878-42c9da997008?q=80&w=400&h=266&auto=format&fit=crop" 
+                            alt="Professional AI Audio Transcription Tool" 
+                            width="400" 
+                            height="266" 
+                            className="rounded-xl shadow-2xl border border-gray-600"
+                            loading="lazy" 
+                        />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-100 mb-2">Professional AI Transcription Services</h2>
+                        <p className="text-gray-400 leading-relaxed mb-4">
+                            Harness the power of Gemini 3.5 to convert your media into accurate text instantly. 
+                            Our system automatically detects language nuances and provides speaker diarization for clear, professional results.
+                        </p>
+                        <a href="#uploader" className="inline-flex items-center px-6 py-2 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-all transform hover:scale-105">
+                            Start Transcribing Now
+                        </a>
+                    </div>
+                </div>
+             </section>
+          )}
+
+          <div id="tool-view" className="h-full">
+            {renderActiveTool()}
+          </div>
+        </main>
+
+        {/* SEMANTIC FOOTER */}
+        <footer className="bg-gray-800/30 border-t border-gray-700/30 p-4 text-center">
+            <p className="text-sm text-gray-500">
+                &copy; {new Date().getFullYear()} MultiTools AI. All rights reserved. 
+                <span className="mx-2">|</span>
+                <a href="/contact" className="hover:text-purple-400 transition-colors">Contact Us Today</a>
+            </p>
+        </footer>
       </div>
+
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onLoginSuccess={handleLoginSuccess} t={t} />
     </div>
   );
