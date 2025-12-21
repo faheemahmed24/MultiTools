@@ -73,7 +73,9 @@ function App() {
 
   useEffect(() => {
     document.documentElement.lang = uiLanguage;
-    document.documentElement.dir = uiLanguage === 'ar' || uiLanguage === 'ur' ? 'rtl' : 'ltr';
+    const isRtl = uiLanguage === 'ar' || uiLanguage === 'ur';
+    document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
+    document.body.classList.toggle('rtl', isRtl);
   }, [uiLanguage]);
   
   useEffect(() => {

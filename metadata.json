@@ -1,5 +1,15 @@
 {
   "name": "MultiTools",
-  "description": "MultiTools — a comprehensive media processing and productivity platform: AI transcription, translation, OCR, PDF and image conversion, audio/video utilities, TTS, grammar correction, and export tools. Local-first history and multilingual UI.",
+  "short_description": "Local-first AI media toolkit — transcription, OCR, PDF, TTS, and more.",
+  "description": "MultiTools is a privacy-first, browser-based media and productivity suite that integrates Google Gemini for transcription, OCR, image analysis, and multi-personality TTS. Built with React + TypeScript and Tailwind, it stores files locally and scopes user data per account. Targeted at journalists, students, and professionals who need powerful, offline-first media tooling without subscription lock-ins.",
+  "features": [
+    "AI Transcription with speaker diarization and exports (SRT, DOCX, PDF, JSON)",
+    "Batch image OCR with translation and pacing engine",
+    "PDF/document conversion and image editor",
+    "Audio/video extraction, conversion and merging",
+    "Multi-personality TTS and web reader",
+    "Grammar correction with visual diff"
+  ],
+  "privacy": "No cloud storage by default; data stored locally and scoped per-user. No analytics or tracking.",
   "requestFramePermissions": []
 }

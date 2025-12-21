@@ -68,10 +68,17 @@ const Header: React.FC<HeaderProps> = ({
     const updateIndicator = () => {
       const activeToolElement = toolsContainerRef.current?.querySelector(`[data-tool-key="${activeTool}"]`) as HTMLElement;
       if (activeToolElement) {
-        setIndicatorStyle({
+        const isRtl = document?.body?.classList?.contains('rtl');
+        const style: any = {
           top: `${activeToolElement.offsetTop}px`,
           height: `${activeToolElement.offsetHeight}px`,
-        });
+        };
+        if (isRtl) {
+          style.right = '0px';
+        } else {
+          style.left = '0px';
+        }
+        setIndicatorStyle(style);
       }
     };
     
@@ -85,7 +92,7 @@ const Header: React.FC<HeaderProps> = ({
   }, [activeTool, t, isSidebarOpen]);
 
   const sidebarClasses = [
-    'bg-gray-800/50 backdrop-blur-sm border-r border-gray-700/50',
+    'glass-card bg-gray-800/40 border-r border-gray-700/50',
     'flex flex-col p-4',
     'duration-300 ease-in-out',
     'fixed inset-y-0 left-0 z-40 w-64 transition-transform',
@@ -116,7 +123,7 @@ const Header: React.FC<HeaderProps> = ({
       
       <nav className="relative flex-grow overflow-y-auto -me-2 pe-2 mt-8 md:mt-0">
         <ul ref={toolsContainerRef} className="flex flex-col space-y-2">
-            <div className="w-1 bg-purple-500 rounded-full absolute start-0 transition-all duration-300 ease-in-out" style={indicatorStyle}></div>
+        <div className="w-1 rounded-full absolute transition-all duration-300 ease-in-out bg-gradient-to-b from-accent-violet to-accent-pink" style={indicatorStyle}></div>
             {tools.map((tool) => {
             const Icon = tool.icon;
             return (

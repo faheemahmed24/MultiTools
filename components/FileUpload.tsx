@@ -86,7 +86,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
   };
 
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl shadow-lg p-6 max-w-4xl mx-auto">
+    <div className="glass-card max-w-4xl mx-auto p-6 shadow-lg">
       <div className="mb-6">
           <label className="block text-sm font-bold text-gray-400 mb-2 flex items-center gap-2">
               <GlobeIcon className="w-4 h-4" />
@@ -108,7 +108,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
       </div>
 
       <div
-        className={`relative flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-xl transition-all duration-300 ${isProcessing ? 'border-gray-600' : (isDragging ? 'border-purple-500 bg-purple-500/10' : 'border-gray-700 hover:border-purple-500')}`}
+        className={`relative flex flex-col items-center justify-center p-12 dropzone-dashed rounded-xl transition-all duration-300 ${isProcessing ? 'border-gray-600' : (isDragging ? 'dragover' : 'hover:border-purple-500')}`}
         onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}
       >
         <div className="p-4 bg-gray-700/50 rounded-full mb-4 border border-gray-600 group-hover:scale-110 transition-transform">
@@ -126,7 +126,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={isProcessing}
-          className="px-8 py-3.5 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-all transform hover:scale-105 shadow-lg shadow-purple-900/20"
+          className="px-8 py-3.5 btn-primary font-bold rounded-lg hover:brightness-105 transition-all transform hover:scale-105 shadow-lg shadow-purple-900/20"
         >
           {isProcessing ? t.transcribing : t.uploadFile}
         </button>
