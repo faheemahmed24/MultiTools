@@ -2,11 +2,9 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { Transcription } from '../types';
 
 // Initialize the Google GenAI client with the API key from environment variables.
-const apiKey = process.env.API_KEY as string;
-if (!apiKey) {
-  throw new Error("GEMINI_API_KEY is not set. Please configure it in your hosting environment.");
-}
-const ai = new GoogleGenAI({ apiKey });
+// Do NOT throw during module import to allow the app to load without the key.
+const apiKey = process.env.API_KEY as string | undefined;
+const ai: GoogleGenAI | null = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 const MODELS = {
     // Primary model for complex tasks like transcription with speaker diarization.
@@ -30,6 +28,7 @@ async function generateContentWithRetry(
   retries = 3,
   delay = 2000
 ): Promise<any> {
+  if (!ai) throw new Error('GEMINI_API_KEY is not set. AI features are unavailable.');
   try {
     return await ai.models.generateContent({ model, ...params });
   } catch (error: any) {
@@ -91,6 +90,7 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
     required: ["language", "segments"]
   };
 
+  if (!ai) throw new Error('GEMINI_API_KEY is not set. Transcription is unavailable.');
   const response = await ai.models.generateContent({
     model: MODELS.primary,
     contents: { 
@@ -117,50 +117,54 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
  * Translates text between source and target languages using Pro model for nuances.
  */
 export const translateText = async (text: string, sourceLang: string, targetLang: string): Promise<string> => {
-    const response = await ai.models.generateContent({
-        model: MODELS.primary,
-        contents: text,
-        config: { systemInstruction: `Translate from ${sourceLang} to ${targetLang}. Only return the translation.` },
-    });
-    return response.text?.trim() || "";
+  if (!ai) throw new Error('GEMINI_API_KEY is not set. Translation is unavailable.');
+  const response = await ai.models.generateContent({
+    model: MODELS.primary,
+    contents: text,
+    config: { systemInstruction: `Translate from ${sourceLang} to ${targetLang}. Only return the translation.` },
+  });
+  return response.text?.trim() || "";
 };
 
 /**
  * Corrects grammar in the input text for the specified language.
  */
 export const correctGrammar = async (text: string, language: string): Promise<string> => {
-    const response = await ai.models.generateContent({
-        model: MODELS.primary,
-        contents: text,
-        config: { systemInstruction: `Fix grammar/punctuation in ${language}. Only return the corrected text.` },
-    });
-    return response.text?.trim() || "";
+  if (!ai) throw new Error('GEMINI_API_KEY is not set. Grammar correction is unavailable.');
+  const response = await ai.models.generateContent({
+    model: MODELS.primary,
+    contents: text,
+    config: { systemInstruction: `Fix grammar/punctuation in ${language}. Only return the corrected text.` },
+  });
+  return response.text?.trim() || "";
 };
 
 /**
  * Performs OCR on image files using multimodal Gemini 3 Flash.
  */
 export const analyzeImage = async (imageFile: File): Promise<string> => {
-    const base64Data = await fileToBase64(imageFile);
-    const response = await ai.models.generateContent({
-        model: MODELS.vision,
-        contents: { parts: [{ inlineData: { mimeType: imageFile.type, data: base64Data } }, { text: "Perform high-accuracy OCR." }] },
-    });
-    return response.text?.trim() || "";
+  if (!ai) throw new Error('GEMINI_API_KEY is not set. Image analysis is unavailable.');
+  const base64Data = await fileToBase64(imageFile);
+  const response = await ai.models.generateContent({
+    model: MODELS.vision,
+    contents: { parts: [{ inlineData: { mimeType: imageFile.type, data: base64Data } }, { text: "Perform high-accuracy OCR." }] },
+  });
+  return response.text?.trim() || "";
 };
 
 /**
  * Extracts content from a website using Google Search grounding.
  */
 export const extractTextFromUrl = async (url: string): Promise<string> => {
-    const response = await ai.models.generateContent({
-        model: MODELS.flash,
-        contents: `Fetch and extract the primary text content from this URL: ${url}. Return ONLY the extracted text in its original language.`,
-        config: {
-            tools: [{ googleSearch: {} }]
-        }
-    });
-    return response.text || "Failed to extract text content.";
+  if (!ai) throw new Error('GEMINI_API_KEY is not set. URL extraction is unavailable.');
+  const response = await ai.models.generateContent({
+    model: MODELS.flash,
+    contents: `Fetch and extract the primary text content from this URL: ${url}. Return ONLY the extracted text in its original language.`,
+    config: {
+      tools: [{ googleSearch: {} }]
+    }
+  });
+  return response.text || "Failed to extract text content.";
 };
 
 // --- AUDIO UTILITIES ---
@@ -198,20 +202,21 @@ export async function decodeAudioData(
  * Generates speech from text using Gemini 2.5 TTS model.
  */
 export const generateSpeech = async (text: string, voiceName: string): Promise<string> => {
-    const response = await ai.models.generateContent({
-        model: MODELS.speech,
-        contents: [{ parts: [{ text }] }],
-        config: {
-            responseModalities: [Modality.AUDIO],
-            speechConfig: {
-                voiceConfig: {
-                    prebuiltVoiceConfig: { voiceName },
-                },
-            },
+  if (!ai) throw new Error('GEMINI_API_KEY is not set. Text-to-speech is unavailable.');
+  const response = await ai.models.generateContent({
+    model: MODELS.speech,
+    contents: [{ parts: [{ text }] }],
+    config: {
+      responseModalities: [Modality.AUDIO],
+      speechConfig: {
+        voiceConfig: {
+          prebuiltVoiceConfig: { voiceName },
         },
-    });
+      },
+    },
+  });
     
-    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    if (!base64Audio) throw new Error("No audio data returned from AI");
-    return base64Audio;
+  const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+  if (!base64Audio) throw new Error("No audio data returned from AI");
+  return base64Audio;
 };
