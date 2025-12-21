@@ -1,8 +1,7 @@
 
 import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
-import { jsPDF } from 'jspdf';
-import * as docx from 'docx';
+// Heavy export libraries are lazy-loaded inside handlers to avoid import-time failures
 import { UploadIcon } from './icons/UploadIcon';
 import { CloseIcon } from './icons/CloseIcon';
 import { PlusIcon } from './icons/PlusIcon';
@@ -78,7 +77,8 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
           id: `${file.name}-${file.lastModified}-${Math.random()}`,
           file,
           preview: URL.createObjectURL(file),
-          edits: { ...defaultEdits },
+      const jspdf = await import('jspdf');
+      const doc = new jspdf.jsPDF({ orientation, unit: 'mm', format: pageSize });
         }));
 
       if (images.length === 0 && newImages.length > 0) {
@@ -138,7 +138,8 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
   const applyEditsToImage = (image: ImageFile): Promise<string> => {
     return new Promise((resolve, reject) => {
         const edits = image.edits;
-        const canvas = document.createElement('canvas');
+      const imageParagraphs: any[] = [];
+      const docxMod = await import('docx');
         const ctx = canvas.getContext('2d');
         if (!ctx) return reject('Could not get canvas context');
 
@@ -158,11 +159,11 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
             ctx.rotate(edits.rotate * Math.PI / 180);
             ctx.drawImage(img, -img.width / 2, -img.height / 2);
             
-            resolve(canvas.toDataURL('image/png'));
+        imageParagraphs.push(new docxMod.Paragraph({ children: [imageRun] }));
         };
         img.onerror = () => reject('Image failed to load');
-    });
-  };
+      const doc = new docxMod.Document({ sections: [{ children: imageParagraphs }] });
+      const blob = await docxMod.Packer.toBlob(doc);
   
   const handleConvertToPdf = async () => {
     if (images.length === 0) return;

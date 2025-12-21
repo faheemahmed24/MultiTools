@@ -10,8 +10,6 @@ import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
 import { translateText } from '../services/geminiService';
-import { jsPDF } from 'jspdf';
-import * as docx from 'docx';
 import { XCircleIcon } from './icons/XCircleIcon';
 import { SkeletonLoader } from './Loader';
 
@@ -106,15 +104,17 @@ const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete })
       const blob = new Blob([editedTranslatedText], { type: 'text/plain;charset=utf-8' });
       createDownload(`${filename}.txt`, blob);
     } else if (format === 'docx') {
-      const doc = new docx.Document({
+      const docxMod = await import('docx');
+      const doc = new docxMod.Document({
         sections: [{
-          children: editedTranslatedText.split('\n').map(text => new docx.Paragraph(text)),
+          children: editedTranslatedText.split('\n').map((text: string) => new docxMod.Paragraph(text)),
         }],
       });
-      const blob = await docx.Packer.toBlob(doc);
+      const blob = await docxMod.Packer.toBlob(doc);
       createDownload(`${filename}.docx`, blob);
     } else if (format === 'pdf') {
-      const doc = new jsPDF();
+      const jspdf = await import('jspdf');
+      const doc = new jspdf.jsPDF();
       doc.text(editedTranslatedText, 10, 10);
       const blob = doc.output('blob');
       createDownload(`${filename}.pdf`, blob);

@@ -3,16 +3,12 @@ import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
-import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
-import JSZip from 'jszip';
+// pdfjs-dist is lazy-loaded to avoid import-time issues in some hosting environments
 import { analyzeImage } from '../services/geminiService';
 import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
 import * as docx from 'docx';
 
-
-// Configure the worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://aistudiocdn.com/pdfjs-dist@^4.5.136/build/pdf.worker.mjs`;
 
 interface GeneratedImage {
   src: string;
@@ -138,6 +134,8 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
       }
 
       try {
+        const pdfjsLib = await import('pdfjs-dist/build/pdf.mjs');
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://aistudiocdn.com/pdfjs-dist@^4.5.136/build/pdf.worker.mjs`;
         const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
         const numPages = pdf.numPages;
         const images: GeneratedImage[] = [];
@@ -195,6 +193,8 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
   };
 
   const handleDownloadAll = async () => {
+    const jszipMod = await import('jszip');
+    const JSZip = jszipMod.default || jszipMod;
     const zip = new JSZip();
     const baseFilename = pdfFile?.name.replace('.pdf', '') || 'pdf-export';
 
@@ -260,16 +260,17 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
     };
 
     if (format === 'txt') {
-        const blob = new Blob([extractedText], { type: 'text/plain;charset=utf-8' });
-        await download(`${baseFilename}.txt`, blob);
+      const blob = new Blob([extractedText], { type: 'text/plain;charset=utf-8' });
+      await download(`${baseFilename}.txt`, blob);
     } else if (format === 'docx') {
-        const doc = new docx.Document({
-            sections: [{
-                children: extractedText.split('\n').map(line => new docx.Paragraph(line)),
-            }],
-        });
-        const blob = await docx.Packer.toBlob(doc);
-        await download(`${baseFilename}.docx`, blob);
+      const docxMod = await import('docx');
+      const doc = new docxMod.Document({
+        sections: [{
+          children: extractedText.split('\n').map((line: string) => new docxMod.Paragraph(line)),
+        }],
+      });
+      const blob = await docxMod.Packer.toBlob(doc);
+      await download(`${baseFilename}.docx`, blob);
     }
     setShowTextExportMenu(false);
   };

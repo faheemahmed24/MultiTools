@@ -2,13 +2,11 @@ import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
-import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
-import * as docx from 'docx';
-import { jsPDF } from 'jspdf';
+// Heavy libraries are dynamically imported inside handlers to avoid import-time failures
 import { ChevronDownIcon } from './icons/ChevronDownIcon';
 
 // Configure the worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://aistudiocdn.com/pdfjs-dist@^4.5.136/build/pdf.worker.mjs`;
+// Lazy-load heavy libraries at runtime to avoid import-time failures on some hosts
 
 interface PdfToWordProps {
     t: TranslationSet;
@@ -26,7 +24,6 @@ const PdfToWord: React.FC<PdfToWordProps> = ({ t, onConversionComplete }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const resetState = () => {
-    setPdfFile(null);
     setIsConverting(false);
     setProgress('');
     setExtractedText('');
@@ -64,77 +61,77 @@ const PdfToWord: React.FC<PdfToWordProps> = ({ t, onConversionComplete }) => {
     setIsConverting(true);
     setDocxBlob(null);
     setExtractedText('');
-    setProgress(t.converting);
 
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const arrayBuffer = event.target?.result;
-      if (!arrayBuffer) {
-        setIsConverting(false);
-        return;
-      }
+    try {
+      // read file as ArrayBuffer
+      const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as ArrayBuffer);
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(pdfFile);
+      });
 
-      try {
-        const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-        const numPages = pdf.numPages;
-        
-        const paragraphs: docx.Paragraph[] = [];
-        const allTextLines: string[] = [];
+      // load pdfjs dynamically
+      const pdfjsLib = await import('pdfjs-dist/build/pdf.mjs');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://aistudiocdn.com/pdfjs-dist@^4.5.136/build/pdf.worker.mjs`;
 
-        for (let i = 1; i <= numPages; i++) {
-          setProgress(t.convertingPage.replace('{currentPage}', i.toString()).replace('{totalPages}', numPages.toString()));
-          const page = await pdf.getPage(i);
-          const textContent = await page.getTextContent();
-          
-          if (textContent.items.length > 0) {
-            const lines = textContent.items.reduce((acc, item: any) => {
-              const y = Math.round(item.transform[5]);
-              if (!acc[y]) acc[y] = [];
-              acc[y].push({ x: Math.round(item.transform[4]), text: item.str });
-              return acc;
-            }, {} as Record<number, {x: number, text: string}[]>);
+      const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+      const numPages = pdf.numPages;
 
-            Object.keys(lines)
-              .sort((a, b) => Number(b) - Number(a))
-              .forEach(y => {
-                const lineText = lines[Number(y)].sort((a, b) => a.x - b.x).map(item => item.text).join(' ');
-                if (lineText.trim()) {
-                  paragraphs.push(new docx.Paragraph(lineText));
-                  allTextLines.push(lineText);
-                }
-              });
-          }
-           if (i < numPages) {
-            paragraphs.push(new docx.Paragraph({ children: [new docx.PageBreak()] }));
-            allTextLines.push('\f'); // Form feed for page break
-          }
+      const paragraphs: Array<any> = [];
+      const allTextLines: string[] = [];
+
+      for (let i = 1; i <= numPages; i++) {
+        setProgress(t.convertingPage.replace('{currentPage}', i.toString()).replace('{totalPages}', numPages.toString()));
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+
+        if (textContent.items.length > 0) {
+          const lines = textContent.items.reduce((acc: Record<number, {x: number, text: string}[]>, item: any) => {
+            const y = Math.round(item.transform[5]);
+            if (!acc[y]) acc[y] = [];
+            acc[y].push({ x: Math.round(item.transform[4]), text: item.str });
+            return acc;
+          }, {} as Record<number, {x: number, text: string}[]>);
+
+          Object.keys(lines)
+            .sort((a, b) => Number(a) - Number(b))
+            .forEach(y => {
+              const lineText = lines[Number(y)].sort((a, b) => a.x - b.x).map(item => item.text).join(' ');
+              if (lineText.trim()) {
+                allTextLines.push(lineText);
+                paragraphs.push(lineText);
+              }
+            });
         }
-        
-        setProgress(t.generatingWord);
-        const textContent = allTextLines.join('\n').replace(/\f/g, '\n\n--- Page Break ---\n\n');
-        setExtractedText(textContent);
-        const doc = new docx.Document({
-            sections: [{
-                children: paragraphs,
-            }],
-        });
-
-        const blob = await docx.Packer.toBlob(doc);
-        setDocxBlob(blob);
-        setProgress(t.conversionComplete);
-        onConversionComplete({fileName: pdfFile.name});
-        
-      } catch (error) {
-        console.error('Error converting PDF to Word:', error);
-        setProgress('Error during conversion.');
-      } finally {
-        setIsConverting(false);
       }
-    };
-    reader.readAsArrayBuffer(pdfFile);
+
+      setProgress(t.generatingWord);
+      const textContent = allTextLines.join('\n').replace(/\f/g, '\n\n--- Page Break ---\n\n');
+      setExtractedText(textContent);
+
+      // build docx dynamically
+      const docxMod = await import('docx');
+      const doc = new docxMod.Document({
+        sections: [{
+          children: paragraphs.map((p: string) => new docxMod.Paragraph(p)),
+        }],
+      });
+
+      const blob = await docxMod.Packer.toBlob(doc);
+      setDocxBlob(blob);
+      setProgress(t.conversionComplete);
+      onConversionComplete({ fileName: pdfFile.name });
+
+    } catch (error) {
+      console.error('Error converting PDF to Word:', error);
+      setProgress('Error during conversion.');
+    } finally {
+      setIsConverting(false);
+    }
   };
   
-  const handleDownload = (format: 'docx' | 'txt' | 'pdf') => {
+  const handleDownload = async (format: 'docx' | 'txt' | 'pdf') => {
     if (!pdfFile) return;
     const baseFilename = pdfFile.name.replace(/\.[^/.]+$/, "");
     const download = (filename: string, blob: Blob) => {
@@ -155,11 +152,18 @@ const PdfToWord: React.FC<PdfToWordProps> = ({ t, onConversionComplete }) => {
         const blob = new Blob([extractedText], { type: 'text/plain;charset=utf-8' });
         download(`${baseFilename}.txt`, blob);
     } else if (format === 'pdf') {
-        const doc = new jsPDF();
+      try {
+        const jsPDFMod = await import('jspdf');
+        const pdfDoc = new jsPDFMod.jsPDF();
         const lines = extractedText.split('\n');
-        doc.text(lines, 10, 10);
-        const blob = doc.output('blob');
+        // join lines into a single string; jspdf will wrap as needed
+        pdfDoc.text(lines.join('\n'), 10, 10);
+        const blob = pdfDoc.output('blob');
         download(`${baseFilename}.pdf`, blob);
+      } catch (err) {
+        console.error('Failed to generate PDF:', err);
+        alert('Failed to generate PDF.');
+      }
     }
   };
 

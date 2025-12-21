@@ -10,8 +10,7 @@ import { UndoIcon } from './icons/UndoIcon';
 import { RedoIcon } from './icons/RedoIcon';
 import { ArrowLeftIcon } from './icons/ArrowLeftIcon';
 import { useDebounce } from '../hooks/useDebounce';
-import { jsPDF } from 'jspdf';
-import * as docx from 'docx';
+// Heavy export libraries are loaded on-demand to avoid import-time issues
 import { TxtIcon } from './icons/TxtIcon';
 import { JsonIcon } from './icons/JsonIcon';
 import { SrtIcon } from './icons/SrtIcon';
@@ -104,25 +103,27 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
 
     if (format === 'txt') download(`${base}.txt`, fullText, 'text/plain');
     else if (format === 'json') download(`${base}.json`, JSON.stringify(transcription, null, 2), 'application/json');
-    else if (format === 'srt') {
-      const srt = transcription.segments.map((s, i) => `${i+1}\n${s.startTime.replace('.', ',')} --> ${s.endTime.replace('.', ',')}\n${s.text}`).join('\n\n');
-      download(`${base}.srt`, srt, 'text/plain');
-    } else if (format === 'csv') {
-      const rows = transcription.segments.map(s => `"${s.startTime}","${s.endTime}","${s.speaker}","${s.text.replace(/"/g, '""')}"`).join('\n');
-      download(`${base}.csv`, `Start,End,Speaker,Text\n${rows}`, 'text/csv');
     } else if (format === 'docx') {
-      const paragraphs = transcription.segments.map(s => new docx.Paragraph({ children: [new docx.TextRun({ text: `${s.speaker} (${s.startTime}): `, bold: true }), new docx.TextRun(s.text)], spacing: { after: 120 } }));
-      const blob = await docx.Packer.toBlob(new docx.Document({ sections: [{ children: paragraphs }] }));
+      const docxMod = await import('docx');
+      const paragraphs = transcription.segments.map(s => new docxMod.Paragraph({ children: [new docxMod.TextRun({ text: `${s.speaker} (${s.startTime}): `, bold: true }), new docxMod.TextRun(s.text)], spacing: { after: 120 } }));
+      const blob = await docxMod.Packer.toBlob(new docxMod.Document({ sections: [{ children: paragraphs }] }));
       download(`${base}.docx`, blob);
     } else if (format === 'pdf') {
-      const doc = new jsPDF();
+      const jspdf = await import('jspdf');
+      const doc = new jspdf.jsPDF();
       let y = 15;
       transcription.segments.forEach(s => {
-          const line = `${s.speaker} (${s.startTime}): ${s.text}`;
-          const split = doc.splitTextToSize(line, 180);
-          if (y + split.length * 7 > 280) { doc.addPage(); y = 15; }
-          doc.text(split, 15, y); y += split.length * 7 + 3;
+        if (y > 270) { doc.addPage(); y = 15; }
+        doc.setFont(undefined, 'bold');
+        doc.text(`${s.speaker} (${s.startTime}):`, 10, y);
+        y += 6;
+        doc.setFont(undefined, 'normal');
+        const split = (doc as any).splitTextToSize(s.text, 180);
+        split.forEach((line: string) => { (doc as any).text(line, 10, y); y += 6; });
+        y += 6;
       });
+      const blob = (doc as any).output('blob');
+      download(`${base}.pdf`, blob);
       download(`${base}.pdf`, doc.output('blob'));
     }
     setShowExportMenu(false);

@@ -2,8 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
-import * as mammoth from 'mammoth';
-import { jsPDF } from 'jspdf';
+// Lazy-load heavy libraries at runtime to avoid import-time failures
 import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
 import * as docx from 'docx';
@@ -80,11 +79,13 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
 
       try {
         setProgress('Extracting content...');
+        const mammoth = await import('mammoth');
         const result = await mammoth.convertToHtml({ arrayBuffer });
         const html = result.value;
 
         setProgress(t.generatingPdf);
-        const doc = new jsPDF({
+        const jspdf = await import('jspdf');
+        const doc = new jspdf.jsPDF({
             orientation: 'p',
             unit: 'pt',
             format: 'a4'
@@ -160,6 +161,7 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
             return;
         }
         try {
+            const mammoth = await import('mammoth');
             const result = await mammoth.extractRawText({ arrayBuffer });
             setExtractedText(result.value);
         } catch (err) {
@@ -192,13 +194,14 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
         const blob = new Blob([extractedText], { type: 'text/plain;charset=utf-8' });
         await download(`${baseFilename}.txt`, blob);
     } else if (format === 'docx') {
-        const doc = new docx.Document({
-            sections: [{
-                children: extractedText.split('\n').map(line => new docx.Paragraph(line)),
-            }],
-        });
-        const blob = await docx.Packer.toBlob(doc);
-        await download(`${baseFilename}.docx`, blob);
+      const docxMod = await import('docx');
+      const doc = new docxMod.Document({
+        sections: [{
+          children: extractedText.split('\n').map((line: string) => new docxMod.Paragraph(line)),
+        }],
+      });
+      const blob = await docxMod.Packer.toBlob(doc);
+      await download(`${baseFilename}.docx`, blob);
     }
     setShowTextExportMenu(false);
   };

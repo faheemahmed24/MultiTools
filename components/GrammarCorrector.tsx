@@ -6,8 +6,7 @@ import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
 import { GrammarIcon } from './icons/GrammarIcon';
-import { jsPDF } from 'jspdf';
-import * as docx from 'docx';
+// Heavy export libraries are loaded on-demand to avoid import-time failures.
 import LanguageDropdown from './LanguageDropdown';
 import { sourceLanguages } from '../lib/languages';
 import type { LanguageOption } from '../lib/languages';
@@ -129,18 +128,20 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
       const blob = new Blob([correctedText], { type: 'text/plain;charset=utf-8' });
       createDownload(`${filename}.txt`, blob);
     } else if (format === 'docx') {
-      const doc = new docx.Document({
-        sections: [{
-          children: correctedText.split('\n').map(text => new docx.Paragraph(text)),
-        }],
-      });
-      const blob = await docx.Packer.toBlob(doc);
-      createDownload(`${filename}.docx`, blob);
+            const docxMod = await import('docx');
+            const doc = new docxMod.Document({
+                sections: [{
+                    children: correctedText.split('\n').map((text: string) => new docxMod.Paragraph(text)),
+                }],
+            });
+            const blob = await docxMod.Packer.toBlob(doc);
+            createDownload(`${filename}.docx`, blob);
     } else if (format === 'pdf') {
-      const doc = new jsPDF();
-      doc.text(correctedText, 10, 10);
-      const blob = doc.output('blob');
-      createDownload(`${filename}.pdf`, blob);
+            const jspdf = await import('jspdf');
+            const doc = new jspdf.jsPDF();
+            doc.text(correctedText, 10, 10);
+            const blob = doc.output('blob');
+            createDownload(`${filename}.pdf`, blob);
     }
   };
 

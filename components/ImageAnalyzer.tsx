@@ -305,16 +305,18 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
       const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
       createDownload(`${filename}.txt`, blob);
     } else if (format === 'docx') {
-       const doc = new docx.Document({
-        sections: [{
-          children: content.split('\n').map(text => new docx.Paragraph(text)),
-        }],
-      });
-      const blob = await docx.Packer.toBlob(doc);
-      createDownload(`${filename}.docx`, blob);
+         const docxMod = await import('docx');
+         const doc = new docxMod.Document({
+          sections: [{
+            children: content.split('\n').map((text: string) => new docxMod.Paragraph(text)),
+          }],
+        });
+        const blob = await docxMod.Packer.toBlob(doc);
+        createDownload(`${filename}.docx`, blob);
     } else if (format === 'pdf') {
-      const doc = new jsPDF();
-      const splitText = doc.splitTextToSize(content, 180);
+        const jspdf = await import('jspdf');
+        const doc = new jspdf.jsPDF();
+        const splitText = doc.splitTextToSize(content, 180);
       let y = 10;
       splitText.forEach((line: string) => {
           if (y > 280) {
