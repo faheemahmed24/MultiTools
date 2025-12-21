@@ -225,15 +225,15 @@ const VideoToAudio: React.FC<{ t: TranslationSet, onConversionComplete: (data: {
   };
 
   return (
-    <div className="bg-gray-800 rounded-2xl shadow-lg p-6 min-h-[60vh] lg:h-full flex flex-col">
+    <div className="glass-card p-6 min-h-[60vh] lg:h-full flex flex-col">
       {!videoFile ? (
         <div
-          className={`flex flex-col flex-grow items-center justify-center p-8 border-2 border-dashed rounded-xl transition-all duration-300 ${isDragging ? 'border-purple-500 bg-gray-700' : 'border-gray-600 hover:border-purple-500'}`}
+          className={`flex flex-col flex-grow items-center justify-center p-8 dropzone-dashed rounded-xl transition-all duration-300 ${isDragging ? 'dragover' : 'hover:border-purple-500'}`}
           onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}
         >
           <UploadIcon className="w-12 h-12 text-gray-500 mb-4" />
           <input type="file" ref={fileInputRef} onChange={onFileChange} accept="video/*" className="hidden" />
-          <button onClick={() => fileInputRef.current?.click()} className="px-8 py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-all transform hover:scale-105 shadow-lg">
+          <button onClick={() => fileInputRef.current?.click()} className="px-8 py-3 btn-primary font-bold rounded-lg hover:brightness-105 transform hover:scale-105 shadow-lg">
             {t.uploadFile}
           </button>
           <p className="mt-4 text-sm text-gray-400">All video formats supported</p>
@@ -241,7 +241,7 @@ const VideoToAudio: React.FC<{ t: TranslationSet, onConversionComplete: (data: {
       ) : (
         <div className="flex flex-col flex-grow">
           <div className="w-full animate-fadeIn flex flex-col h-full">
-            <div className="mb-6 bg-gray-700/50 p-4 rounded-xl border border-gray-600 flex items-center justify-between">
+            <div className="mb-6 obsidian-card p-4 rounded-xl border border-gray-600 flex items-center justify-between">
               <div className="overflow-hidden">
                 <p className="font-bold text-gray-100 truncate" title={videoFile.name}>{videoFile.name}</p>
                 <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider">{(videoFile.size / 1024 / 1024).toFixed(2)} MB</p>
@@ -260,7 +260,7 @@ const VideoToAudio: React.FC<{ t: TranslationSet, onConversionComplete: (data: {
                         <button
                           key={fmt.id}
                           onClick={() => setOutputFormat(fmt.id)}
-                          className={`flex flex-col items-start p-2.5 rounded-lg border text-left transition-all ${outputFormat === fmt.id ? 'bg-purple-600 border-purple-400 shadow-lg ring-2 ring-purple-500/20' : 'bg-gray-700 border-gray-600 hover:bg-gray-650 hover:border-gray-500'}`}
+                          className={`flex flex-col items-start p-2.5 rounded-lg border text-left transition-all ${outputFormat === fmt.id ? 'bg-purple-600 border-purple-400 shadow-lg ring-2 ring-purple-500/20' : 'obsidian-card border-gray-600 hover:brightness-105'}`}
                         >
                           <span className="font-bold text-white text-sm">{fmt.label}</span>
                           <span className={`text-[10px] truncate w-full ${outputFormat === fmt.id ? 'text-purple-200' : 'text-gray-400'}`}>
@@ -279,7 +279,7 @@ const VideoToAudio: React.FC<{ t: TranslationSet, onConversionComplete: (data: {
                 <button
                   onClick={handleConvert}
                   disabled={isConverting}
-                  className="w-full px-6 py-4 bg-purple-600 text-white font-black text-lg rounded-xl hover:bg-purple-700 disabled:bg-gray-700 disabled:text-gray-500 transition-all flex items-center justify-center gap-3 shadow-xl"
+                  className="w-full px-6 py-4 btn-primary font-black text-lg rounded-xl disabled:opacity-60 transition-all flex items-center justify-center gap-3 shadow-xl"
                 >
                   {isConverting && <div className="animate-spin rounded-full h-6 w-6 border-4 border-white/20 border-t-white"></div>}
                   {isConverting ? progress : t.extractAudio}

@@ -77,14 +77,14 @@ const ImageEditModal: React.FC<ImageEditModalProps> = ({ imagePreview, initialEd
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-gray-800 rounded-2xl shadow-lg w-full max-w-4xl h-full max-h-[90vh] flex flex-col p-6" onClick={e => e.stopPropagation()}>
-        <h2 className="text-xl font-bold mb-4 text-gray-200">{t.editImage}</h2>
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="glass-card w-full max-w-4xl h-full max-h-[90vh] flex flex-col p-4" onClick={e => e.stopPropagation()}>
+        <h2 className="text-xl font-bold mb-4 text-gray-100">{t.editImage}</h2>
         
         <div className="flex-grow flex flex-col md:flex-row gap-6 min-h-0">
             {/* Image Preview */}
-            <div className="flex-grow bg-gray-900/50 rounded-lg flex items-center justify-center p-4 overflow-hidden">
-                <img src={imagePreview} alt="Editing preview" className="max-w-full max-h-full object-contain transition-all duration-200" style={imageStyle} />
+            <div className="flex-grow obsidian-card rounded-lg flex items-center justify-center p-4 overflow-hidden">
+              <img src={imagePreview} alt="Editing preview" className="max-w-full max-h-full object-contain transition-all duration-200" style={imageStyle} />
             </div>
 
             {/* Controls */}
@@ -92,10 +92,10 @@ const ImageEditModal: React.FC<ImageEditModalProps> = ({ imagePreview, initialEd
                 <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">{t.rotate}</label>
                     <div className="flex gap-2">
-                        <button onClick={() => handleRotate('left')} className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors">
+                        <button onClick={() => handleRotate('left')} className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-700/60 text-white font-semibold rounded-lg hover:brightness-105 transition-colors">
                             <RotateLeftIcon className="w-5 h-5"/> {t.rotateLeft}
                         </button>
-                        <button onClick={() => handleRotate('right')} className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors">
+                        <button onClick={() => handleRotate('right')} className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-700/60 text-white font-semibold rounded-lg hover:brightness-105 transition-colors">
                             <RotateRightIcon className="w-5 h-5"/> {t.rotateRight}
                         </button>
                     </div>
@@ -105,15 +105,15 @@ const ImageEditModal: React.FC<ImageEditModalProps> = ({ imagePreview, initialEd
                 <Slider label={t.contrast} value={edits.contrast} onChange={(e) => handleSliderChange('contrast', e.target.value)} />
                 <Slider label={t.saturation} value={edits.saturate} onChange={(e) => handleSliderChange('saturate', e.target.value)} />
 
-                <button onClick={handleReset} className="w-full px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors">
-                    {t.reset}
+                <button onClick={handleReset} className="w-full px-4 py-2 bg-gray-700/60 text-white font-semibold rounded-lg hover:brightness-105 transition-colors">
+                  {t.reset}
                 </button>
             </div>
         </div>
 
         <div className="flex justify-end gap-4 mt-6">
-            <button onClick={onClose} className="px-6 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors">{t.cancel}</button>
-            <button onClick={() => onSave(edits)} className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors">{t.saveChanges}</button>
+              <button onClick={onClose} className="px-6 py-2 bg-gray-700/60 text-white font-semibold rounded-lg hover:brightness-105 transition-colors">{t.cancel}</button>
+              <button onClick={() => onSave(edits)} className="px-6 py-2 btn-primary font-semibold rounded-lg">{t.saveChanges}</button>
         </div>
       </div>
     </div>

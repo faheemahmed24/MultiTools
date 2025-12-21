@@ -114,10 +114,10 @@ const TextToSpeech: React.FC<{ t: TranslationSet, onComplete: (data: { text: str
   };
 
   return (
-    <div className="bg-gray-800 rounded-2xl shadow-lg p-6 min-h-[60vh] lg:h-full flex flex-col gap-6">
+    <div className="glass-card p-6 min-h-[60vh] lg:h-full flex flex-col gap-6">
       
       {/* Read Online / URL Import */}
-      <div className="bg-gray-900/60 p-4 rounded-xl border border-gray-700/50 shadow-inner">
+      <div className="obsidian-card p-4 rounded-xl border border-gray-700/30">
          <label className="block text-xs font-bold text-purple-400 mb-3 uppercase tracking-widest flex items-center gap-2">
             <GlobeIcon className="w-4 h-4" />
             {t.readOnline}
@@ -132,9 +132,9 @@ const TextToSpeech: React.FC<{ t: TranslationSet, onComplete: (data: { text: str
                 onKeyDown={(e) => e.key === 'Enter' && handleFetchUrl()}
             />
             <button 
-                onClick={handleFetchUrl}
-                disabled={isFetching || !url.trim()}
-                className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 text-white text-sm font-bold rounded-lg transition-all flex items-center gap-2 shadow-lg"
+              onClick={handleFetchUrl}
+              disabled={isFetching || !url.trim()}
+              className="px-6 py-2.5 btn-primary disabled:opacity-60 text-sm font-bold rounded-lg flex items-center gap-2 shadow-lg"
             >
                 {isFetching ? (
                     <>
@@ -152,7 +152,7 @@ const TextToSpeech: React.FC<{ t: TranslationSet, onComplete: (data: { text: str
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            className="w-full flex-grow bg-gray-900/50 rounded-xl p-4 text-gray-200 resize-none focus:ring-2 focus:ring-purple-500 border border-gray-700 outline-none min-h-[150px]"
+            className="w-full flex-grow obsidian-card rounded-xl p-4 text-gray-200 resize-none focus:ring-2 focus:ring-purple-500 border border-gray-700 outline-none min-h-[150px]"
             placeholder="Type content, or use the 'Read Online' tool above to process any website or article..."
           />
           <div className="text-right text-xs text-gray-500 mt-1">{text.length} characters</div>
@@ -162,11 +162,11 @@ const TextToSpeech: React.FC<{ t: TranslationSet, onComplete: (data: { text: str
           <div>
             <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-widest">{t.selectVoice}</label>
             <div className="space-y-2">
-              {VOICES.map((v) => (
+                {VOICES.map((v) => (
                 <button
                   key={v.id}
                   onClick={() => setVoice(v.id)}
-                  className={`w-full text-left p-3 rounded-lg border transition-all text-sm font-medium ${voice === v.id ? 'bg-purple-600 border-purple-400 text-white shadow-lg' : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'}`}
+                  className={`w-full text-left p-3 rounded-lg border transition-all text-sm font-medium ${voice === v.id ? 'bg-purple-600 border-purple-400 text-white shadow-lg' : 'obsidian-card border-gray-600 text-gray-300 hover:brightness-105'}`}
                 >
                   {v.name}
                 </button>
@@ -193,7 +193,7 @@ const TextToSpeech: React.FC<{ t: TranslationSet, onComplete: (data: { text: str
           <button
             onClick={handleGenerate}
             disabled={isGenerating || !text.trim()}
-            className="w-full py-4 bg-purple-600 text-white font-black text-xl rounded-xl hover:bg-purple-700 disabled:bg-gray-700 disabled:text-gray-500 transition-all flex items-center justify-center gap-3 shadow-xl"
+            className="w-full py-4 btn-primary font-black text-xl rounded-xl disabled:opacity-60 transition-all flex items-center justify-center gap-3 shadow-xl"
           >
             {isGenerating ? (
               <>
@@ -215,10 +215,10 @@ const TextToSpeech: React.FC<{ t: TranslationSet, onComplete: (data: { text: str
             </div>
             <div className="flex gap-4">
               <a
-                href={audioUrl}
-                download={`speech-${new Date().getTime()}.wav`}
-                className="flex-1 flex items-center justify-center py-4 bg-green-600 text-white font-black text-xl rounded-xl hover:bg-green-700 transition-all shadow-xl"
-              >
+                  href={audioUrl}
+                  download={`speech-${new Date().getTime()}.wav`}
+                  className="flex-1 flex items-center justify-center py-4 bg-green-600 text-white font-black text-xl rounded-xl hover:bg-green-700 transition-all shadow-xl"
+                >
                 <DownloadIcon className="w-6 h-6 me-2" />
                 {t.download} .WAV
               </a>

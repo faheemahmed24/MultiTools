@@ -129,7 +129,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl shadow-lg p-6">
+    <div className="flex flex-col h-full glass-card p-6">
       <div className="flex flex-wrap items-center justify-between mb-6 gap-4">
         <div className="flex items-center gap-3">
              <button onClick={onClose} className="p-2 hover:bg-gray-700 rounded-full text-gray-400 transition-colors"><ArrowLeftIcon className="w-5 h-5" /></button>
@@ -144,33 +144,33 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
         </div>
       </div>
 
-      <div ref={containerRef} className="flex-grow bg-gray-900/40 rounded-xl p-6 overflow-y-auto mb-4 border border-gray-700/30">
+      <div ref={containerRef} className="flex-grow obsidian-card rounded-xl p-6 overflow-y-auto mb-4">
         <div className="space-y-6">
           {isEditing ? (
             editedSegments.map((seg, idx) => (
-              <div key={idx} className="flex flex-col gap-2 p-3 bg-gray-800/30 rounded-lg border border-gray-700/50">
-                <div className="flex gap-4 text-xs font-bold">
+            <div key={idx} className="flex flex-col gap-2 p-3 segment-bubble">
+                <div className="flex gap-4 text-xs font-bold meta-rail">
                     <span className="text-purple-400">{seg.startTime}</span>
                     <span className="text-pink-400">{seg.speaker}</span>
                 </div>
                 <textarea 
                     value={seg.text} 
                     onChange={e => { const n = [...editedSegments]; n[idx].text = e.target.value; setEditedSegments(n); }} 
-                    className="w-full bg-gray-700/50 border-gray-600 rounded p-2 text-sm text-gray-200 focus:ring-1 focus:ring-purple-500"
+                    className="w-full bg-transparent border border-gray-700/30 rounded p-2 text-sm text-gray-200 focus:ring-1 focus:ring-purple-500"
                     rows={2}
                 />
               </div>
             ))
           ) : (
             transcription.segments.map((seg, idx) => (
-              <div key={idx} className="flex flex-col sm:flex-row gap-4 hover:bg-gray-800/20 p-2 rounded-lg transition-colors group">
+              <div key={idx} className="flex flex-col sm:flex-row gap-4 p-2 transition-colors group animate-pop-in">
                  {(showTimestamps || showSpeaker) && (
-                    <div className="sm:w-32 flex-shrink-0 flex flex-col text-[10px] font-bold uppercase tracking-tighter text-gray-500 pt-1">
-                        {showSpeaker && <span className="text-pink-500 truncate mb-0.5">{seg.speaker}</span>}
+                    <div className="sm:w-32 flex-shrink-0 flex flex-col text-[10px] font-bold uppercase tracking-tighter meta-rail pt-1">
+                        {showSpeaker && <span className="text-pink-400 truncate mb-0.5">{seg.speaker}</span>}
                         {showTimestamps && <span className="text-purple-400 font-mono">{seg.startTime}</span>}
                     </div>
                  )}
-                <p className="flex-grow text-gray-200 leading-relaxed text-sm lg:text-base">{seg.text}</p>
+                <p className="flex-grow segment-bubble text-gray-200 leading-relaxed text-sm lg:text-base">{seg.text}</p>
               </div>
             ))
           )}
@@ -179,16 +179,16 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
 
       <div className="flex flex-wrap gap-2 justify-between">
         <div className="flex gap-2">
-           <button onClick={handleCopy} className="flex items-center px-4 py-2 bg-gray-700 text-white text-sm font-bold rounded-lg hover:bg-gray-600 transition-all">
+           <button onClick={handleCopy} className="flex items-center px-4 py-2 bg-gray-700/60 text-white text-sm font-bold rounded-lg hover:brightness-105 transition-all">
             {isCopied ? <CheckIcon className="w-4 h-4 me-2"/> : <CopyIcon className="w-4 h-4 me-2" />}
             {isCopied ? 'COPIED' : 'COPY'}
           </button>
           <div className="relative" ref={exportMenuRef}>
-            <button onClick={() => setShowExportMenu(!showExportMenu)} className="flex items-center px-4 py-2 bg-gray-700 text-white text-sm font-bold rounded-lg hover:bg-gray-600 transition-all">
+            <button onClick={() => setShowExportMenu(!showExportMenu)} className="flex items-center px-4 py-2 btn-primary text-sm font-bold rounded-lg">
               <DownloadIcon className="w-4 h-4 me-2" /> EXPORT
             </button>
             {showExportMenu && (
-              <div className="absolute bottom-full mb-2 w-32 bg-gray-700 border border-gray-600 rounded-lg shadow-xl py-1 z-10">
+              <div className="absolute bottom-full mb-2 w-40 bg-gray-800/60 border border-gray-700/30 rounded-lg shadow-xl py-1 z-10 glass-card">
                 {['txt', 'json', 'srt', 'docx', 'pdf', 'csv'].map(f => (
                   <button key={f} onClick={() => handleExport(f as any)} className="w-full text-start px-4 py-2 text-xs font-bold text-gray-300 hover:bg-purple-600 uppercase">{f}</button>
                 ))}
@@ -199,11 +199,11 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
         <div className="flex gap-2">
             {isEditing ? (
               <>
-                <button onClick={() => onUpdate(transcription.id, editedSegments)} className="px-4 py-2 bg-green-600 text-white text-sm font-bold rounded-lg hover:bg-green-700">SAVE</button>
-                <button onClick={() => setIsEditing(false)} className="px-4 py-2 bg-gray-700 text-white text-sm font-bold rounded-lg">CANCEL</button>
+                <button onClick={() => onUpdate(transcription.id, editedSegments)} className="px-4 py-2 btn-primary text-sm font-bold rounded-lg">SAVE</button>
+                <button onClick={() => setIsEditing(false)} className="px-4 py-2 bg-gray-700/60 text-white text-sm font-bold rounded-lg">CANCEL</button>
               </>
             ) : (
-              <button onClick={handleEditToggle} className="flex items-center px-4 py-2 bg-gray-700 text-white text-sm font-bold rounded-lg hover:bg-gray-600 transition-all">
+              <button onClick={handleEditToggle} className="flex items-center px-4 py-2 btn-primary text-sm font-bold rounded-lg">
                 <EditIcon className="w-4 h-4 me-2"/> EDIT
               </button>
             )}

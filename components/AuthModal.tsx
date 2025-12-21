@@ -124,11 +124,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess, 
       isRendered && isOpen ? "opacity-100" : "opacity-0",
   ].join(' ');
 
-  const modalClasses = [
-      "bg-gray-800 rounded-2xl shadow-lg w-full max-w-sm p-8",
+    const modalClasses = [
+      "glass-card rounded-2xl shadow-lg w-full max-w-sm p-6",
       "transition-all duration-200 ease-out",
       isRendered && isOpen ? "opacity-100 scale-100" : "opacity-0 scale-95",
-  ].join(' ');
+    ].join(' ');
 
   return (
     <>
@@ -172,7 +172,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess, 
 
                 <button
                   type="submit"
-                  className="w-full py-3 px-4 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
+                  className="w-full py-3 px-4 btn-primary font-semibold rounded-lg"
                 >
                   {isLoginMode ? t.login : t.signup}
                 </button>
