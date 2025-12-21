@@ -1,10 +1,23 @@
-import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { Transcription } from '../types';
+import type { GoogleGenAI } from '@google/genai';
+import { Type, Modality } from '@google/genai';
 
-// Initialize the Google GenAI client with the API key from environment variables.
-// Do NOT throw during module import to allow the app to load without the key.
-const apiKey = process.env.API_KEY as string | undefined;
-const ai: GoogleGenAI | null = apiKey ? new GoogleGenAI({ apiKey }) : null;
+// Lazily initialize the Google GenAI client to avoid import-time side effects
+// that can break the app when deployed (e.g., Workers or constrained runtimes).
+let aiClient: GoogleGenAI | null = null;
+const getApiKey = () => (process.env.API_KEY as string | undefined) || undefined;
+
+async function ensureClient(): Promise<GoogleGenAI> {
+  if (aiClient) return aiClient;
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error('GEMINI_API_KEY is not set. AI features are unavailable.');
+  // Dynamically import to avoid bundling/runtime issues in environments where
+  // the GenAI package may assume Node APIs at module-eval time.
+  const mod = await import('@google/genai');
+  if (!mod || !mod.GoogleGenAI) throw new Error('Failed to load Google GenAI client.');
+  aiClient = new mod.GoogleGenAI({ apiKey });
+  return aiClient;
+}
 
 const MODELS = {
     // Primary model for complex tasks like transcription with speaker diarization.
@@ -90,20 +103,20 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
     required: ["language", "segments"]
   };
 
-  if (!ai) throw new Error('GEMINI_API_KEY is not set. Transcription is unavailable.');
-  const response = await ai.models.generateContent({
+    const ai = await ensureClient();
+    const response = await ai.models.generateContent({
     model: MODELS.primary,
     contents: { 
-        parts: [
-            { inlineData: { mimeType, data: base64Data } },
-            { text: `Transcribe this media file. Language strategy: ${languageHint === 'auto' ? 'Detect precisely (Urdu vs Hindi etc.)' : 'User suggests ' + languageHint}. Return valid JSON.` }
-        ] 
+      parts: [
+        { inlineData: { mimeType, data: base64Data } },
+        { text: `Transcribe this media file. Language strategy: ${languageHint === 'auto' ? 'Detect precisely (Urdu vs Hindi etc.)' : 'User suggests ' + languageHint}. Return valid JSON.` }
+      ] 
     },
     config: {
-        responseMimeType: 'application/json',
-        responseSchema: transcriptionSchema,
+      responseMimeType: 'application/json',
+      responseSchema: transcriptionSchema,
     }
-  });
+    });
 
   const parsed = JSON.parse(response.text || '{}');
   return {
@@ -117,7 +130,7 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
  * Translates text between source and target languages using Pro model for nuances.
  */
 export const translateText = async (text: string, sourceLang: string, targetLang: string): Promise<string> => {
-  if (!ai) throw new Error('GEMINI_API_KEY is not set. Translation is unavailable.');
+  const ai = await ensureClient();
   const response = await ai.models.generateContent({
     model: MODELS.primary,
     contents: text,
@@ -130,7 +143,7 @@ export const translateText = async (text: string, sourceLang: string, targetLang
  * Corrects grammar in the input text for the specified language.
  */
 export const correctGrammar = async (text: string, language: string): Promise<string> => {
-  if (!ai) throw new Error('GEMINI_API_KEY is not set. Grammar correction is unavailable.');
+  const ai = await ensureClient();
   const response = await ai.models.generateContent({
     model: MODELS.primary,
     contents: text,
@@ -143,7 +156,7 @@ export const correctGrammar = async (text: string, language: string): Promise<st
  * Performs OCR on image files using multimodal Gemini 3 Flash.
  */
 export const analyzeImage = async (imageFile: File): Promise<string> => {
-  if (!ai) throw new Error('GEMINI_API_KEY is not set. Image analysis is unavailable.');
+  const ai = await ensureClient();
   const base64Data = await fileToBase64(imageFile);
   const response = await ai.models.generateContent({
     model: MODELS.vision,
@@ -156,7 +169,7 @@ export const analyzeImage = async (imageFile: File): Promise<string> => {
  * Extracts content from a website using Google Search grounding.
  */
 export const extractTextFromUrl = async (url: string): Promise<string> => {
-  if (!ai) throw new Error('GEMINI_API_KEY is not set. URL extraction is unavailable.');
+  const ai = await ensureClient();
   const response = await ai.models.generateContent({
     model: MODELS.flash,
     contents: `Fetch and extract the primary text content from this URL: ${url}. Return ONLY the extracted text in its original language.`,
@@ -202,7 +215,7 @@ export async function decodeAudioData(
  * Generates speech from text using Gemini 2.5 TTS model.
  */
 export const generateSpeech = async (text: string, voiceName: string): Promise<string> => {
-  if (!ai) throw new Error('GEMINI_API_KEY is not set. Text-to-speech is unavailable.');
+  const ai = await ensureClient();
   const response = await ai.models.generateContent({
     model: MODELS.speech,
     contents: [{ parts: [{ text }] }],
