@@ -36,7 +36,7 @@ const ResultBox: React.FC<{
     const [showExportMenu, setShowExportMenu] = useState(false);
 
     return (
-        <div className="bg-gray-900/50 rounded-lg p-4 flex flex-col mt-4">
+      <div className="obsidian-card rounded-lg p-4 flex flex-col mt-4">
             <div className="flex justify-between items-center mb-2">
                 <h3 className="font-semibold text-lg text-gray-200">{title}</h3>
                 <div className="flex items-center space-x-2 rtl:space-x-reverse">
@@ -357,7 +357,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
   };
 
   return (
-    <div className="bg-gray-800 rounded-2xl shadow-lg p-6 min-h-[60vh] lg:h-full flex flex-col">
+    <div className="glass-card p-6 min-h-[60vh] lg:h-full flex flex-col">
        <input
           type="file"
           ref={fileInputRef}
@@ -379,7 +379,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
       {images.length === 0 ? (
          <div className="flex-grow flex flex-col">
             <div
-              className={`flex flex-grow flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 mb-4 min-h-[300px] ${isDragging ? 'border-purple-500 bg-gray-700/50' : 'border-gray-600'}`}
+              className={`flex flex-grow flex-col items-center justify-center p-8 dropzone-dashed rounded-xl transition-colors duration-300 mb-4 min-h-[300px] ${isDragging ? 'dragover' : ''}`}
               onDragEnter={handleDragEnter}
               onDragLeave={handleDragLeave}
               onDragOver={handleDragOver}
@@ -389,7 +389,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
               <h3 className="text-xl font-semibold text-gray-300 mb-2">{t.uploadImages}</h3>
               <p className="text-gray-400 mb-6 text-center max-w-sm">Drag & drop images or folders here, or use the buttons below.</p>
               <div className="flex flex-col sm:flex-row gap-4">
-                  <button onClick={handleUploadClick} className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors shadow-lg">
+                    <button onClick={handleUploadClick} className="px-6 py-3 btn-primary text-white font-semibold rounded-lg hover:brightness-105 transition-colors shadow-lg">
                       Select Files
                   </button>
                    <button onClick={handleFolderUploadClick} className="px-6 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors flex items-center shadow-lg border border-gray-600">
@@ -421,7 +421,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
              {/* Image Grid */}
              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6 max-h-[40vh] overflow-y-auto p-1">
                 {images.map((img, index) => (
-                    <div key={img.id} className="group relative bg-gray-900/50 p-2 rounded-lg aspect-square flex items-center justify-center border border-gray-700">
+                <div key={img.id} className="group relative obsidian-card p-2 rounded-lg aspect-square flex items-center justify-center border border-gray-700">
                         <img src={img.preview} alt={img.file.name} className="max-w-full max-h-full object-contain rounded-md" />
                         
                         <div className="absolute top-1 right-1">
@@ -434,7 +434,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
                              )}
                         </div>
                         
-                        <div className="absolute bottom-1 left-1 bg-black/60 px-2 py-0.5 rounded text-xs text-white truncate max-w-[90%]">
+                        <div className="absolute bottom-1 left-1 bg-black/40 px-2 py-0.5 rounded text-xs text-white truncate max-w-[90%]">
                             {index + 1}. {img.file.name}
                         </div>
                     </div>
@@ -443,13 +443,13 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
 
              {/* Action Button */}
              <div className="flex justify-center mb-6">
-                <button
-                    onClick={handleAnalyzeAll}
-                    disabled={isAnalyzing || images.length === 0}
-                    className="w-full md:w-auto min-w-[200px] px-8 py-3 bg-purple-600 text-white font-bold text-lg rounded-xl hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all shadow-lg shadow-purple-900/20"
-                >
-                    {isAnalyzing ? (progressMessage || t.analyzing) : (analysisResult ? t.reanalyze : t.analyze)}
-                </button>
+              <button
+                onClick={handleAnalyzeAll}
+                disabled={isAnalyzing || images.length === 0}
+                className="w-full md:w-auto min-w-[200px] px-8 py-3 btn-primary font-bold text-lg rounded-xl disabled:opacity-60 transition-all shadow-lg"
+              >
+                {isAnalyzing ? (progressMessage || t.analyzing) : (analysisResult ? t.reanalyze : t.analyze)}
+              </button>
              </div>
 
              {error && <div className="text-red-400 mb-4 text-center bg-red-900/20 p-3 rounded-lg border border-red-800">{error}</div>}
@@ -479,11 +479,11 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
                                 />
                         </div>
                         <button 
-                            onClick={handleTranslate}
-                            disabled={isTranslating || !editedAnalysisResult}
-                            className="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors h-[42px] mt-auto"
+                          onClick={handleTranslate}
+                          disabled={isTranslating || !editedAnalysisResult}
+                          className="w-full sm:w-auto px-6 py-2 btn-primary text-white font-semibold rounded-lg disabled:opacity-60 transition-colors h-[42px] mt-auto"
                         >
-                            {isTranslating ? t.translating : t.translate}
+                          {isTranslating ? t.translating : t.translate}
                         </button>
                     </div>
 

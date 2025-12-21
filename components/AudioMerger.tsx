@@ -153,19 +153,19 @@ const AudioMerger: React.FC<AudioMergerProps> = ({ t, onConversionComplete }) =>
   };
 
   return (
-    <div className="bg-gray-800 rounded-2xl shadow-lg p-6 min-h-[60vh] lg:h-full flex flex-col">
+    <div className="glass-card p-6 min-h-[60vh] lg:h-full flex flex-col">
       <input type="file" ref={fileInputRef} onChange={e => handleFilesSelect(e.target.files)} accept="audio/*" multiple className="hidden" />
       
       {audioFiles.length === 0 ? (
         <div
-          className={`flex flex-col flex-grow items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 ${isDragging ? 'border-purple-500 bg-gray-700' : 'border-gray-600 hover:border-purple-500'}`}
+          className={`flex flex-col flex-grow items-center justify-center p-8 dropzone-dashed rounded-xl transition-colors duration-300 ${isDragging ? 'dragover' : ''}`}
           onDragEnter={e => { e.preventDefault(); setIsDragging(true); }}
           onDragLeave={e => { e.preventDefault(); setIsDragging(false); }}
           onDragOver={e => e.preventDefault()}
           onDrop={e => { e.preventDefault(); setIsDragging(false); handleFilesSelect(e.dataTransfer.files); }}
         >
           <UploadIcon className="w-12 h-12 text-gray-500 mb-4" />
-          <button onClick={() => fileInputRef.current?.click()} className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors">
+          <button onClick={() => fileInputRef.current?.click()} className="px-6 py-2 btn-primary text-white font-semibold rounded-lg hover:brightness-105 transition-colors">
             {t.addAudioFiles || 'Select Audio Files'}
           </button>
           <p className="mt-2 text-sm text-gray-400">{t.dropAudioFiles || 'or drop audio files here'}</p>
@@ -174,10 +174,10 @@ const AudioMerger: React.FC<AudioMergerProps> = ({ t, onConversionComplete }) =>
         <div className="flex flex-col flex-grow min-h-0">
           <div className="flex justify-between items-center mb-4">
              <div className="flex gap-2">
-                <button onClick={() => fileInputRef.current?.click()} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600">
+                <button onClick={() => fileInputRef.current?.click()} className="flex items-center px-4 py-2 obsidian-card text-white font-semibold rounded-lg hover:brightness-105">
                     <PlusIcon className="w-5 h-5 me-2" /> {t.addMoreImages || 'Add More'}
                 </button>
-                <button onClick={clearAll} className="flex items-center px-4 py-2 bg-red-600/20 text-red-400 font-semibold rounded-lg hover:bg-red-600/40">
+                <button onClick={clearAll} className="flex items-center px-4 py-2 obsidian-card text-red-400 font-semibold rounded-lg hover:brightness-95">
                     <TrashIcon className="w-5 h-5 me-2" /> {t.clearAll}
                 </button>
              </div>
@@ -193,7 +193,7 @@ const AudioMerger: React.FC<AudioMergerProps> = ({ t, onConversionComplete }) =>
                 onDragEnter={() => dragOverItem.current = index}
                 onDragEnd={handleDragSort}
                 onDragOver={e => e.preventDefault()}
-                className="bg-gray-700/50 p-3 rounded-lg border border-gray-600 flex items-center gap-4 group cursor-move hover:bg-gray-700 transition-colors"
+                className="obsidian-card p-3 rounded-lg border border-gray-600 flex items-center gap-4 group cursor-move hover:brightness-105 transition-colors"
               >
                 <div className="bg-gray-600 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-gray-300 flex-shrink-0">{index + 1}</div>
                 <div className="flex-grow overflow-hidden">
@@ -207,7 +207,7 @@ const AudioMerger: React.FC<AudioMergerProps> = ({ t, onConversionComplete }) =>
             ))}
           </div>
 
-          <div className="bg-gray-900/40 p-4 rounded-xl space-y-4">
+              <div className="obsidian-card p-4 rounded-xl space-y-4">
               <div>
                   <label className="block text-sm font-medium text-gray-400 mb-1">{t.outputFilename}</label>
                   <div className="flex items-center bg-gray-800 rounded-lg border border-gray-700 px-3">
@@ -218,32 +218,32 @@ const AudioMerger: React.FC<AudioMergerProps> = ({ t, onConversionComplete }) =>
 
               {!mergedAudioUrl ? (
                 <button
-                    onClick={handleMerge}
-                    disabled={isMerging || audioFiles.length < 2}
-                    className="w-full py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
+                  onClick={handleMerge}
+                  disabled={isMerging || audioFiles.length < 2}
+                  className="w-full py-3 btn-primary text-white font-bold rounded-lg disabled:opacity-60 transition-all shadow-lg"
                 >
-                    {isMerging ? (
-                        <div className="flex items-center justify-center gap-3">
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                            {progress}
-                        </div>
-                    ) : (
-                        `${t.mergeAudio || 'Merge Audio'} (${audioFiles.length} files)`
-                    )}
+                  {isMerging ? (
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      {progress}
+                    </div>
+                  ) : (
+                    `${t.mergeAudio || 'Merge Audio'} (${audioFiles.length} files)`
+                  )}
                 </button>
               ) : (
                 <div className="animate-fadeIn space-y-4">
-                    <div className="bg-green-600/10 border border-green-500/50 p-4 rounded-lg">
-                        <p className="text-green-400 font-bold text-sm mb-2">✓ {t.conversionComplete}</p>
-                        <audio src={mergedAudioUrl} controls className="w-full h-10" />
-                    </div>
-                    <a
-                        href={mergedAudioUrl}
-                        download={`${outputFilename}.wav`}
-                        className="flex items-center justify-center w-full py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors shadow-lg"
-                    >
-                        <DownloadIcon className="w-5 h-5 me-2" /> {t.download} .WAV
-                    </a>
+                  <div className="obsidian-card p-4 rounded-lg">
+                    <p className="text-green-400 font-bold text-sm mb-2">✓ {t.conversionComplete}</p>
+                    <audio src={mergedAudioUrl} controls className="w-full h-10" />
+                  </div>
+                  <a
+                    href={mergedAudioUrl}
+                    download={`${outputFilename}.wav`}
+                    className="flex items-center justify-center w-full py-3 obsidian-card text-white font-bold rounded-lg transition-colors shadow-lg"
+                  >
+                    <DownloadIcon className="w-5 h-5 me-2" /> {t.download} .WAV
+                  </a>
                 </div>
               )}
           </div>
