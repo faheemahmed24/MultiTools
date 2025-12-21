@@ -99,3 +99,10 @@ export interface AudioMergerHistoryItem {
     fileName: string;
     fileCount: number;
 }
+
+export interface TtsHistoryItem {
+    id: string;
+    date: string;
+    text: string;
+    voice: string;
+}

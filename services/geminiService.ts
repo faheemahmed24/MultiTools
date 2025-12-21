@@ -1,5 +1,4 @@
-
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { Transcription } from '../types';
 
 // Initialize the Google GenAI client with the API key from environment variables.
@@ -11,7 +10,11 @@ const MODELS = {
     // Multimodal model for analyzing images (OCR).
     vision: 'gemini-3-flash-preview',
     // Lightweight model for basic tasks.
-    lite: 'gemini-flash-lite-latest'
+    lite: 'gemini-flash-lite-latest',
+    // Speech generation model.
+    speech: 'gemini-2.5-flash-preview-tts',
+    // General purpose fast model with search capability.
+    flash: 'gemini-3-flash-preview'
 };
 
 /**
@@ -84,7 +87,8 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
     required: ["language", "segments"]
   };
 
-  const response = await generateContentWithRetry(MODELS.primary, {
+  const response = await ai.models.generateContent({
+    model: MODELS.primary,
     contents: { 
         parts: [
             { inlineData: { mimeType, data: base64Data } },
@@ -97,12 +101,11 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
     }
   });
 
-  // Accessing text output via the .text property of GenerateContentResponse.
-  const parsed = JSON.parse(response.text);
+  const parsed = JSON.parse(response.text || '{}');
   return {
     fileName: file.name,
-    detectedLanguage: parsed.language,
-    segments: parsed.segments,
+    detectedLanguage: parsed.language || 'Unknown',
+    segments: parsed.segments || [],
   };
 };
 
@@ -110,7 +113,8 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
  * Translates text between source and target languages using Pro model for nuances.
  */
 export const translateText = async (text: string, sourceLang: string, targetLang: string): Promise<string> => {
-    const response = await generateContentWithRetry(MODELS.primary, {
+    const response = await ai.models.generateContent({
+        model: MODELS.primary,
         contents: text,
         config: { systemInstruction: `Translate from ${sourceLang} to ${targetLang}. Only return the translation.` },
     });
@@ -121,7 +125,8 @@ export const translateText = async (text: string, sourceLang: string, targetLang
  * Corrects grammar in the input text for the specified language.
  */
 export const correctGrammar = async (text: string, language: string): Promise<string> => {
-    const response = await generateContentWithRetry(MODELS.primary, {
+    const response = await ai.models.generateContent({
+        model: MODELS.primary,
         contents: text,
         config: { systemInstruction: `Fix grammar/punctuation in ${language}. Only return the corrected text.` },
     });
@@ -133,8 +138,76 @@ export const correctGrammar = async (text: string, language: string): Promise<st
  */
 export const analyzeImage = async (imageFile: File): Promise<string> => {
     const base64Data = await fileToBase64(imageFile);
-    const response = await generateContentWithRetry(MODELS.vision, {
+    const response = await ai.models.generateContent({
+        model: MODELS.vision,
         contents: { parts: [{ inlineData: { mimeType: imageFile.type, data: base64Data } }, { text: "Perform high-accuracy OCR." }] },
     });
     return response.text?.trim() || "";
+};
+
+/**
+ * Extracts content from a website using Google Search grounding.
+ */
+export const extractTextFromUrl = async (url: string): Promise<string> => {
+    const response = await ai.models.generateContent({
+        model: MODELS.flash,
+        contents: `Fetch and extract the primary text content from this URL: ${url}. Return ONLY the extracted text in its original language.`,
+        config: {
+            tools: [{ googleSearch: {} }]
+        }
+    });
+    return response.text || "Failed to extract text content.";
+};
+
+// --- AUDIO UTILITIES ---
+
+export function decode(base64: string): Uint8Array {
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
+export async function decodeAudioData(
+  data: Uint8Array,
+  ctx: AudioContext,
+  sampleRate: number,
+  numChannels: number,
+): Promise<AudioBuffer> {
+  const dataInt16 = new Int16Array(data.buffer);
+  const frameCount = dataInt16.length / numChannels;
+  const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
+
+  for (let channel = 0; channel < numChannels; channel++) {
+    const channelData = buffer.getChannelData(channel);
+    for (let i = 0; i < frameCount; i++) {
+      channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+    }
+  }
+  return buffer;
+}
+
+/**
+ * Generates speech from text using Gemini 2.5 TTS model.
+ */
+export const generateSpeech = async (text: string, voiceName: string): Promise<string> => {
+    const response = await ai.models.generateContent({
+        model: MODELS.speech,
+        contents: [{ parts: [{ text }] }],
+        config: {
+            responseModalities: [Modality.AUDIO],
+            speechConfig: {
+                voiceConfig: {
+                    prebuiltVoiceConfig: { voiceName },
+                },
+            },
+        },
+    });
+    
+    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (!base64Audio) throw new Error("No audio data returned from AI");
+    return base64Audio;
 };

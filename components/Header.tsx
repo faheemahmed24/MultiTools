@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import type { Language, TranslationSet, User } from '../types';
 import { SidebarCollapseIcon } from './icons/SidebarCollapseIcon';
@@ -11,6 +12,7 @@ import { PdfToWordIcon } from './icons/PdfToWordIcon';
 import { WordToPdfIcon } from './icons/WordToPdfIcon';
 import { VideoToAudioIcon } from './icons/VideoToAudioIcon';
 import { AudioMergerIcon } from './icons/AudioMergerIcon';
+import { SpeakerIcon } from './icons/SpeakerIcon';
 import { SheetIcon } from './icons/SheetIcon';
 import { GrammarIcon } from './icons/GrammarIcon';
 import { HistoryIcon } from './icons/HistoryIcon';
@@ -55,6 +57,7 @@ const Header: React.FC<HeaderProps> = ({
     { key: 'Word to PDF', label: t.wordToPdf, icon: WordToPdfIcon },
     { key: 'Video to Audio', label: t.videoToAudio, icon: VideoToAudioIcon },
     { key: 'Audio Merger', label: t.audioMerger, icon: AudioMergerIcon },
+    { key: 'Text to Speech', label: t.textToSpeech, icon: SpeakerIcon },
     { key: 'Export to Sheets', label: t.exportToSheets, icon: SheetIcon },
     { key: 'History', label: t.history, icon: HistoryIcon }
   ];

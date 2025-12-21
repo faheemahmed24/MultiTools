@@ -1,8 +1,9 @@
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useUserLocalStorage } from './hooks/useUserLocalStorage';
 import { getTranslations } from './lib/i18n';
-import type { Language, User, Transcription, TranscriptionSegment, TranslationHistoryItem, AnalysisHistoryItem, PdfImageHistoryItem, ImagePdfHistoryItem, PdfWordHistoryItem, WordPdfHistoryItem, GrammarHistoryItem, VideoAudioHistoryItem, AudioMergerHistoryItem } from './types';
+import type { Language, User, Transcription, TranscriptionSegment, TranslationHistoryItem, AnalysisHistoryItem, PdfImageHistoryItem, ImagePdfHistoryItem, PdfWordHistoryItem, WordPdfHistoryItem, GrammarHistoryItem, VideoAudioHistoryItem, AudioMergerHistoryItem, TtsHistoryItem } from './types';
 import { transcribeAudio } from './services/geminiService';
 
 import Header from './components/Header';
@@ -19,6 +20,7 @@ import PdfToWord from './components/PdfToWord';
 import WordToPdf from './components/WordToPdf';
 import VideoToAudio from './components/VideoToAudio';
 import AudioMerger from './components/AudioMerger';
+import TextToSpeech from './components/TextToSpeech';
 import ExportToSheets from './components/ExportToSheets';
 import AuthModal from './components/AuthModal';
 import { ClockIcon } from './components/icons/ClockIcon';
@@ -60,6 +62,7 @@ function App() {
   const [wordPdfHistory, setWordPdfHistory] = useUserLocalStorage<WordPdfHistoryItem[]>(currentUser?.id, 'wordPdfHistory', []);
   const [videoAudioHistory, setVideoAudioHistory] = useUserLocalStorage<VideoAudioHistoryItem[]>(currentUser?.id, 'videoAudioHistory', []);
   const [audioMergerHistory, setAudioMergerHistory] = useUserLocalStorage<AudioMergerHistoryItem[]>(currentUser?.id, 'audioMergerHistory', []);
+  const [ttsHistory, setTtsHistory] = useUserLocalStorage<TtsHistoryItem[]>(currentUser?.id, 'ttsHistory', []);
   
   const [historyTab, setHistoryTab] = useState('transcriptions');
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
@@ -173,6 +176,7 @@ function App() {
         case 'Word to PDF': setWordPdfHistory(prev => [newItem, ...prev]); break;
         case 'Video to Audio': setVideoAudioHistory(prev => [newItem, ...prev]); break;
         case 'Audio Merger': setAudioMergerHistory(prev => [newItem, ...prev]); break;
+        case 'Text to Speech': setTtsHistory(prev => [newItem, ...prev]); break;
     }
   };
 
@@ -253,6 +257,7 @@ function App() {
       case 'Word to PDF': return <div className={mainContentClass}><WordToPdf t={t} onConversionComplete={(data) => handleAddToHistory('Word to PDF', data)} /></div>;
       case 'Video to Audio': return <div className={mainContentClass}><VideoToAudio t={t} onConversionComplete={(data) => handleAddToHistory('Video to Audio', data)} /></div>;
       case 'Audio Merger': return <div className={mainContentClass}><AudioMerger t={t} onConversionComplete={(data) => handleAddToHistory('Audio Merger', data)} /></div>;
+      case 'Text to Speech': return <div className={mainContentClass}><TextToSpeech t={t} onComplete={(data) => handleAddToHistory('Text to Speech', data)} /></div>;
       case 'Export to Sheets': return <div className={mainContentClass}><ExportToSheets t={t} /></div>;
       case 'History':
         const tabs = [
@@ -266,6 +271,7 @@ function App() {
             { id: 'wordpdf', label: t.wordToPdf },
             { id: 'videoaudio', label: t.videoToAudio },
             { id: 'audiomerger', label: t.audioMerger },
+            { id: 'tts', label: t.textToSpeech },
         ];
         return (
              <div className={`${mainContentClass} animate-fadeIn h-full overflow-hidden`}>
@@ -309,6 +315,9 @@ function App() {
                      )} />}
                      {historyTab === 'audiomerger' && <HistoryPanel items={audioMergerHistory} onSelect={() => {}} onDelete={(id) => setAudioMergerHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={(item) => (
                         <div className="flex-grow overflow-hidden"><p className="font-semibold truncate text-gray-200">{item.fileName}</p><p className="text-xs text-gray-400">{item.date} • {item.fileCount} files</p></div>
+                     )} />}
+                     {historyTab === 'tts' && <HistoryPanel items={ttsHistory} onSelect={() => {}} onDelete={(id) => setTtsHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={(item) => (
+                        <div className="flex-grow overflow-hidden"><p className="font-semibold truncate text-gray-200">{item.text}</p><p className="text-xs text-gray-400">{item.date} • Voice: {item.voice}</p></div>
                      )} />}
                 </div>
             </div>
