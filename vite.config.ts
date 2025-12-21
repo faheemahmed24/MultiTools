@@ -19,5 +19,20 @@ export default defineConfig(({ mode }) => {
           '@': path.resolve(__dirname, '.'),
         }
       }
+      ,
+      build: {
+        chunkSizeWarningLimit: 2000,
+        rollupOptions: {
+          output: {
+            manualChunks(id: string) {
+              if (id.includes('node_modules')) {
+                if (id.includes('react') || id.includes('react-dom')) return 'vendor_react';
+                if (id.includes('pdfjs-dist') || id.includes('html2canvas') || id.includes('jspdf') || id.includes('docx') || id.includes('jszip') || id.includes('mammoth')) return 'vendor_large';
+                return 'vendor';
+              }
+            }
+          }
+        }
+      }
     };
 });
