@@ -2,7 +2,11 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { Transcription } from '../types';
 
 // Initialize the Google GenAI client with the API key from environment variables.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+const apiKey = process.env.API_KEY as string;
+if (!apiKey) {
+  throw new Error("GEMINI_API_KEY is not set. Please configure it in your hosting environment.");
+}
+const ai = new GoogleGenAI({ apiKey });
 
 const MODELS = {
     // Primary model for complex tasks like transcription with speaker diarization.
