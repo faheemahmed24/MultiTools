@@ -16,6 +16,7 @@ import { SpeakerIcon } from './icons/SpeakerIcon';
 import { SheetIcon } from './icons/SheetIcon';
 import { GrammarIcon } from './icons/GrammarIcon';
 import { HistoryIcon } from './icons/HistoryIcon';
+import { CogIcon } from './icons/CogIcon';
 
 interface HeaderProps {
   uiLanguage: Language;
@@ -47,6 +48,7 @@ const Header: React.FC<HeaderProps> = ({
   const isInitialMount = useRef(true);
 
   const tools = [
+    { key: 'Features', label: 'Features', icon: CogIcon },
     { key: 'AI Transcriber', label: t.aiTranscriber, icon: TranscriberIcon },
     { key: 'AI Translator', label: t.aiTranslatorTitle, icon: TranslatorIcon },
     { key: 'Grammar Corrector', label: t.grammarCorrector, icon: GrammarIcon },

@@ -15,7 +15,11 @@ View your app in AI Studio: https://ai.studio/apps/drive/13TyrNh1XXvSvltSdNcdyqT
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env](.env) to your Gemini API key
+2. Copy `.env.example` to `.env` and set `GEMINI_API_KEY` to your Gemini API key
+   ```bash
+   cp .env.example .env
+   # then edit .env and add your GEMINI_API_KEY
+   ```
 3. Run the app:
    `npm run dev`
 
@@ -45,3 +49,46 @@ This repository can be deployed to Cloudflare in two ways:
    - If your Cloudflare integration runs `npx wrangler deploy`, this repo includes `wrangler.jsonc` which points to `./dist` so Wrangler will upload the built assets.
 
 After pushing changes, Cloudflare will build and publish the `dist/` directory.
+
+## Features
+
+MultiTools is a comprehensive media processing and productivity platform. Core tools and functionality include:
+
+1. **AI Transcriber**
+   - Media Transcription: Converts audio and video files (MP3, WAV, MP4, etc.) into structured text.
+   - Auto-Language Detection: Automatically identifies the spoken language.
+   - Speaker Diarization: Identifies and labels different speakers.
+   - Transcript Editor: Interactive editor to adjust timestamps, speakers, and text.
+   - Multi-Format Export: TXT, JSON, SRT, DOCX, PDF, CSV.
+
+2. **AI Translator**
+   - Multi-Language Translation between dozens of languages.
+   - Language Swapping and Batch Export (TXT, DOCX, PDF).
+
+3. **Image & OCR Tools**
+   - OCR extraction from images or scanned documents.
+   - Batch image processing with pacing for API limits.
+   - Integrated translation of OCR results.
+
+4. **PDF & Document Management**
+   - PDF → Image (PNG/JPEG) with page range selection.
+   - Image → PDF with page / orientation / margin controls.
+   - PDF → Word (DOCX) extraction.
+   - Word → PDF rendering.
+   - Image editor (rotate, brightness, contrast, saturation) before conversion.
+
+5. **Audio & Video Utilities**
+   - Video → Audio (WAV, MP3, FLAC, AAC).
+   - Audio Merger: merge multiple audio tracks into one.
+
+6. **Advanced AI Features**
+   - Text to Speech (TTS) with multiple AI voices.
+   - Read Online: Fetch & extract page text from any URL.
+   - Grammar Corrector with visual diff view.
+
+7. **Data & Organization**
+   - Export to Sheets (CSV) with preview and cleanup.
+   - Persistent local-first history scoped per user.
+   - Multilingual UI (English, Hindi, Urdu, Arabic with RTL support).
+   - Local auth (email/password + simulated Google login).
+

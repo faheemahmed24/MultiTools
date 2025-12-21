@@ -23,6 +23,7 @@ import AudioMerger from './components/AudioMerger';
 import TextToSpeech from './components/TextToSpeech';
 import ExportToSheets from './components/ExportToSheets';
 import AuthModal from './components/AuthModal';
+import Features from './components/Features';
 import { ClockIcon } from './components/icons/ClockIcon';
 import { CheckCircleIcon } from './components/icons/CheckCircleIcon';
 import { XCircleIcon } from './components/icons/XCircleIcon';
@@ -259,6 +260,7 @@ function App() {
       case 'Audio Merger': return <div className={mainContentClass}><AudioMerger t={t} onConversionComplete={(data) => handleAddToHistory('Audio Merger', data)} /></div>;
       case 'Text to Speech': return <div className={mainContentClass}><TextToSpeech t={t} onComplete={(data) => handleAddToHistory('Text to Speech', data)} /></div>;
       case 'Export to Sheets': return <div className={mainContentClass}><ExportToSheets t={t} /></div>;
+      case 'Features': return <div className={mainContentClass}><Features t={t} /></div>;
       case 'History':
         const tabs = [
             { id: 'transcriptions', label: t.transcription },

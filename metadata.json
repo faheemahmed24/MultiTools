@@ -1,5 +1,5 @@
 {
   "name": "MultiTools",
-  "description": "A powerful, local-first transcription application that converts speech from audio and video files into text. It features auto-language detection, multi-language support (English, Arabic, Urdu, Hindi), timestamp toggling, and a persistent history of your transcriptions.",
+  "description": "MultiTools — a comprehensive media processing and productivity platform: AI transcription, translation, OCR, PDF and image conversion, audio/video utilities, TTS, grammar correction, and export tools. Local-first history and multilingual UI.",
   "requestFramePermissions": []
 }
