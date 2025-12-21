@@ -1,0 +1,46 @@
+:root {
+  --bg-dark-gray: #111827;
+  --bg-med-gray: #1f2937;
+  --bg-light-gray: #374151;
+  --border-gray: #4b5563;
+  --text-light: #f3f4f6;
+  --text-med: #9ca3af;
+  --accent-purple: #8b5cf6;
+  --font-sans: 'Inter', sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-dark-gray);
+  background-image: radial-gradient(circle at 1px 1px, rgba(139, 92, 246, 0.1) 1px, transparent 0);
+  background-size: 2rem 2rem;
+  margin: 0;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-dark-gray); }
+::-webkit-scrollbar-thumb { background: var(--bg-light-gray); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-dark); }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn { animation: fadeIn 0.3s ease-in-out forwards; }
+
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-pop-in { animation: pop-in 0.2s ease-out forwards; }
+
+.progress-bar-shimmer {
+  background: linear-gradient(to right, var(--accent-purple) 4%, #a855f7 25%, var(--accent-purple) 36%);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite linear;
+}
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
