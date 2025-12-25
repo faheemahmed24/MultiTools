@@ -69,7 +69,7 @@
     <div id="root"></div>
     <script>
       // If the site is served directly from the repo (unbuilt), the script below
-      // will detect the presence of the Vite dev entry (`/src/index.tsx`) and
+      // will detect the presence of the Vite dev entry and
       // show an explanatory overlay instead of a confusing blank page.
       (function(){
         try {
@@ -87,7 +87,7 @@
             overlay.style.zIndex = '99999';
             overlay.innerHTML = `<div style="max-width:720px;padding:24px;border-radius:12px;background:rgba(0,0,0,0.35);box-shadow:0 10px 30px rgba(0,0,0,0.6);font-family:Inter, system-ui, sans-serif">
               <h2 style="margin:0 0 8px 0;font-size:20px">Site is running unbuilt source</h2>
-              <p style="margin:0 0 12px 0;color:#d1d5db">It looks like the repository source files are being served directly (entry: <code>/src/index.tsx</code>). Build the project and serve the generated <code>dist/</code> folder or configure Cloudflare Pages to run <code>npm run build</code> and publish <code>dist/</code>.</p>
+              <p style="margin:0 0 12px 0;color:#d1d5db">It looks like the repository source files are being served directly (entry: <code>the development entry point</code>). Build the project and serve the generated <code>dist/</code> folder or configure Cloudflare Pages to run <code>npm run build</code> and publish <code>dist/</code>.</p>
               <p style="margin:0;font-size:13px;color:#9ca3af">See README or CLOUDFLARE-PAGES.md for deployment instructions.</p>
             </div>`;
             document.documentElement.style.background = '#0b1220';

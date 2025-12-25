@@ -77,8 +77,6 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
           id: `${file.name}-${file.lastModified}-${Math.random()}`,
           file,
           preview: URL.createObjectURL(file),
-      const jspdf = await import('jspdf');
-      const doc = new jspdf.jsPDF({ orientation, unit: 'mm', format: pageSize });
         }));
 
       if (images.length === 0 && newImages.length > 0) {
@@ -135,11 +133,9 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
     setEditingImage(null);
   };
 
-  const applyEditsToImage = (image: ImageFile): Promise<string> => {
-    return new Promise((resolve, reject) => {
+  const applyEditsToImage = async (image: ImageFile): Promise<string> => {
+    return new Promise(async (resolve, reject) => {
         const edits = image.edits;
-      const imageParagraphs: any[] = [];
-      const docxMod = await import('docx');
         const ctx = canvas.getContext('2d');
         if (!ctx) return reject('Could not get canvas context');
 
@@ -159,11 +155,11 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
             ctx.rotate(edits.rotate * Math.PI / 180);
             ctx.drawImage(img, -img.width / 2, -img.height / 2);
             
-        imageParagraphs.push(new docxMod.Paragraph({ children: [imageRun] }));
+            resolve(canvas.toDataURL());
         };
         img.onerror = () => reject('Image failed to load');
-      const doc = new docxMod.Document({ sections: [{ children: imageParagraphs }] });
-      const blob = await docxMod.Packer.toBlob(doc);
+    });
+  };
   
   const handleConvertToPdf = async () => {
     if (images.length === 0) return;

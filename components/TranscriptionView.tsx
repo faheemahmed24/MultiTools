@@ -103,7 +103,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
 
     if (format === 'txt') download(`${base}.txt`, fullText, 'text/plain');
     else if (format === 'json') download(`${base}.json`, JSON.stringify(transcription, null, 2), 'application/json');
-    } else if (format === 'docx') {
+    else if (format === 'docx') {
       const docxMod = await import('docx');
       const paragraphs = transcription.segments.map(s => new docxMod.Paragraph({ children: [new docxMod.TextRun({ text: `${s.speaker} (${s.startTime}): `, bold: true }), new docxMod.TextRun(s.text)], spacing: { after: 120 } }));
       const blob = await docxMod.Packer.toBlob(new docxMod.Document({ sections: [{ children: paragraphs }] }));
