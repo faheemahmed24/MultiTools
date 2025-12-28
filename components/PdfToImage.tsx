@@ -7,7 +7,6 @@ import { DownloadIcon } from './icons/DownloadIcon';
 import { analyzeImage } from '../services/geminiService';
 import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
-import * as docx from 'docx';
 
 
 interface GeneratedImage {

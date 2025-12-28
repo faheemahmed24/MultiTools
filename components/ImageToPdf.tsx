@@ -12,6 +12,7 @@ import { EditIcon } from './icons/EditIcon';
 import { analyzeImage } from '../services/geminiService';
 import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
+import type { Paragraph } from 'docx';
 
 
 interface ImageFile {
@@ -169,6 +170,7 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
     setExtractedText('');
     setExtractionError('');
 
+    const { jsPDF } = await import('jspdf');
     const doc = new jsPDF({ orientation, unit: 'mm', format: pageSize });
     const marginValue = MARGIN_VALUES[margin];
     
@@ -229,7 +231,8 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
     setConversionMessage(t.generatingWord);
     setPdfUrl(null);
 
-    const imageParagraphs: docx.Paragraph[] = [];
+    const docx = await import('docx');
+    const imageParagraphs: Paragraph[] = [];
 
     for (const image of images) {
         const editedImageDataUrl = await applyEditsToImage(image);

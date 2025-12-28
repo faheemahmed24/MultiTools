@@ -5,7 +5,6 @@ import { DownloadIcon } from './icons/DownloadIcon';
 // Lazy-load heavy libraries at runtime to avoid import-time failures
 import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
-import * as docx from 'docx';
 
 interface WordToPdfProps {
     t: TranslationSet;

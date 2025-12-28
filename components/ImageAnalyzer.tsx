@@ -17,8 +17,6 @@ import { CheckCircleIcon } from './icons/CheckCircleIcon';
 import { ClockIcon } from './icons/ClockIcon';
 import { XCircleIcon } from './icons/XCircleIcon';
 import { FolderIcon } from './icons/FolderIcon';
-import { jsPDF } from 'jspdf';
-import * as docx from 'docx';
 import { SkeletonLoader } from './Loader';
 
 const ResultBox: React.FC<{ 

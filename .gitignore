@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Gemini CLI
+.gemini/
+gha-creds-*.json
