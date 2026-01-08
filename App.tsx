@@ -1,9 +1,9 @@
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useUserLocalStorage } from './hooks/useUserLocalStorage';
 import { getTranslations } from './lib/i18n';
-import type { Language, User, Transcription, TranscriptionSegment, TranslationHistoryItem, AnalysisHistoryItem, PdfImageHistoryItem, ImagePdfHistoryItem, PdfWordHistoryItem, WordPdfHistoryItem, GrammarHistoryItem, VideoAudioHistoryItem, AudioMergerHistoryItem, TtsHistoryItem } from './types';
+import type { Language, User, Transcription, TranslationHistoryItem, AnalysisHistoryItem, PdfImageHistoryItem, VideoAudioHistoryItem, TtsHistoryItem, DataSummarizerHistoryItem, GrammarHistoryItem } from './types';
 import { transcribeAudio } from './services/geminiService';
 
 import Header from './components/Header';
@@ -17,311 +17,260 @@ import ImageConverterOcr from './components/ImageAnalyzer';
 import PdfToImage from './components/PdfToImage';
 import ImageToPdf from './components/ImageToPdf';
 import PdfToWord from './components/PdfToWord';
-import WordToPdf from './components/WordToPdf';
 import VideoToAudio from './components/VideoToAudio';
 import AudioMerger from './components/AudioMerger';
 import TextToSpeech from './components/TextToSpeech';
+import DataSummarizer from './components/DataSummarizer';
+import ImageToolsHub from './components/ImageToolsHub';
 import ExportToSheets from './components/ExportToSheets';
+import StrategicPlanner from './components/StrategicPlanner';
 import AuthModal from './components/AuthModal';
-import Features from './components/Features';
-import { ClockIcon } from './components/icons/ClockIcon';
-import { CheckCircleIcon } from './components/icons/CheckCircleIcon';
 import { XCircleIcon } from './components/icons/XCircleIcon';
 import { UserIcon } from './components/icons/UserIcon';
+import { SparklesIcon } from './components/icons/SparklesIcon';
 
-const HamburgerIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-    </svg>
-);
+const LandingPage: React.FC<{ onStart: () => void; onLogin: () => void; currentUser: User | null }> = ({ onStart, onLogin, currentUser }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
-interface ProcessingFile {
-  id: string;
-  file: File;
-  status: 'pending' | 'processing' | 'done' | 'error';
-  error?: string;
-  transcriptionId?: string;
-  languageHint?: string;
-}
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoaded(true), 800);
+    const handleMouseMove = (e: MouseEvent) => setMousePos({ x: e.clientX, y: e.clientY });
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
+
+  const cardStyle = "group relative overflow-hidden backdrop-blur-xl bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-8 transition-all duration-500 hover:-translate-y-2 hover:border-purple-500/40 hover:bg-white/[0.05] shadow-2xl cursor-pointer";
+
+  return (
+    <div className="min-h-full flex flex-col items-center justify-center relative overflow-visible animate-fadeIn pb-24">
+      {/* Interactive Background Blobs */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/4 -left-20 w-[500px] h-[500px] bg-purple-600/10 blur-[140px] rounded-full animate-pulse"></div>
+        <div className="absolute bottom-1/4 -right-20 w-[500px] h-[500px] bg-pink-600/10 blur-[140px] rounded-full animate-pulse" style={{ animationDelay: '3s' }}></div>
+        <div 
+          className="absolute w-[600px] h-[600px] bg-purple-500/5 blur-[120px] rounded-full transition-transform duration-700 ease-out"
+          style={{ transform: `translate(${mousePos.x - 300}px, ${mousePos.y - 300}px)` }}
+        ></div>
+      </div>
+
+      <div className="max-w-6xl w-full text-center space-y-12 z-10 px-6 pt-12">
+        {!isLoaded ? (
+          <div className="animate-pulse space-y-8">
+            <div className="h-32 bg-white/5 rounded-3xl w-3/4 mx-auto"></div>
+            <div className="h-10 bg-white/5 rounded-xl w-1/2 mx-auto"></div>
+          </div>
+        ) : (
+          <>
+            <div className="relative inline-block">
+              <h1 className="text-7xl md:text-[9rem] font-black tracking-tighter text-white relative leading-none select-none">
+                <span className="text-transparent bg-clip-text bg-gradient-to-br from-purple-400 via-purple-500 to-purple-800">Multi</span>Tools
+              </h1>
+              <div className="mt-4 text-xs font-black uppercase tracking-[0.8em] text-gray-500 flex items-center justify-center gap-4">
+                <div className="h-px w-8 bg-gray-800"></div>
+                Integrated Data Workstation
+                <div className="h-px w-8 bg-gray-800"></div>
+              </div>
+            </div>
+            
+            <p className="text-xl md:text-2xl text-gray-400 font-medium leading-relaxed max-w-2xl mx-auto">
+              Process audio, visual media, and business logic through <br/> 
+              <span className="text-white font-bold">one high-performance universal engine.</span>
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-8">
+              <button 
+                onClick={onStart}
+                className="group relative px-14 py-5 bg-purple-600 hover:bg-purple-500 text-white font-black uppercase tracking-[0.2em] text-sm rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_50px_rgba(168,85,247,0.4)] hover:brightness-110"
+              >
+                <div className="absolute inset-0 rounded-2xl bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <span className="relative flex items-center gap-3">
+                  <SparklesIcon className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                  Launch Dashboard
+                </span>
+              </button>
+              
+              {!currentUser && (
+                <button 
+                  onClick={onLogin}
+                  className="px-14 py-5 bg-transparent border border-white/10 hover:border-white/30 text-gray-400 font-black uppercase tracking-[0.2em] text-sm rounded-2xl transition-all hover:text-white active:scale-95"
+                >
+                  Sign In
+                </button>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Bento Grid with Shimmer Effects */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-24 text-left pb-12">
+          <div className={`${cardStyle} md:col-span-2 overflow-hidden`}>
+            <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent via-white/[0.03] to-transparent group-hover:animate-[shimmer_2s_infinite]"></div>
+            <div className="absolute top-8 right-8 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
+              <span className="text-[10px] font-black text-yellow-500/80 uppercase tracking-widest">Logic Hub</span>
+            </div>
+            <div className="text-3xl font-black text-white uppercase tracking-tighter mb-4">Strategic Plan</div>
+            <p className="text-gray-500 font-bold text-sm leading-relaxed max-w-md">
+              The Burooj-themed logic core that architecturally maps chaotic data into structured visual reports and actionable task lists.
+            </p>
+          </div>
+
+          <div className={cardStyle}>
+            <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent via-white/[0.03] to-transparent group-hover:animate-[shimmer_2s_infinite]"></div>
+            <div className="absolute top-8 right-8">
+              <span className="text-[10px] font-black text-cyan-500/80 uppercase tracking-widest">Vision</span>
+            </div>
+            <div className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Visual Studio</div>
+            <p className="text-gray-500 font-bold text-xs leading-relaxed">
+              Precision OCR, multimodal editing, and government-compliant formatting tools for high-stakes documentation.
+            </p>
+          </div>
+
+          <div className={cardStyle}>
+             <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent via-white/[0.03] to-transparent group-hover:animate-[shimmer_2s_infinite]"></div>
+             <div className="absolute top-8 right-8">
+              <span className="text-[10px] font-black text-purple-500/80 uppercase tracking-widest">Audio</span>
+            </div>
+            <div className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Voice Archive</div>
+            <p className="text-gray-500 font-bold text-xs leading-relaxed">
+              Deep-learning transcription across 50+ languages with diarization and automated content summarization.
+            </p>
+          </div>
+
+          <div className={`${cardStyle} md:col-span-2`}>
+             <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent via-white/[0.03] to-transparent group-hover:animate-[shimmer_2s_infinite]"></div>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-black text-white uppercase tracking-tighter mb-2">Smart Summarizer</div>
+                <p className="text-gray-500 font-bold text-xs">Instantly synthesize vast datasets into structured insights and key entities.</p>
+              </div>
+              <div className="bg-white/5 p-4 rounded-3xl border border-white/5 group-hover:border-purple-500/30 transition-colors">
+                <SparklesIcon className="w-8 h-8 text-purple-500" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 function App() {
   const [uiLanguage, setUiLanguage] = useLocalStorage<Language>('uiLanguage', 'en');
   const [currentUser, setCurrentUser] = useLocalStorage<User | null>('currentUser', null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useLocalStorage<boolean>('isSidebarOpen', true);
   
-  const [activeTool, setActiveTool] = useUserLocalStorage<string>(currentUser?.id, 'activeTool', 'AI Transcriber');
+  const [activeTool, setActiveTool] = useUserLocalStorage<string>(currentUser?.id, 'activeTool', 'Home');
+  const [activeImageCategory, setActiveImageCategory] = useUserLocalStorage<string>(currentUser?.id, 'activeImageCategory', 'All');
+  const [activeSummaryCategory, setActiveSummaryCategory] = useUserLocalStorage<string>(currentUser?.id, 'activeSummaryCategory', 'All');
+  const [historyTab, setHistoryTab] = useUserLocalStorage<string>(currentUser?.id, 'historyTab', 'transcriptions');
+  
   const [transcriptions, setTranscriptions] = useUserLocalStorage<Transcription[]>(currentUser?.id, 'transcriptions', []);
   const [currentTranscriptionId, setCurrentTranscriptionId] = useUserLocalStorage<string | null>(currentUser?.id, 'currentTranscriptionId', null);
-  const [processingFiles, setProcessingFiles] = useState<ProcessingFile[]>([]);
+  const [processingFiles, setProcessingFiles] = useState<any[]>([]);
   
   const [translationHistory, setTranslationHistory] = useUserLocalStorage<TranslationHistoryItem[]>(currentUser?.id, 'translationHistory', []);
   const [grammarHistory, setGrammarHistory] = useUserLocalStorage<GrammarHistoryItem[]>(currentUser?.id, 'grammarHistory', []);
-  const [analysisHistory, setAnalysisHistory] = useUserLocalStorage<AnalysisHistoryItem[]>(currentUser?.id, 'analysisHistory', []);
-  const [pdfImageHistory, setPdfImageHistory] = useUserLocalStorage<PdfImageHistoryItem[]>(currentUser?.id, 'pdfImageHistory', []);
-  const [imagePdfHistory, setImagePdfHistory] = useUserLocalStorage<ImagePdfHistoryItem[]>(currentUser?.id, 'imagePdfHistory', []);
-  const [pdfWordHistory, setPdfWordHistory] = useUserLocalStorage<PdfWordHistoryItem[]>(currentUser?.id, 'pdfWordHistory', []);
-  const [wordPdfHistory, setWordPdfHistory] = useUserLocalStorage<WordPdfHistoryItem[]>(currentUser?.id, 'wordPdfHistory', []);
-  const [videoAudioHistory, setVideoAudioHistory] = useUserLocalStorage<VideoAudioHistoryItem[]>(currentUser?.id, 'videoAudioHistory', []);
-  const [audioMergerHistory, setAudioMergerHistory] = useUserLocalStorage<AudioMergerHistoryItem[]>(currentUser?.id, 'audioMergerHistory', []);
-  const [ttsHistory, setTtsHistory] = useUserLocalStorage<TtsHistoryItem[]>(currentUser?.id, 'ttsHistory', []);
-  
-  const [historyTab, setHistoryTab] = useState('transcriptions');
-  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
-  const [isSidebarOpen, setIsSidebarOpen] = useLocalStorage<boolean>('isSidebarOpen', window.innerWidth >= 768);
+  const [summarizerHistory, setSummarizerHistory] = useUserLocalStorage<DataSummarizerHistoryItem[]>(currentUser?.id, 'summarizerHistory', []);
+  const [plannerHistory, setPlannerHistory] = useUserLocalStorage<any[]>(currentUser?.id, 'plannerHistory', []);
 
   const t = useMemo(() => getTranslations(uiLanguage), [uiLanguage]);
 
-  useEffect(() => {
-    document.documentElement.lang = uiLanguage;
-    const isRtl = uiLanguage === 'ar' || uiLanguage === 'ur';
-    document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
-    document.body.classList.toggle('rtl', isRtl);
-  }, [uiLanguage]);
-  
-  useEffect(() => {
-    const handleResize = () => {
-      const newIsDesktop = window.innerWidth >= 768;
-      if (newIsDesktop !== isDesktop) {
-        setIsDesktop(newIsDesktop);
-        if (!newIsDesktop) setIsSidebarOpen(false);
-        else setIsSidebarOpen(true);
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [isDesktop, setIsSidebarOpen]);
+  const handleLaunchDashboard = () => {
+    setActiveTool('AI Transcriber');
+    setIsSidebarOpen(true);
+  };
 
-  const currentTranscription = useMemo(() => {
-    if (!currentTranscriptionId) return null;
-    return transcriptions.find(t => t.id === currentTranscriptionId) || null;
-  }, [transcriptions, currentTranscriptionId]);
-  
   const handleFilesSelect = (files: File[], languageHint: string) => {
-    const newFilesToProcess: ProcessingFile[] = files.map(file => ({
-      id: `${file.name}-${file.lastModified}-${Math.random()}`,
+    const newFiles = files.map(file => ({
+      id: `${file.name}-${Date.now()}-${Math.random()}`,
       file,
       status: 'pending',
       languageHint,
     }));
-    setProcessingFiles(current => [...current, ...newFilesToProcess]);
+    setProcessingFiles(current => [...current, ...newFiles]);
     setActiveTool('AI Transcriber');
     setCurrentTranscriptionId(null);
   };
 
   useEffect(() => {
-    const isProcessing = processingFiles.some(f => f.status === 'processing');
-    if (isProcessing) return;
-
     const fileToProcess = processingFiles.find(f => f.status === 'pending');
     if (!fileToProcess) return;
 
     const processFile = async () => {
       setProcessingFiles(prev => prev.map(f => f.id === fileToProcess.id ? { ...f, status: 'processing' } : f));
-      
       try {
-        const newTranscriptionData = await transcribeAudio(fileToProcess.file, fileToProcess.languageHint);
+        const data = await transcribeAudio(fileToProcess.file, fileToProcess.languageHint);
         const newTranscription: Transcription = {
-          ...newTranscriptionData,
+          ...data,
           id: `${Date.now()}-${Math.random()}`,
-          date: new Date().toLocaleDateString(uiLanguage, { year: 'numeric', month: 'long', day: 'numeric' }),
+          date: new Date().toLocaleDateString(),
         };
-        
         setTranscriptions(prev => [newTranscription, ...prev]);
         setProcessingFiles(prev => prev.map(f => f.id === fileToProcess.id ? { ...f, status: 'done', transcriptionId: newTranscription.id } : f));
         setCurrentTranscriptionId(newTranscription.id);
-        
       } catch (err: any) {
-        setProcessingFiles(prev => prev.map(f => (
-          f.id === fileToProcess.id ? { ...f, status: 'error', error: err.message } : f
-        )));
+        setProcessingFiles(prev => prev.map(f => (f.id === fileToProcess.id ? { ...f, status: 'error', error: err.message } : f)));
       }
     };
-    
     processFile();
-  }, [processingFiles, setTranscriptions, uiLanguage, setCurrentTranscriptionId]);
-
-  const handleUpdateTranscription = useCallback((id: string, updatedSegments: TranscriptionSegment[]) => {
-    setTranscriptions(prev => prev.map(t => t.id === id ? { ...t, segments: updatedSegments } : t));
-  }, [setTranscriptions]);
-
-  const handleDeleteTranscription = useCallback((id: string) => {
-    setTranscriptions(prev => prev.filter(t => t.id !== id));
-    if (currentTranscriptionId === id) setCurrentTranscriptionId(null);
-  }, [currentTranscriptionId, setTranscriptions, setCurrentTranscriptionId]);
-
-  const handleSelectTranscription = useCallback((transcription: Transcription) => {
-    setActiveTool('AI Transcriber');
-    setCurrentTranscriptionId(transcription.id);
-  }, [setActiveTool, setCurrentTranscriptionId]);
-
-  const handleLoginSuccess = (user: User) => {
-    setCurrentUser(user);
-    setIsAuthModalOpen(false);
-  };
-  
-  const handleLogout = () => {
-    setCurrentUser(null);
-  };
-  
-  const handleAddToHistory = (tool: string, data: any) => {
-    const newItem = {
-        id: `${Date.now()}-${Math.random()}`,
-        date: new Date().toLocaleDateString(uiLanguage, { year: 'numeric', month: 'long', day: 'numeric' }),
-        ...data,
-    };
-    switch (tool) {
-        case 'AI Translator': setTranslationHistory(prev => [newItem, ...prev]); break;
-        case 'Grammar Corrector': setGrammarHistory(prev => [newItem, ...prev]); break;
-        case 'Image Converter & OCR': setAnalysisHistory(prev => [newItem, ...prev]); break;
-        case 'PDF to Image': setPdfImageHistory(prev => [newItem, ...prev]); break;
-        case 'Image to PDF': setImagePdfHistory(prev => [newItem, ...prev]); break;
-        case 'PDF to Word': setPdfWordHistory(prev => [newItem, ...prev]); break;
-        case 'Word to PDF': setWordPdfHistory(prev => [newItem, ...prev]); break;
-        case 'Video to Audio': setVideoAudioHistory(prev => [newItem, ...prev]); break;
-        case 'Audio Merger': setAudioMergerHistory(prev => [newItem, ...prev]); break;
-        case 'Text to Speech': setTtsHistory(prev => [newItem, ...prev]); break;
-    }
-  };
+  }, [processingFiles]);
 
   const renderActiveTool = () => {
-    const mainContentClass = "flex flex-col h-full";
-    
     switch (activeTool) {
+      case 'Home':
+        return <LandingPage currentUser={currentUser} onStart={handleLaunchDashboard} onLogin={() => setIsAuthModalOpen(true)} />;
       case 'AI Transcriber':
-        if (currentTranscription) {
-             return (
-                 <div className="h-full animate-fadeIn">
-                     <TranscriptionView 
-                        transcription={currentTranscription} 
-                        onSave={() => {}} 
-                        onUpdate={handleUpdateTranscription} 
-                        onClose={() => setCurrentTranscriptionId(null)}
-                        t={t} 
-                    />
-                 </div>
-             )
+        if (currentTranscriptionId) {
+             const ct = transcriptions.find(tr => tr.id === currentTranscriptionId);
+             if (ct) return <TranscriptionView transcription={ct} onSave={() => {}} onUpdate={(id, segs) => setTranscriptions(prev => prev.map(t => t.id === id ? {...t, segments: segs} : t))} onClose={() => setCurrentTranscriptionId(null)} t={t} />;
         }
         return (
-            <div className={`${mainContentClass} animate-fadeIn`}>
+            <div className="flex flex-col h-full animate-fadeIn">
                 {processingFiles.length > 0 ? (
-                    (() => {
-                        const allDone = processingFiles.every(f => f.status === 'done' || f.status === 'error');
-                        return (
-                            <section className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl shadow-lg p-6">
-                                <h2 className="text-xl font-bold mb-4 text-gray-200">Transcription Queue</h2>
-                                <ul className="space-y-4">
-                                    {processingFiles.map(f => (
-                                        <li key={f.id} className="bg-gray-700/50 p-4 rounded-lg">
-                                            <div className="flex items-center justify-between gap-4 mb-2">
-                                                <p className="font-semibold truncate text-gray-200 flex-1" title={f.file.name}>{f.file.name}</p>
-                                                <div className="flex items-center gap-3">
-                                                    {f.status === 'pending' && <ClockIcon className="w-5 h-5 text-gray-400" />}
-                                                    {f.status === 'processing' && <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-400"></div>}
-                                                    {f.status === 'done' && <CheckCircleIcon className="w-5 h-5 text-green-400" />}
-                                                    {f.status === 'error' && <XCircleIcon className="w-5 h-5 text-red-400" />}
-                                                    <span className="text-sm font-medium text-gray-300 capitalize">{f.status === 'done' ? 'Completed' : f.status}</span>
-                                                    {f.status === 'done' && f.transcriptionId && (
-                                                        <button 
-                                                            onClick={() => setCurrentTranscriptionId(f.transcriptionId!)}
-                                                            className="text-xs bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-white font-bold transition-colors"
-                                                        >
-                                                            VIEW
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <div className="w-full bg-gray-600 rounded-full h-1.5 overflow-hidden">
-                                                <div className={`h-full rounded-full transition-all duration-500 ${f.status === 'error' ? 'bg-red-500 w-full' : (f.status === 'processing' ? 'progress-bar-shimmer w-full' : (f.status === 'done' ? 'bg-purple-500 w-full' : 'bg-purple-500 w-[10%]'))}`}></div>
-                                            </div>
-                                            {f.error && <p className="mt-2 text-xs text-red-400 leading-relaxed">{f.error}</p>}
-                                        </li>
-                                    ))}
-                                </ul>
-                                {allDone && (
-                                    <div className="flex gap-4 mt-6">
-                                        <button onClick={() => setProcessingFiles([])} className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 font-semibold rounded-lg transition-colors text-white">Upload More</button>
-                                        <button onClick={() => setProcessingFiles([])} className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 font-semibold rounded-lg transition-colors text-white">Clear Queue</button>
+                    <section className="bg-white/[0.03] backdrop-blur-md border border-white/10 rounded-3xl p-8 max-w-4xl mx-auto w-full">
+                        <h2 className="text-2xl font-black mb-6 text-white uppercase tracking-widest">Processing Stack</h2>
+                        <ul className="space-y-4">
+                            {processingFiles.map(f => (
+                                <li key={f.id} className="bg-black/40 p-5 rounded-2xl border border-white/5">
+                                    <div className="flex items-center justify-between gap-4">
+                                        <p className="font-bold truncate text-gray-100 flex-1">{f.file.name}</p>
+                                        <div className="flex items-center gap-3">
+                                            {f.status === 'processing' && <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-400/20 border-t-purple-400"></div>}
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">{f.status}</span>
+                                            {f.status === 'done' && <button onClick={() => setCurrentTranscriptionId(f.transcriptionId!)} className="text-[10px] font-black tracking-widest bg-purple-600 px-4 py-2 rounded-lg text-white hover:bg-purple-500 transition-colors">OPEN</button>}
+                                        </div>
                                     </div>
-                                )}
-                            </section>
-                        );
-                    })()
-                ) : (
-                    <FileUpload onFilesSelect={handleFilesSelect} t={t} isProcessing={false} />
-                )}
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                ) : <FileUpload onFilesSelect={handleFilesSelect} t={t} isProcessing={false} />}
             </div>
         );
-      case 'AI Translator': return <div className={mainContentClass}><AITranslator t={t} onTranslationComplete={(data) => handleAddToHistory('AI Translator', data)} /></div>;
-      case 'Grammar Corrector': return <div className={mainContentClass}><GrammarCorrector t={t} onCorrectionComplete={(data) => handleAddToHistory('Grammar Corrector', data)} /></div>;
-      case 'Image Converter & OCR': return <div className={mainContentClass}><ImageConverterOcr t={t} onAnalysisComplete={(data) => handleAddToHistory('Image Converter & OCR', data)}/></div>;
-      case 'PDF to Image': return <div className={mainContentClass}><PdfToImage t={t} onConversionComplete={(data) => handleAddToHistory('PDF to Image', data)} /></div>;
-      case 'Image to PDF': return <div className={mainContentClass}><ImageToPdf t={t} onConversionComplete={(data) => handleAddToHistory('Image to PDF', data)}/></div>;
-      case 'PDF to Word': return <div className={mainContentClass}><PdfToWord t={t} onConversionComplete={(data) => handleAddToHistory('PDF to Word', data)} /></div>;
-      case 'Word to PDF': return <div className={mainContentClass}><WordToPdf t={t} onConversionComplete={(data) => handleAddToHistory('Word to PDF', data)} /></div>;
-      case 'Video to Audio': return <div className={mainContentClass}><VideoToAudio t={t} onConversionComplete={(data) => handleAddToHistory('Video to Audio', data)} /></div>;
-      case 'Audio Merger': return <div className={mainContentClass}><AudioMerger t={t} onConversionComplete={(data) => handleAddToHistory('Audio Merger', data)} /></div>;
-      case 'Text to Speech': return <div className={mainContentClass}><TextToSpeech t={t} onComplete={(data) => handleAddToHistory('Text to Speech', data)} /></div>;
-      case 'Export to Sheets': return <div className={mainContentClass}><ExportToSheets t={t} /></div>;
-      case 'Features': return <div className={mainContentClass}><Features t={t} /></div>;
+      case 'Strategic Planner': return <StrategicPlanner t={t} />;
+      case 'Image Related Tools': return <ImageToolsHub t={t} externalCategory={activeImageCategory} onCategoryChange={setActiveImageCategory} />;
+      case 'AI Translator': return <AITranslator t={t} onTranslationComplete={(data) => setTranslationHistory(prev => [{...data, id: Date.now().toString(), date: new Date().toLocaleDateString()}, ...prev])} />;
+      case 'Grammar Corrector': return <GrammarCorrector t={t} onCorrectionComplete={(data) => setGrammarHistory(prev => [{...data, id: Date.now().toString(), date: new Date().toLocaleDateString()}, ...prev])} />;
+      case 'PDF to Image': return <PdfToImage t={t} onConversionComplete={() => {}} />;
+      case 'Video to Audio': return <VideoToAudio t={t} onConversionComplete={() => {}} />;
+      case 'Text to Speech': return <TextToSpeech t={t} onComplete={(data) => {}} />;
+      case 'Smart Summarizer': return <DataSummarizer t={t} onComplete={(data) => setSummarizerHistory(prev => [{...data, id: Date.now().toString(), date: new Date().toLocaleDateString()}, ...prev])} externalCategory={activeSummaryCategory} />;
+      case 'Export to Sheets': return <ExportToSheets t={t} />;
       case 'History':
-        const tabs = [
-            { id: 'transcriptions', label: t.transcription },
-            { id: 'translations', label: t.aiTranslatorTitle },
-            { id: 'grammar', label: t.grammarCorrector },
-            { id: 'analysis', label: t.imageConverterOcrTitle },
-            { id: 'pdfimage', label: t.pdfToImage },
-            { id: 'imagepdf', label: t.imageToPdf },
-            { id: 'pdfword', label: t.pdfToWord },
-            { id: 'wordpdf', label: t.wordToPdf },
-            { id: 'videoaudio', label: t.videoToAudio },
-            { id: 'audiomerger', label: t.audioMerger },
-            { id: 'tts', label: t.textToSpeech },
-        ];
         return (
-             <div className={`${mainContentClass} animate-fadeIn h-full overflow-hidden`}>
-                <div className="mb-6 overflow-x-auto pb-2 flex space-x-2">
-                    {tabs.map(tab => (
-                        <button key={tab.id} onClick={() => setHistoryTab(tab.id)} className={`px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors ${historyTab === tab.id ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}>
-                            {tab.label}
-                        </button>
-                    ))}
+             <div className="h-full flex flex-col animate-fadeIn">
+                <div className="mb-10">
+                    <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Archives</h2>
                 </div>
-                <div className="flex-grow bg-gray-800 rounded-2xl p-4 overflow-hidden shadow-lg border border-gray-700/50">
-                     {historyTab === 'transcriptions' && <HistoryPanel items={transcriptions} onSelect={handleSelectTranscription} onDelete={handleDeleteTranscription} activeId={currentTranscription?.id} t={t} renderItem={(item) => (
-                        <div className="flex-grow overflow-hidden">
-                            <p className="font-semibold truncate text-gray-200">{item.fileName}</p>
-                            <p className="text-xs text-gray-400">{item.date} • {item.detectedLanguage}</p>
-                        </div>
-                     )} />}
-                     {historyTab === 'translations' && <HistoryPanel items={translationHistory} onSelect={() => {}} onDelete={(id) => setTranslationHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={(item) => (
-                        <div className="flex-grow overflow-hidden"><p className="font-semibold truncate text-gray-200">{item.inputText}</p><p className="text-xs text-gray-400">{item.date} • {item.sourceLang} → {item.targetLang}</p></div>
-                     )} />}
-                     {historyTab === 'grammar' && <HistoryPanel items={grammarHistory} onSelect={() => {}} onDelete={(id) => setGrammarHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={(item) => (
-                        <div className="flex-grow overflow-hidden"><p className="font-semibold truncate text-gray-200">{item.originalText}</p><p className="text-xs text-gray-400">{item.date} • {item.language}</p></div>
-                     )} />}
-                     {historyTab === 'analysis' && <HistoryPanel items={analysisHistory} onSelect={() => {}} onDelete={(id) => setAnalysisHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={(item) => (
-                        <div className="flex-grow overflow-hidden"><p className="font-semibold truncate text-gray-200">{item.fileName}</p><p className="text-xs text-gray-400">{item.date}</p></div>
-                     )} />}
-                     {historyTab === 'pdfimage' && <HistoryPanel items={pdfImageHistory} onSelect={() => {}} onDelete={(id) => setPdfImageHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={(item) => (
-                        <div className="flex-grow overflow-hidden"><p className="font-semibold truncate text-gray-200">{item.fileName}</p><p className="text-xs text-gray-400">{item.date} • {item.pageCount} pages</p></div>
-                     )} />}
-                     {historyTab === 'imagepdf' && <HistoryPanel items={imagePdfHistory} onSelect={() => {}} onDelete={(id) => setImagePdfHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={(item) => (
-                        <div className="flex-grow overflow-hidden"><p className="font-semibold truncate text-gray-200">{item.fileName}</p><p className="text-xs text-gray-400">{item.date} • {item.imageCount} images</p></div>
-                     )} />}
-                     {historyTab === 'pdfword' && <HistoryPanel items={pdfWordHistory} onSelect={() => {}} onDelete={(id) => setPdfWordHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={(item) => (
-                        <div className="flex-grow overflow-hidden"><p className="font-semibold truncate text-gray-200">{item.fileName}</p><p className="text-xs text-gray-400">{item.date}</p></div>
-                     )} />}
-                     {historyTab === 'wordpdf' && <HistoryPanel items={wordPdfHistory} onSelect={() => {}} onDelete={(id) => setWordPdfHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={(item) => (
-                        <div className="flex-grow overflow-hidden"><p className="font-semibold truncate text-gray-200">{item.fileName}</p><p className="text-xs text-gray-400">{item.date}</p></div>
-                     )} />}
-                     {historyTab === 'videoaudio' && <HistoryPanel items={videoAudioHistory} onSelect={() => {}} onDelete={(id) => setVideoAudioHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={(item) => (
-                        <div className="flex-grow overflow-hidden"><p className="font-semibold truncate text-gray-200">{item.fileName}</p><p className="text-xs text-gray-400">{item.date} • {item.outputFormat}</p></div>
-                     )} />}
-                     {historyTab === 'audiomerger' && <HistoryPanel items={audioMergerHistory} onSelect={() => {}} onDelete={(id) => setAudioMergerHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={(item) => (
-                        <div className="flex-grow overflow-hidden"><p className="font-semibold truncate text-gray-200">{item.fileName}</p><p className="text-xs text-gray-400">{item.date} • {item.fileCount} files</p></div>
-                     )} />}
-                     {historyTab === 'tts' && <HistoryPanel items={ttsHistory} onSelect={() => {}} onDelete={(id) => setTtsHistory(p => p.filter(i => i.id !== id))} t={t} renderItem={(item) => (
-                        <div className="flex-grow overflow-hidden"><p className="font-semibold truncate text-gray-200">{item.text}</p><p className="text-xs text-gray-400">{item.date} • Voice: {item.voice}</p></div>
+                <div className="flex-grow overflow-hidden">
+                     {historyTab === 'transcriptions' && <HistoryPanel items={transcriptions} onSelect={(i) => setCurrentTranscriptionId(i.id)} onDelete={(id) => setTranscriptions(p => p.filter(i => i.id !== id))} t={t} renderItem={(item) => (
+                        <div className="flex-grow min-w-0"><p className="font-bold truncate text-gray-100">{item.fileName}</p><p className="text-[10px] text-purple-400 font-black uppercase tracking-widest mt-1.5">{item.detectedLanguage} • {item.date}</p></div>
                      )} />}
                 </div>
             </div>
@@ -331,68 +280,49 @@ function App() {
   };
 
   return (
-    <div className="bg-gray-900 text-white h-screen font-sans flex overflow-hidden">
-      {/* SEMANTIC HEADER & NAV */}
-      <header className="contents">
-        <Header uiLanguage={uiLanguage} setUiLanguage={setUiLanguage} activeTool={activeTool} setActiveTool={setActiveTool} t={t} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} currentUser={currentUser} onLoginClick={() => setIsAuthModalOpen(true)} onLogoutClick={handleLogout} />
-        {isSidebarOpen && !isDesktop && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/60 z-30 md:hidden" aria-hidden="true" />}
-      </header>
-
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* MOBILE NAV BAR */}
-        <nav className="md:hidden flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700 h-16">
-          <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ms-2 rounded-lg text-gray-400 hover:text-white" aria-label="Open menu"><HamburgerIcon className="w-6 h-6" /></button>
-          <div className="text-xl font-bold"><a href="/"><span className="text-purple-400">Multi</span><span className="text-pink-500">Tools</span></a></div>
-          {currentUser ? <div className="p-1 bg-gray-700 rounded-full"><UserIcon className="w-6 h-6 text-purple-400"/></div> : <button onClick={() => setIsAuthModalOpen(true)} className="p-1"><UserIcon className="w-6 h-6 text-gray-400" /></button>}
-        </nav>
-
-        {/* MAIN CONTENT AREA */}
-        <main id="main-content" className="flex-grow p-4 sm:p-6 md:p-8 overflow-y-auto">
-          {/* SEO SECTION (INTEGRATED) */}
-          {!currentTranscription && activeTool === 'AI Transcriber' && (
-             <section className="mb-8 animate-fadeIn">
-                <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 mb-4">Welcome to MultiTools</h1>
-                <div className="bg-gray-800/40 border border-gray-700/50 rounded-2xl p-6 flex flex-col md:flex-row gap-6 items-center">
-                    <div className="flex-shrink-0">
-                        <img 
-                            src="https://images.unsplash.com/photo-1589254065878-42c9da997008?q=80&w=400&h=266&auto=format&fit=crop" 
-                            alt="Professional AI Audio Transcription Tool" 
-                            width="400" 
-                            height="266" 
-                            className="rounded-xl shadow-2xl border border-gray-600"
-                            loading="lazy" 
-                        />
-                    </div>
-                    <div>
-                        <h2 className="text-xl font-bold text-gray-100 mb-2">Professional AI Transcription Services</h2>
-                        <p className="text-gray-400 leading-relaxed mb-4">
-                            Harness the power of Gemini 3.5 to convert your media into accurate text instantly. 
-                            Our system automatically detects language nuances and provides speaker diarization for clear, professional results.
-                        </p>
-                        <a href="#uploader" className="inline-flex items-center px-6 py-2 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-all transform hover:scale-105">
-                            Start Transcribing Now
-                        </a>
-                    </div>
-                </div>
-             </section>
+    <div className={`bg-[#05050C] text-white min-h-screen font-sans flex overflow-x-hidden selection:bg-purple-500/30 selection:text-white ${isAuthModalOpen ? 'modal-active' : ''}`}>
+      <Header 
+        activeTool={activeTool} 
+        setActiveTool={setActiveTool} 
+        activeImageCategory={activeImageCategory} 
+        setActiveImageCategory={setActiveImageCategory} 
+        activeSummaryCategory={activeSummaryCategory} 
+        setActiveSummaryCategory={setActiveSummaryCategory} 
+        activeHistoryTab={historyTab} 
+        setActiveHistoryTab={setHistoryTab} 
+        t={t} 
+        isSidebarOpen={isSidebarOpen} 
+        setIsSidebarOpen={setIsSidebarOpen} 
+      />
+      
+      <div className={`flex-1 flex flex-col relative transition-all duration-700 ${isAuthModalOpen ? 'blur-xl scale-[0.98] brightness-50' : ''}`}>
+        <div className="absolute top-8 right-8 z-20 flex items-center gap-4">
+          {currentUser ? (
+            <div className="flex items-center gap-4 bg-white/[0.03] backdrop-blur-2xl px-6 py-3 rounded-2xl border border-white/5 shadow-2xl">
+               <div className="flex flex-col items-end">
+                  <span className="text-[9px] font-black uppercase text-purple-500 tracking-widest">Operator Connected</span>
+                  <span className="text-xs font-bold truncate max-w-[150px] text-gray-300">{currentUser.email}</span>
+               </div>
+               <button onClick={() => setCurrentUser(null)} className="p-2 hover:bg-red-500/20 rounded-xl text-gray-500 hover:text-red-400 transition-all active:scale-90"><XCircleIcon className="w-6 h-6" /></button>
+            </div>
+          ) : (
+            <button 
+                onClick={() => setIsAuthModalOpen(true)} 
+                className="group flex items-center gap-3 bg-pink-600 hover:bg-pink-500 px-8 py-3.5 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all shadow-[0_0_40px_rgba(219,39,119,0.3)] hover:shadow-[0_0_60px_rgba(219,39,119,0.5)] active:scale-95 hover:brightness-110"
+            >
+                <UserIcon className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                Connect Profile
+            </button>
           )}
+        </div>
 
-          <div id="tool-view" className="h-full">
+        <main className="flex-grow p-8 md:p-16 pt-28">
+          <div className="max-w-7xl mx-auto min-h-full">
             {renderActiveTool()}
           </div>
         </main>
-
-        {/* SEMANTIC FOOTER */}
-        <footer className="bg-gray-800/30 border-t border-gray-700/30 p-4 text-center">
-            <p className="text-sm text-gray-500">
-                &copy; {new Date().getFullYear()} MultiTools AI. All rights reserved. 
-                <span className="mx-2">|</span>
-                <a href="/contact" className="hover:text-purple-400 transition-colors">Contact Us Today</a>
-            </p>
-        </footer>
       </div>
-
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onLoginSuccess={handleLoginSuccess} t={t} />
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onLoginSuccess={setCurrentUser} t={t} />
     </div>
   );
 }

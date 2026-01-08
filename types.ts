@@ -106,3 +106,18 @@ export interface TtsHistoryItem {
     text: string;
     voice: string;
 }
+
+export interface SmartSummary {
+    summary: string;
+    contacts: { name: string; info: string; type: string }[];
+    languages: string[];
+    keyInsights: string[];
+    numbers: { label: string; value: string }[];
+}
+
+export interface DataSummarizerHistoryItem {
+    id: string;
+    date: string;
+    inputText: string;
+    result: SmartSummary;
+}

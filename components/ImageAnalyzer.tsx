@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import type { LanguageOption } from '../lib/languages';
 import { UploadIcon } from './icons/UploadIcon';
-import { analyzeImage, translateText } from '../services/geminiService';
+import { analyzeImage, translateText, summarizeText } from '../services/geminiService';
 import LanguageDropdown from './LanguageDropdown';
 import { targetLanguages } from '../lib/languages';
 import { CopyIcon } from './icons/CopyIcon';
@@ -17,6 +17,8 @@ import { CheckCircleIcon } from './icons/CheckCircleIcon';
 import { ClockIcon } from './icons/ClockIcon';
 import { XCircleIcon } from './icons/XCircleIcon';
 import { FolderIcon } from './icons/FolderIcon';
+import { jsPDF } from 'jspdf';
+import * as docx from 'docx';
 import { SkeletonLoader } from './Loader';
 
 const ResultBox: React.FC<{ 
@@ -34,7 +36,7 @@ const ResultBox: React.FC<{
     const [showExportMenu, setShowExportMenu] = useState(false);
 
     return (
-      <div className="obsidian-card rounded-lg p-4 flex flex-col mt-4">
+        <div className="bg-gray-900/50 rounded-lg p-4 flex flex-col mt-4">
             <div className="flex justify-between items-center mb-2">
                 <h3 className="font-semibold text-lg text-gray-200">{title}</h3>
                 <div className="flex items-center space-x-2 rtl:space-x-reverse">
@@ -118,6 +120,12 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
   const [isTranslating, setIsTranslating] = useState(false);
   const [translationError, setTranslationError] = useState<string | null>(null);
 
+  // Summary State
+  const [summaryText, setSummaryText] = useState('');
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [isSummaryCopied, setIsSummaryCopied] = useState(false);
+
   const [isOcrCopied, setIsOcrCopied] = useState(false);
   const [isTranslationCopied, setIsTranslationCopied] = useState(false);
 
@@ -130,6 +138,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
     setEditedAnalysisResult('');
     setTranslatedText('');
     setEditedTranslatedText('');
+    setSummaryText('');
     
     let combinedText = "";
     
@@ -198,6 +207,21 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
     }
   }, [editedAnalysisResult, targetLang.name]);
 
+  const handleSummarize = useCallback(async () => {
+    if (!editedAnalysisResult) return;
+    setIsSummarizing(true);
+    setSummaryError(null);
+    setSummaryText('');
+    try {
+        const result = await summarizeText(editedAnalysisResult);
+        setSummaryText(result);
+    } catch (err: any) {
+        setSummaryError(err.message || 'An error occurred during summarization.');
+    } finally {
+        setIsSummarizing(false);
+    }
+  }, [editedAnalysisResult]);
+
   // Auto-translate only if a single image was analyzed and result appeared newly, 
   // otherwise for bulk, user should manually click (to save quota).
   useEffect(() => {
@@ -223,6 +247,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
         setEditedAnalysisResult('');
         setTranslatedText('');
         setEditedTranslatedText('');
+        setSummaryText('');
         setError(null);
         
         setImages(prev => [...prev, ...newFiles]);
@@ -254,6 +279,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
              setEditedAnalysisResult('');
              setTranslatedText('');
              setEditedTranslatedText('');
+             setSummaryText('');
              setError(null);
              setImages(prev => [...prev, ...newFiles]);
         }
@@ -273,8 +299,10 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
     setEditedAnalysisResult('');
     setTranslatedText('');
     setEditedTranslatedText('');
+    setSummaryText('');
     setError(null);
     setTranslationError(null);
+    setSummaryError(null);
     setIsAnalyzing(false);
   };
 
@@ -289,32 +317,37 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
     URL.revokeObjectURL(url);
   };
 
-  const handleExport = async (format: 'txt' | 'docx' | 'pdf', type: 'analysis' | 'translation') => {
-    const content = type === 'analysis' ? editedAnalysisResult : editedTranslatedText;
+  const handleExport = async (format: 'txt' | 'docx' | 'pdf', type: 'analysis' | 'translation' | 'summary') => {
+    let content = "";
+    if (type === 'analysis') content = editedAnalysisResult;
+    else if (type === 'translation') content = editedTranslatedText;
+    else if (type === 'summary') content = summaryText;
+
     if (!content) return;
     
     const baseFilename = images.length === 1 
         ? images[0].file.name.split('.').slice(0, -1).join('.') 
         : `batch-scan-${images.length}-files`;
         
-    const filename = type === 'analysis' ? `${baseFilename}-ocr` : `${baseFilename}-translation-${targetLang.code}`;
+    let filename = "";
+    if (type === 'analysis') filename = `${baseFilename}-ocr`;
+    else if (type === 'translation') filename = `${baseFilename}-translation-${targetLang.code}`;
+    else if (type === 'summary') filename = `${baseFilename}-summary`;
 
     if (format === 'txt') {
       const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
       createDownload(`${filename}.txt`, blob);
     } else if (format === 'docx') {
-         const docxMod = await import('docx');
-         const doc = new docxMod.Document({
-          sections: [{
-            children: content.split('\n').map((text: string) => new docxMod.Paragraph(text)),
-          }],
-        });
-        const blob = await docxMod.Packer.toBlob(doc);
-        createDownload(`${filename}.docx`, blob);
+       const doc = new docx.Document({
+        sections: [{
+          children: content.split('\n').map(text => new docx.Paragraph(text)),
+        }],
+      });
+      const blob = await docx.Packer.toBlob(doc);
+      createDownload(`${filename}.docx`, blob);
     } else if (format === 'pdf') {
-        const jspdf = await import('jspdf');
-        const doc = new jspdf.jsPDF();
-        const splitText = doc.splitTextToSize(content, 180);
+      const doc = new jsPDF();
+      const splitText = doc.splitTextToSize(content, 180);
       let y = 10;
       splitText.forEach((line: string) => {
           if (y > 280) {
@@ -329,15 +362,18 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
     }
   };
 
-  const handleCopy = (type: 'ocr' | 'translation') => {
-    const textToCopy = type === 'ocr' ? editedAnalysisResult : editedTranslatedText;
+  const handleCopy = (type: 'ocr' | 'translation' | 'summary') => {
+    const textToCopy = type === 'ocr' ? editedAnalysisResult : (type === 'translation' ? editedTranslatedText : summaryText);
     navigator.clipboard.writeText(textToCopy);
     if (type === 'ocr') {
         setIsOcrCopied(true);
         setTimeout(() => setIsOcrCopied(false), 2000);
-    } else {
+    } else if (type === 'translation') {
         setIsTranslationCopied(true);
         setTimeout(() => setIsTranslationCopied(false), 2000);
+    } else if (type === 'summary') {
+        setIsSummaryCopied(true);
+        setTimeout(() => setIsSummaryCopied(false), 2000);
     }
   };
   
@@ -357,7 +393,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
   };
 
   return (
-    <div className="glass-card p-6 min-h-[60vh] lg:h-full flex flex-col">
+    <div className="bg-gray-800 rounded-2xl shadow-lg p-6 min-h-[60vh] lg:h-full flex flex-col">
        <input
           type="file"
           ref={fileInputRef}
@@ -379,7 +415,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
       {images.length === 0 ? (
          <div className="flex-grow flex flex-col">
             <div
-              className={`flex flex-grow flex-col items-center justify-center p-8 dropzone-dashed rounded-xl transition-colors duration-300 mb-4 min-h-[300px] ${isDragging ? 'dragover' : ''}`}
+              className={`flex flex-grow flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 mb-4 min-h-[300px] ${isDragging ? 'border-purple-500 bg-gray-700/50' : 'border-gray-600'}`}
               onDragEnter={handleDragEnter}
               onDragLeave={handleDragLeave}
               onDragOver={handleDragOver}
@@ -389,7 +425,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
               <h3 className="text-xl font-semibold text-gray-300 mb-2">{t.uploadImages}</h3>
               <p className="text-gray-400 mb-6 text-center max-w-sm">Drag & drop images or folders here, or use the buttons below.</p>
               <div className="flex flex-col sm:flex-row gap-4">
-                    <button onClick={handleUploadClick} className="px-6 py-3 btn-primary text-white font-semibold rounded-lg hover:brightness-105 transition-colors shadow-lg">
+                  <button onClick={handleUploadClick} className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors shadow-lg">
                       Select Files
                   </button>
                    <button onClick={handleFolderUploadClick} className="px-6 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors flex items-center shadow-lg border border-gray-600">
@@ -421,7 +457,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
              {/* Image Grid */}
              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6 max-h-[40vh] overflow-y-auto p-1">
                 {images.map((img, index) => (
-                <div key={img.id} className="group relative obsidian-card p-2 rounded-lg aspect-square flex items-center justify-center border border-gray-700">
+                    <div key={img.id} className="group relative bg-gray-900/50 p-2 rounded-lg aspect-square flex items-center justify-center border border-gray-700">
                         <img src={img.preview} alt={img.file.name} className="max-w-full max-h-full object-contain rounded-md" />
                         
                         <div className="absolute top-1 right-1">
@@ -434,7 +470,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
                              )}
                         </div>
                         
-                        <div className="absolute bottom-1 left-1 bg-black/40 px-2 py-0.5 rounded text-xs text-white truncate max-w-[90%]">
+                        <div className="absolute bottom-1 left-1 bg-black/60 px-2 py-0.5 rounded text-xs text-white truncate max-w-[90%]">
                             {index + 1}. {img.file.name}
                         </div>
                     </div>
@@ -443,20 +479,20 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
 
              {/* Action Button */}
              <div className="flex justify-center mb-6">
-              <button
-                onClick={handleAnalyzeAll}
-                disabled={isAnalyzing || images.length === 0}
-                className="w-full md:w-auto min-w-[200px] px-8 py-3 btn-primary font-bold text-lg rounded-xl disabled:opacity-60 transition-all shadow-lg"
-              >
-                {isAnalyzing ? (progressMessage || t.analyzing) : (analysisResult ? t.reanalyze : t.analyze)}
-              </button>
+                <button
+                    onClick={handleAnalyzeAll}
+                    disabled={isAnalyzing || images.length === 0}
+                    className="w-full md:w-auto min-w-[200px] px-8 py-3 bg-purple-600 text-white font-bold text-lg rounded-xl hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all shadow-lg shadow-purple-900/20"
+                >
+                    {isAnalyzing ? (progressMessage || t.analyzing) : (analysisResult ? t.reanalyze : t.analyze)}
+                </button>
              </div>
 
              {error && <div className="text-red-400 mb-4 text-center bg-red-900/20 p-3 rounded-lg border border-red-800">{error}</div>}
 
              {/* Results Section */}
              {(analysisResult || isAnalyzing) && (
-                <div className="animate-fadeIn">
+                <div className="animate-fadeIn space-y-6 pb-12">
                     <ResultBox 
                         title={t.imageAnalysisResult} 
                         value={editedAnalysisResult} 
@@ -478,13 +514,22 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
                                 searchPlaceholder="Search target language"
                                 />
                         </div>
-                        <button 
-                          onClick={handleTranslate}
-                          disabled={isTranslating || !editedAnalysisResult}
-                          className="w-full sm:w-auto px-6 py-2 btn-primary text-white font-semibold rounded-lg disabled:opacity-60 transition-colors h-[42px] mt-auto"
-                        >
-                          {isTranslating ? t.translating : t.translate}
-                        </button>
+                        <div className="flex gap-2 w-full sm:w-auto">
+                            <button 
+                                onClick={handleTranslate}
+                                disabled={isTranslating || !editedAnalysisResult}
+                                className="flex-1 sm:flex-none px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors h-[42px] mt-auto"
+                            >
+                                {isTranslating ? t.translating : t.translate}
+                            </button>
+                            <button 
+                                onClick={handleSummarize}
+                                disabled={isSummarizing || !editedAnalysisResult}
+                                className="flex-1 sm:flex-none px-6 py-2 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors h-[42px] mt-auto"
+                            >
+                                {isSummarizing ? t.summarizing : t.summarize}
+                            </button>
+                        </div>
                     </div>
 
                     {translationError && <div className="text-red-400 mt-4 text-center">{translationError}</div>}
@@ -499,6 +544,20 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
                             onExport={(format) => handleExport(format, 'translation')}
                             onChange={setEditedTranslatedText}
                             isLoading={isTranslating}
+                        />
+                    )}
+
+                    {summaryError && <div className="text-red-400 mt-4 text-center">{summaryError}</div>}
+
+                    {(isSummarizing || summaryText) && (
+                        <ResultBox 
+                            title={t.summaryResult} 
+                            value={summaryText} 
+                            t={t} 
+                            onCopy={() => handleCopy('summary')} 
+                            isCopied={isSummaryCopied} 
+                            onExport={(format) => handleExport(format, 'summary')}
+                            isLoading={isSummarizing}
                         />
                     )}
                 </div>

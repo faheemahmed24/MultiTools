@@ -1,7 +1,8 @@
 
 import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
-// Heavy export libraries are lazy-loaded inside handlers to avoid import-time failures
+import { jsPDF } from 'jspdf';
+import * as docx from 'docx';
 import { UploadIcon } from './icons/UploadIcon';
 import { CloseIcon } from './icons/CloseIcon';
 import { PlusIcon } from './icons/PlusIcon';
@@ -12,7 +13,6 @@ import { EditIcon } from './icons/EditIcon';
 import { analyzeImage } from '../services/geminiService';
 import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
-import type { Paragraph } from 'docx';
 
 
 interface ImageFile {
@@ -78,6 +78,7 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
           id: `${file.name}-${file.lastModified}-${Math.random()}`,
           file,
           preview: URL.createObjectURL(file),
+          edits: { ...defaultEdits },
         }));
 
       if (images.length === 0 && newImages.length > 0) {
@@ -134,9 +135,10 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
     setEditingImage(null);
   };
 
-  const applyEditsToImage = async (image: ImageFile): Promise<string> => {
-    return new Promise(async (resolve, reject) => {
+  const applyEditsToImage = (image: ImageFile): Promise<string> => {
+    return new Promise((resolve, reject) => {
         const edits = image.edits;
+        const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         if (!ctx) return reject('Could not get canvas context');
 
@@ -156,7 +158,7 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
             ctx.rotate(edits.rotate * Math.PI / 180);
             ctx.drawImage(img, -img.width / 2, -img.height / 2);
             
-            resolve(canvas.toDataURL());
+            resolve(canvas.toDataURL('image/png'));
         };
         img.onerror = () => reject('Image failed to load');
     });
@@ -170,7 +172,6 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
     setExtractedText('');
     setExtractionError('');
 
-    const { jsPDF } = await import('jspdf');
     const doc = new jsPDF({ orientation, unit: 'mm', format: pageSize });
     const marginValue = MARGIN_VALUES[margin];
     
@@ -219,7 +220,8 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
     }
     
     const url = doc.output('bloburl');
-    setPdfUrl(url as string);
+    // Fix: Convert URL to string using unknown as intermediate type to avoid TS error
+    setPdfUrl(url as unknown as string);
     setIsConverting(false);
     setConversionMessage('');
     onConversionComplete({ fileName: `${outputFilename || 'converted'}.pdf`, imageCount: images.length });
@@ -231,8 +233,7 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
     setConversionMessage(t.generatingWord);
     setPdfUrl(null);
 
-    const docx = await import('docx');
-    const imageParagraphs: Paragraph[] = [];
+    const imageParagraphs: docx.Paragraph[] = [];
 
     for (const image of images) {
         const editedImageDataUrl = await applyEditsToImage(image);
@@ -245,13 +246,20 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
         // A4 page dimensions in EMU (English Metric Units)
         const a4Width = 792 * 12700;
         
+        // Fix: Use Uint8Array for docx ImageRun data to avoid SvgMediaOptions type mismatch
+        const binaryString = atob(base64Data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let j = 0; j < binaryString.length; j++) {
+            bytes[j] = binaryString.charCodeAt(j);
+        }
+
         const imageRun = new docx.ImageRun({
-            data: base64Data,
+            data: bytes,
             transformation: {
                 width: a4Width, 
                 height: (a4Width * tempImg.height) / tempImg.width,
             },
-        });
+        } as any);
         imageParagraphs.push(new docx.Paragraph({ children: [imageRun] }));
     }
     

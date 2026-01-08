@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,99 +6,113 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>MultiTools | Professional AI Transcriber & Media Converter</title>
-    <meta name="description" content="Convert speech from audio and video files into text with auto-language detection. Supports 20+ audio formats including WAV, MP3, FLAC, and GSM.">
-    <meta name="keywords" content="AI transcriber, speech to text, audio converter, video to text, transcription tool, media converter, PDF tools, image analysis, translation, grammar correction">
-    <meta name="author" content="MultiTools">
-    <meta name="robots" content="index, follow">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta charset="UTF-8">
+    <meta name="description" content="Convert speech from audio and video files into text with auto-language detection. Professional AI workstation for business strategy and media processing.">
 
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@700;900&family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
       :root {
-        --bg-dark-gray: #111827;
-        --bg-med-gray: #1f2937;
-        --bg-light-gray: #374151;
-        --border-gray: #4b5563;
-        --text-light: #f3f4f6;
-        --text-med: #9ca3af;
-        --accent-purple: #8b5cf6;
+        --bg-deep: #05050C;
+        --accent-purple: #A855F7;
+        --neon-cyan: #06B6D4;
         --font-sans: 'Inter', sans-serif;
       }
 
       html { scroll-behavior: smooth; }
       body {
         font-family: var(--font-sans);
-        background-color: var(--bg-dark-gray);
-        background-image: radial-gradient(circle at 1px 1px, rgba(139, 92, 246, 0.1) 1px, transparent 0);
-        background-size: 2rem 2rem;
+        background-color: var(--bg-deep);
         margin: 0;
+        /* Allow scroll for mobile and desktop consistency */
+        overflow-x: hidden;
+        overflow-y: auto;
       }
       
-      ::-webkit-scrollbar { width: 8px; height: 8px; }
-      ::-webkit-scrollbar-track { background: var(--bg-dark-gray); }
-      ::-webkit-scrollbar-thumb { background: var(--bg-light-gray); border-radius: 4px; }
-      ::-webkit-scrollbar-thumb:hover { background: var(--text-dark); }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+        opacity: 0.05;
+        pointer-events: none;
+        z-index: 999;
+      }
+
+      h1, h2, h3 {
+        letter-spacing: -0.025em;
+      }
+
+      ::-webkit-scrollbar { width: 4px; height: 4px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+      ::-webkit-scrollbar-thumb:hover { background: var(--accent-purple); }
+
+      .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 20px; }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--accent-purple); }
 
       @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
+        from { opacity: 0; transform: translateY(15px); }
         to { opacity: 1; transform: translateY(0); }
       }
-      .animate-fadeIn { animation: fadeIn 0.3s ease-in-out forwards; }
+      .animate-fadeIn { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
       @keyframes pop-in {
-        from { opacity: 0; transform: scale(0.95); }
+        from { opacity: 0; transform: scale(0.9); }
         to { opacity: 1; transform: scale(1); }
       }
-      .animate-pop-in { animation: pop-in 0.2s ease-out forwards; }
+      .animate-pop-in { animation: pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
 
-      .progress-bar-shimmer {
-        background: linear-gradient(to right, var(--accent-purple) 4%, #a855f7 25%, var(--accent-purple) 36%);
-        background-size: 1000px 100%;
-        animation: shimmer 2s infinite linear;
-      }
       @keyframes shimmer {
-        0% { background-position: -1000px 0; }
-        100% { background-position: 1000px 0; }
+        0% { transform: translateX(-100%) skewX(-12deg); }
+        100% { transform: translateX(200%) skewX(-12deg); }
       }
+
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+      }
+
+      @keyframes pulse {
+        0% { transform: scale(0.9); opacity: 0.2; }
+        50% { transform: scale(1.5); opacity: 0.5; }
+        100% { transform: scale(0.9); opacity: 0.2; }
+      }
+
+      .glass {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      
+      .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.28.0",
+        "react/": "https://aistudiocdn.com/react@^19.2.0/",
+        "react": "https://aistudiocdn.com/react@^19.2.0",
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+        "pdfjs-dist/": "https://aistudiocdn.com/pdfjs-dist@^4.5.136/",
+        "jszip": "https://aistudiocdn.com/jszip@^3.10.1/dist/jszip.min.js",
+        "jspdf": "https://aistudiocdn.com/jspdf@^2.5.1/dist/jspdf.umd.min.js",
+        "docx": "https://aistudiocdn.com/docx@^8.5.0/build/index.js",
+        "mammoth": "https://aistudiocdn.com/mammoth@^1.7.2/mammoth.browser.min.js",
+        "pptxgenjs": "https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.es.js",
+        "xlsx": "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"
+      }
+    }
+    </script>
 </head>
 <body>
     <div id="root"></div>
-    <script>
-      // If the site is served directly from the repo (unbuilt), the script below
-      // will detect the presence of the Vite dev entry and
-      // show an explanatory overlay instead of a confusing blank page.
-      (function(){
-        try {
-          const scripts = Array.from(document.getElementsByTagName('script'));
-          const hasSrcIndex = scripts.some(s => s.getAttribute('src') && s.getAttribute('src').startsWith('/src/'));
-          if (hasSrcIndex) {
-            const overlay = document.createElement('div');
-            overlay.style.position = 'fixed';
-            overlay.style.inset = '0';
-            overlay.style.background = 'linear-gradient(90deg, rgba(17,24,39,0.95), rgba(17,24,39,0.9))';
-            overlay.style.color = '#fff';
-            overlay.style.display = 'flex';
-            overlay.style.alignItems = 'center';
-            overlay.style.justifyContent = 'center';
-            overlay.style.zIndex = '99999';
-            overlay.innerHTML = `<div style="max-width:720px;padding:24px;border-radius:12px;background:rgba(0,0,0,0.35);box-shadow:0 10px 30px rgba(0,0,0,0.6);font-family:Inter, system-ui, sans-serif">
-              <h2 style="margin:0 0 8px 0;font-size:20px">Site is running unbuilt source</h2>
-              <p style="margin:0 0 12px 0;color:#d1d5db">It looks like the repository source files are being served directly (entry: <code>the development entry point</code>). Build the project and serve the generated <code>dist/</code> folder or configure Cloudflare Pages to run <code>npm run build</code> and publish <code>dist/</code>.</p>
-              <p style="margin:0;font-size:13px;color:#9ca3af">See README or CLOUDFLARE-PAGES.md for deployment instructions.</p>
-            </div>`;
-            document.documentElement.style.background = '#0b1220';
-            document.body.appendChild(overlay);
-          }
-        } catch (e) {
-          console.warn('Deployment check failed', e);
-        }
-      })();
-    </script>
-    <script type="module" src="/src/index.tsx"></script>
+    <script type="module" src="./index.tsx"></script>
 </body>
 </html>

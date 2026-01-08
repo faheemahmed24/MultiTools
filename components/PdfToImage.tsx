@@ -3,11 +3,16 @@ import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
-// pdfjs-dist is lazy-loaded to avoid import-time issues in some hosting environments
+import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
+import JSZip from 'jszip';
 import { analyzeImage } from '../services/geminiService';
 import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
+import * as docx from 'docx';
 
+
+// Configure the worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://aistudiocdn.com/pdfjs-dist@^4.5.136/build/pdf.worker.mjs`;
 
 interface GeneratedImage {
   src: string;
@@ -133,8 +138,6 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
       }
 
       try {
-        const pdfjsLib = await import('pdfjs-dist/build/pdf.mjs');
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://aistudiocdn.com/pdfjs-dist@^4.5.136/build/pdf.worker.mjs`;
         const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
         const numPages = pdf.numPages;
         const images: GeneratedImage[] = [];
@@ -192,8 +195,6 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
   };
 
   const handleDownloadAll = async () => {
-    const jszipMod = await import('jszip');
-    const JSZip = jszipMod.default || jszipMod;
     const zip = new JSZip();
     const baseFilename = pdfFile?.name.replace('.pdf', '') || 'pdf-export';
 
@@ -259,26 +260,25 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
     };
 
     if (format === 'txt') {
-      const blob = new Blob([extractedText], { type: 'text/plain;charset=utf-8' });
-      await download(`${baseFilename}.txt`, blob);
+        const blob = new Blob([extractedText], { type: 'text/plain;charset=utf-8' });
+        await download(`${baseFilename}.txt`, blob);
     } else if (format === 'docx') {
-      const docxMod = await import('docx');
-      const doc = new docxMod.Document({
-        sections: [{
-          children: extractedText.split('\n').map((line: string) => new docxMod.Paragraph(line)),
-        }],
-      });
-      const blob = await docxMod.Packer.toBlob(doc);
-      await download(`${baseFilename}.docx`, blob);
+        const doc = new docx.Document({
+            sections: [{
+                children: extractedText.split('\n').map(line => new docx.Paragraph(line)),
+            }],
+        });
+        const blob = await docx.Packer.toBlob(doc);
+        await download(`${baseFilename}.docx`, blob);
     }
     setShowTextExportMenu(false);
   };
 
   return (
-    <div className="glass-card p-6 min-h-[60vh] lg:h-full flex flex-col">
+    <div className="bg-gray-800 rounded-2xl shadow-lg p-6 min-h-[60vh] lg:h-full flex flex-col">
       {!pdfFile ? (
         <div
-          className={`flex flex-col flex-grow items-center justify-center p-8 dropzone-dashed rounded-xl transition-colors duration-300 ${isDragging ? 'dragover' : ''}`}
+          className={`flex flex-col flex-grow items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 ${isDragging ? 'border-purple-500 bg-gray-700' : 'border-gray-600 hover:border-purple-500'}`}
           onDragEnter={handleDragEnter}
           onDragLeave={handleDragLeave}
           onDragOver={handleDragOver}
@@ -286,14 +286,14 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
         >
           <UploadIcon className="w-12 h-12 text-gray-500 mb-4" />
           <input type="file" ref={fileInputRef} onChange={onFileChange} accept="application/pdf" className="hidden" />
-          <button onClick={() => fileInputRef.current?.click()} className="px-6 py-2 btn-primary text-white font-semibold rounded-lg hover:brightness-105 transition-colors duration-200">
+          <button onClick={() => fileInputRef.current?.click()} className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors duration-200">
             {t.uploadPdf}
           </button>
           <p className="mt-2 text-sm text-gray-400">{t.dropPdf}</p>
         </div>
       ) : (
         <>
-          <div className="mb-6 obsidian-card p-4 rounded-lg flex items-center justify-between">
+          <div className="mb-6 bg-gray-700/50 p-4 rounded-lg flex items-center justify-between">
             <div>
               <p className="font-semibold text-gray-200">{pdfFile.name}</p>
               <p className="text-sm text-gray-400">{(pdfFile.size / 1024 / 1024).toFixed(2)} MB</p>
@@ -346,7 +346,7 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
           <button
             onClick={handleConvert}
             disabled={isConverting}
-            className="w-full px-6 py-3 btn-primary text-white font-semibold rounded-lg disabled:opacity-60 transition-colors duration-200"
+            className="w-full px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200"
           >
             {isConverting ? progress : t.convert}
           </button>
@@ -358,10 +358,10 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
               <div className="flex flex-wrap gap-4 justify-between items-center mb-4">
                 <h3 className="text-lg font-bold text-gray-200">Results ({generatedImages.length} images)</h3>
                 <div className="flex gap-2">
-                  <button onClick={handleExtractText} disabled={isExtracting} className="flex items-center px-4 py-2 btn-primary font-semibold rounded-lg disabled:opacity-60 transition-colors duration-200">
+                  <button onClick={handleExtractText} disabled={isExtracting} className="flex items-center px-4 py-2 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 disabled:bg-gray-500 transition-colors duration-200">
                     {isExtracting ? (isConverting ? progress : t.analyzing) : t.extractText}
                   </button>
-                  <button onClick={handleDownloadAll} className="flex items-center px-4 py-2 obsidian-card text-white font-semibold rounded-lg transition-colors duration-200">
+                  <button onClick={handleDownloadAll} className="flex items-center px-4 py-2 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200">
                     <DownloadIcon className="w-5 h-5 me-2" />
                     {t.downloadAll}
                   </button>
@@ -371,16 +371,16 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
                 {generatedImages.map((img, index) => (
                   <div
                     key={img.pageNumber}
-                    className="group relative obsidian-card p-2 rounded-lg animate-pop-in"
+                    className="group relative bg-gray-900/50 p-2 rounded-lg animate-pop-in"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
                     <img src={img.src} alt={`Page ${img.pageNumber}`} className="w-full h-auto rounded-md" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2">
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2">
                        <a
                         href={img.src}
                         download={`${pdfFile?.name.replace('.pdf', '') || 'page'}-${img.pageNumber}.${imageFormat}`}
                         title={t.downloadPage.replace('{pageNumber}', img.pageNumber.toString())}
-                        className="p-3 btn-primary rounded-full text-white mb-2"
+                        className="p-3 bg-purple-600/80 rounded-full text-white hover:bg-purple-600 mb-2"
                       >
                         <DownloadIcon className="w-6 h-6" />
                       </a>
@@ -395,7 +395,7 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
           {extractionError && <p className="text-center mt-4 font-semibold text-red-400">{extractionError}</p>}
 
           {extractedText && (
-            <div className="mt-4 obsidian-card p-4 rounded-lg">
+            <div className="mt-4 bg-gray-900/50 p-4 rounded-lg">
                 <div className="flex justify-between items-center mb-2">
                 <h4 className="font-semibold text-gray-200">{t.imageAnalysisResult}</h4>
                 <div className="flex items-center gap-2">

@@ -1,10 +1,13 @@
+
 import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
-// Lazy-load heavy libraries at runtime to avoid import-time failures
+import * as mammoth from 'mammoth';
+import { jsPDF } from 'jspdf';
 import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
+import * as docx from 'docx';
 
 interface WordToPdfProps {
     t: TranslationSet;
@@ -78,13 +81,11 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
 
       try {
         setProgress('Extracting content...');
-        const mammoth = await import('mammoth');
         const result = await mammoth.convertToHtml({ arrayBuffer });
         const html = result.value;
 
         setProgress(t.generatingPdf);
-        const jspdf = await import('jspdf');
-        const doc = new jspdf.jsPDF({
+        const doc = new jsPDF({
             orientation: 'p',
             unit: 'pt',
             format: 'a4'
@@ -121,7 +122,8 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
         await doc.html(tempDiv, {
             callback: (doc) => {
                 const url = doc.output('bloburl');
-                setPdfUrl(url as string);
+                // Fix: Convert URL to string using unknown as intermediate type to avoid TS error
+                setPdfUrl(url as unknown as string);
                 setProgress(t.conversionComplete);
                 onConversionComplete({fileName: wordFile.name});
             },
@@ -160,7 +162,6 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
             return;
         }
         try {
-            const mammoth = await import('mammoth');
             const result = await mammoth.extractRawText({ arrayBuffer });
             setExtractedText(result.value);
         } catch (err) {
@@ -193,28 +194,27 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
         const blob = new Blob([extractedText], { type: 'text/plain;charset=utf-8' });
         await download(`${baseFilename}.txt`, blob);
     } else if (format === 'docx') {
-      const docxMod = await import('docx');
-      const doc = new docxMod.Document({
-        sections: [{
-          children: extractedText.split('\n').map((line: string) => new docxMod.Paragraph(line)),
-        }],
-      });
-      const blob = await docxMod.Packer.toBlob(doc);
-      await download(`${baseFilename}.docx`, blob);
+        const doc = new docx.Document({
+            sections: [{
+                children: extractedText.split('\n').map(line => new docx.Paragraph(line)),
+            }],
+        });
+        const blob = await docx.Packer.toBlob(doc);
+        await download(`${baseFilename}.docx`, blob);
     }
     setShowTextExportMenu(false);
   };
 
   return (
-    <div className="glass-card p-6 min-h-[60vh] lg:h-full flex flex-col">
+    <div className="bg-gray-800 rounded-2xl shadow-lg p-6 min-h-[60vh] lg:h-full flex flex-col">
       {!wordFile ? (
         <div
-          className={`flex flex-col flex-grow items-center justify-center p-8 dropzone-dashed rounded-xl transition-colors duration-300 ${isDragging ? 'dragover' : ''}`}
+          className={`flex flex-col flex-grow items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 ${isDragging ? 'border-purple-500 bg-gray-700' : 'border-gray-600 hover:border-purple-500'}`}
           onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}
         >
           <UploadIcon className="w-12 h-12 text-gray-500 mb-4" />
           <input type="file" ref={fileInputRef} onChange={onFileChange} accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="hidden" />
-          <button onClick={() => fileInputRef.current?.click()} className="px-6 py-2 btn-primary text-white font-semibold rounded-lg hover:brightness-105 transition-colors duration-200">
+          <button onClick={() => fileInputRef.current?.click()} className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors duration-200">
             {t.uploadWord}
           </button>
           <p className="mt-2 text-sm text-gray-400">{t.dropWord}</p>
@@ -223,7 +223,7 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
       ) : (
         <div className="flex flex-col flex-grow items-center justify-center">
           <div className="w-full max-w-lg">
-            <div className="mb-6 obsidian-card p-4 rounded-lg flex items-center justify-between">
+            <div className="mb-6 bg-gray-700/50 p-4 rounded-lg flex items-center justify-between">
               <div>
                 <p className="font-semibold text-gray-200 truncate" title={wordFile.name}>{wordFile.name}</p>
                 <p className="text-sm text-gray-400">{(wordFile.size / 1024 / 1024).toFixed(2)} MB</p>
@@ -233,18 +233,18 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
             
             <div className="flex flex-col sm:flex-row gap-4">
                 <button
-                  onClick={handleConvert}
-                  disabled={isConverting || isExtracting}
-                  className="w-full px-6 py-3 btn-primary text-white font-semibold rounded-lg disabled:opacity-60 transition-colors duration-200"
+                    onClick={handleConvert}
+                    disabled={isConverting || isExtracting}
+                    className="w-full px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200"
                 >
-                  {isConverting ? progress : t.convertToPdf}
+                    {isConverting ? progress : t.convertToPdf}
                 </button>
                  <button
-                  onClick={handleExtractText}
-                  disabled={isConverting || isExtracting}
-                  className="w-full px-6 py-3 btn-primary text-white font-semibold rounded-lg disabled:opacity-60 transition-colors duration-200"
+                    onClick={handleExtractText}
+                    disabled={isConverting || isExtracting}
+                    className="w-full px-6 py-3 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200"
                 >
-                  {isExtracting ? t.analyzing : t.extractText}
+                    {isExtracting ? t.analyzing : t.extractText}
                 </button>
             </div>
 
@@ -252,7 +252,7 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
                 <a
                     href={pdfUrl}
                     download={`${wordFile.name.replace(/\.[^/.]+$/, "")}.pdf`}
-                  className="w-full mt-4 flex items-center justify-center px-6 py-3 obsidian-card text-white font-semibold rounded-lg transition-colors duration-200"
+                    className="w-full mt-4 flex items-center justify-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200"
                 >
                     <DownloadIcon className="w-5 h-5 me-2" />
                     {t.downloadPdf}
@@ -274,7 +274,7 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
 
             {extractionError && <p className="text-center mt-4 font-semibold text-red-400">{extractionError}</p>}
             {(extractedText || isExtracting) && (
-              <div className="mt-6 w-full obsidian-card p-4 rounded-lg">
+              <div className="mt-6 w-full">
                 <div className="flex justify-between items-center mb-2">
                     <h3 className="font-semibold text-gray-300">Extracted Text</h3>
                      <div className="flex items-center gap-2">
@@ -298,7 +298,7 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
                 <textarea
                   readOnly
                   value={isExtracting ? 'Extracting text...' : extractedText}
-                  className="w-full h-48 bg-transparent text-gray-300 p-2 resize-y border-0 focus:ring-0"
+                  className="w-full h-48 bg-gray-900/50 rounded-lg p-4 text-gray-300 resize-y border border-gray-600 focus:ring-2 focus:ring-purple-500"
                 />
               </div>
             )}

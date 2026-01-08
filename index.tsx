@@ -1,3 +1,15 @@
-// Removed: root-level entrypoint was empty and could expose raw TypeScript if served.
-// The app entrypoint is located at `src/index.tsx` and will be compiled by Vite.
-// Keeping this file intentionally empty to avoid accidental runtime loads.
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error("Could not find root element to mount to");
+}
+
+const root = ReactDOM.createRoot(rootElement);
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
