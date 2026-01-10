@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import type { LanguageOption } from '../lib/languages';
 import { UploadIcon } from './icons/UploadIcon';
-import { analyzeImage, translateText } from '../services/geminiService';
+import { analyzeImage, translateText, summarizeText } from '../services/geminiService';
 import LanguageDropdown from './LanguageDropdown';
 import { targetLanguages } from '../lib/languages';
 import { CopyIcon } from './icons/CopyIcon';
@@ -120,6 +120,12 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
   const [isTranslating, setIsTranslating] = useState(false);
   const [translationError, setTranslationError] = useState<string | null>(null);
 
+  // Summary State
+  const [summaryText, setSummaryText] = useState('');
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [isSummaryCopied, setIsSummaryCopied] = useState(false);
+
   const [isOcrCopied, setIsOcrCopied] = useState(false);
   const [isTranslationCopied, setIsTranslationCopied] = useState(false);
 
@@ -132,6 +138,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
     setEditedAnalysisResult('');
     setTranslatedText('');
     setEditedTranslatedText('');
+    setSummaryText('');
     
     let combinedText = "";
     
@@ -200,6 +207,21 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
     }
   }, [editedAnalysisResult, targetLang.name]);
 
+  const handleSummarize = useCallback(async () => {
+    if (!editedAnalysisResult) return;
+    setIsSummarizing(true);
+    setSummaryError(null);
+    setSummaryText('');
+    try {
+        const result = await summarizeText(editedAnalysisResult);
+        setSummaryText(result);
+    } catch (err: any) {
+        setSummaryError(err.message || 'An error occurred during summarization.');
+    } finally {
+        setIsSummarizing(false);
+    }
+  }, [editedAnalysisResult]);
+
   // Auto-translate only if a single image was analyzed and result appeared newly, 
   // otherwise for bulk, user should manually click (to save quota).
   useEffect(() => {
@@ -225,6 +247,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
         setEditedAnalysisResult('');
         setTranslatedText('');
         setEditedTranslatedText('');
+        setSummaryText('');
         setError(null);
         
         setImages(prev => [...prev, ...newFiles]);
@@ -256,6 +279,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
              setEditedAnalysisResult('');
              setTranslatedText('');
              setEditedTranslatedText('');
+             setSummaryText('');
              setError(null);
              setImages(prev => [...prev, ...newFiles]);
         }
@@ -275,8 +299,10 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
     setEditedAnalysisResult('');
     setTranslatedText('');
     setEditedTranslatedText('');
+    setSummaryText('');
     setError(null);
     setTranslationError(null);
+    setSummaryError(null);
     setIsAnalyzing(false);
   };
 
@@ -291,15 +317,22 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
     URL.revokeObjectURL(url);
   };
 
-  const handleExport = async (format: 'txt' | 'docx' | 'pdf', type: 'analysis' | 'translation') => {
-    const content = type === 'analysis' ? editedAnalysisResult : editedTranslatedText;
+  const handleExport = async (format: 'txt' | 'docx' | 'pdf', type: 'analysis' | 'translation' | 'summary') => {
+    let content = "";
+    if (type === 'analysis') content = editedAnalysisResult;
+    else if (type === 'translation') content = editedTranslatedText;
+    else if (type === 'summary') content = summaryText;
+
     if (!content) return;
     
     const baseFilename = images.length === 1 
         ? images[0].file.name.split('.').slice(0, -1).join('.') 
         : `batch-scan-${images.length}-files`;
         
-    const filename = type === 'analysis' ? `${baseFilename}-ocr` : `${baseFilename}-translation-${targetLang.code}`;
+    let filename = "";
+    if (type === 'analysis') filename = `${baseFilename}-ocr`;
+    else if (type === 'translation') filename = `${baseFilename}-translation-${targetLang.code}`;
+    else if (type === 'summary') filename = `${baseFilename}-summary`;
 
     if (format === 'txt') {
       const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
@@ -329,15 +362,18 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
     }
   };
 
-  const handleCopy = (type: 'ocr' | 'translation') => {
-    const textToCopy = type === 'ocr' ? editedAnalysisResult : editedTranslatedText;
+  const handleCopy = (type: 'ocr' | 'translation' | 'summary') => {
+    const textToCopy = type === 'ocr' ? editedAnalysisResult : (type === 'translation' ? editedTranslatedText : summaryText);
     navigator.clipboard.writeText(textToCopy);
     if (type === 'ocr') {
         setIsOcrCopied(true);
         setTimeout(() => setIsOcrCopied(false), 2000);
-    } else {
+    } else if (type === 'translation') {
         setIsTranslationCopied(true);
         setTimeout(() => setIsTranslationCopied(false), 2000);
+    } else if (type === 'summary') {
+        setIsSummaryCopied(true);
+        setTimeout(() => setIsSummaryCopied(false), 2000);
     }
   };
   
@@ -456,7 +492,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
 
              {/* Results Section */}
              {(analysisResult || isAnalyzing) && (
-                <div className="animate-fadeIn">
+                <div className="animate-fadeIn space-y-6 pb-12">
                     <ResultBox 
                         title={t.imageAnalysisResult} 
                         value={editedAnalysisResult} 
@@ -478,13 +514,22 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
                                 searchPlaceholder="Search target language"
                                 />
                         </div>
-                        <button 
-                            onClick={handleTranslate}
-                            disabled={isTranslating || !editedAnalysisResult}
-                            className="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors h-[42px] mt-auto"
-                        >
-                            {isTranslating ? t.translating : t.translate}
-                        </button>
+                        <div className="flex gap-2 w-full sm:w-auto">
+                            <button 
+                                onClick={handleTranslate}
+                                disabled={isTranslating || !editedAnalysisResult}
+                                className="flex-1 sm:flex-none px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors h-[42px] mt-auto"
+                            >
+                                {isTranslating ? t.translating : t.translate}
+                            </button>
+                            <button 
+                                onClick={handleSummarize}
+                                disabled={isSummarizing || !editedAnalysisResult}
+                                className="flex-1 sm:flex-none px-6 py-2 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors h-[42px] mt-auto"
+                            >
+                                {isSummarizing ? t.summarizing : t.summarize}
+                            </button>
+                        </div>
                     </div>
 
                     {translationError && <div className="text-red-400 mt-4 text-center">{translationError}</div>}
@@ -499,6 +544,20 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
                             onExport={(format) => handleExport(format, 'translation')}
                             onChange={setEditedTranslatedText}
                             isLoading={isTranslating}
+                        />
+                    )}
+
+                    {summaryError && <div className="text-red-400 mt-4 text-center">{summaryError}</div>}
+
+                    {(isSummarizing || summaryText) && (
+                        <ResultBox 
+                            title={t.summaryResult} 
+                            value={summaryText} 
+                            t={t} 
+                            onCopy={() => handleCopy('summary')} 
+                            isCopied={isSummaryCopied} 
+                            onExport={(format) => handleExport(format, 'summary')}
+                            isLoading={isSummarizing}
                         />
                     )}
                 </div>

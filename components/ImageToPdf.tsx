@@ -220,7 +220,8 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
     }
     
     const url = doc.output('bloburl');
-    setPdfUrl(url as string);
+    // Fix: Convert URL to string using unknown as intermediate type to avoid TS error
+    setPdfUrl(url as unknown as string);
     setIsConverting(false);
     setConversionMessage('');
     onConversionComplete({ fileName: `${outputFilename || 'converted'}.pdf`, imageCount: images.length });
@@ -245,13 +246,20 @@ const ImageToPdf: React.FC<ImageToPdfProps> = ({ t, onConversionComplete }) => {
         // A4 page dimensions in EMU (English Metric Units)
         const a4Width = 792 * 12700;
         
+        // Fix: Use Uint8Array for docx ImageRun data to avoid SvgMediaOptions type mismatch
+        const binaryString = atob(base64Data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let j = 0; j < binaryString.length; j++) {
+            bytes[j] = binaryString.charCodeAt(j);
+        }
+
         const imageRun = new docx.ImageRun({
-            data: base64Data,
+            data: bytes,
             transformation: {
                 width: a4Width, 
                 height: (a4Width * tempImg.height) / tempImg.width,
             },
-        });
+        } as any);
         imageParagraphs.push(new docx.Paragraph({ children: [imageRun] }));
     }
     

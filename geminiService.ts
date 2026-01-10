@@ -1,9 +1,8 @@
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import type { Transcription, SmartSummary } from '../types';
+import type { Transcription } from '../types';
 
-// Accessing the API key exclusively from process.env.API_KEY
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
 const MODELS = {
     primary: 'gemini-3-pro-preview',
@@ -39,17 +38,17 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
   const transcriptionSchema = {
     type: Type.OBJECT,
     properties: {
-      language: { type: Type.STRING },
-      languageCode: { type: Type.STRING },
+      language: { type: Type.STRING, description: "Full name of the detected language (e.g. English, Urdu, Hindi, Arabic)" },
+      languageCode: { type: Type.STRING, description: "BCP-47 language code" },
       segments: {
         type: Type.ARRAY,
         items: {
           type: Type.OBJECT,
           properties: {
-            startTime: { type: Type.STRING },
-            endTime: { type: Type.STRING },
-            speaker: { type: Type.STRING },
-            text: { type: Type.STRING },
+            startTime: { type: Type.STRING, description: "Format MM:SS or HH:MM:SS" },
+            endTime: { type: Type.STRING, description: "Format MM:SS or HH:MM:SS" },
+            speaker: { type: Type.STRING, description: "Speaker identifier, e.g. Speaker 1, Speaker 2" },
+            text: { type: Type.STRING, description: "The transcribed text for this segment" },
           },
           required: ["startTime", "endTime", "speaker", "text"]
         }
@@ -63,7 +62,13 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
     contents: { 
         parts: [
             { inlineData: { mimeType, data: base64Data } },
-            { text: `Transcribe with speaker diarization. Language hint: ${languageHint}` }
+            { text: `Transcribe this media file with high precision. 
+              1. Auto-detect the language (it could be any language including Arabic, Urdu, Hindi, or English). 
+              2. Perform speaker diarization to distinguish between different voices. 
+              3. Break the text into logical segments based on pauses or speaker changes.
+              4. Language strategy: ${languageHint === 'auto' ? 'Full Auto-detection' : 'The user suggests the language is ' + languageHint}.
+              Return the result strictly in the provided JSON format.` 
+            }
         ] 
     },
     config: {
@@ -84,90 +89,65 @@ export const translateText = async (text: string, sourceLang: string, targetLang
     const response = await ai.models.generateContent({
         model: MODELS.primary,
         contents: text,
-        config: { systemInstruction: `Translate from ${sourceLang} to ${targetLang}.` },
+        config: { systemInstruction: `Translate from ${sourceLang} to ${targetLang}. Only return the translation.` },
     });
-    return response.text || "";
-};
-
-export const pureOrganizeData = async (text: string): Promise<any> => {
-    const response = await ai.models.generateContent({
-        model: MODELS.primary,
-        contents: `Organize this data verbatim into JSON categories: ${text}`,
-        config: { responseMimeType: "application/json" }
-    });
-    return JSON.parse(response.text || '{}');
-};
-
-export const smartSummarize = async (text: string): Promise<SmartSummary> => {
-    const response = await ai.models.generateContent({
-        model: MODELS.primary,
-        contents: `Provide a smart summary and extract entities from: ${text}`,
-        config: { responseMimeType: "application/json" }
-    });
-    return JSON.parse(response.text || '{}');
-};
-
-// Fix: Exporting summarizeText used in ImageAnalyzer.tsx
-export const summarizeText = async (text: string): Promise<string> => {
-    const response = await ai.models.generateContent({
-        model: MODELS.primary,
-        contents: text,
-        config: { systemInstruction: "Provide a concise summary of the following text." },
-    });
-    return response.text || "";
-};
-
-export const runStrategicPlanning = async (text: string, images: {data: string, mime: string}[] = []): Promise<any> => {
-    const imageParts = images.map(img => ({ inlineData: { mimeType: img.mime, data: img.data } }));
-    const response = await ai.models.generateContent({
-        model: MODELS.primary,
-        contents: { parts: [...imageParts, { text: `Generate a strategic plan for: ${text}` }] },
-        config: { responseMimeType: "application/json" }
-    });
-    return JSON.parse(response.text || '{}');
+    return response.text?.trim() || "";
 };
 
 export const correctGrammar = async (text: string, language: string): Promise<string> => {
     const response = await ai.models.generateContent({
         model: MODELS.primary,
         contents: text,
-        config: { systemInstruction: `Correct grammar and punctuation in ${language}.` },
+        config: { systemInstruction: `Fix grammar/punctuation in ${language}. Only return the corrected text.` },
     });
-    return response.text || "";
+    return response.text?.trim() || "";
 };
 
 export const analyzeImage = async (imageFile: File): Promise<string> => {
     const base64Data = await fileToBase64(imageFile);
     const response = await ai.models.generateContent({
         model: MODELS.vision,
-        contents: { parts: [{ inlineData: { mimeType: imageFile.type, data: base64Data } }, { text: "Perform OCR." }] },
+        contents: { parts: [{ inlineData: { mimeType: imageFile.type, data: base64Data } }, { text: "Perform high-accuracy OCR." }] },
     });
-    return response.text || "";
+    return response.text?.trim() || "";
 };
 
 export const extractTextFromUrl = async (url: string): Promise<string> => {
     const response = await ai.models.generateContent({
         model: MODELS.flash,
-        contents: `Extract text from: ${url}`,
-        config: { tools: [{ googleSearch: {} }] }
+        contents: `Fetch and extract the primary text content from this URL: ${url}. Return ONLY the extracted text in its original language.`,
+        config: {
+            tools: [{ googleSearch: {} }]
+        }
     });
-    return response.text || "";
+    return response.text || "Failed to extract text content.";
 };
 
 export function decode(base64: string): Uint8Array {
   const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
   return bytes;
 }
 
-export async function decodeAudioData(data: Uint8Array, ctx: AudioContext, sampleRate: number, numChannels: number): Promise<AudioBuffer> {
+export async function decodeAudioData(
+  data: Uint8Array,
+  ctx: AudioContext,
+  sampleRate: number,
+  numChannels: number,
+): Promise<AudioBuffer> {
   const dataInt16 = new Int16Array(data.buffer);
   const frameCount = dataInt16.length / numChannels;
   const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
+
   for (let channel = 0; channel < numChannels; channel++) {
     const channelData = buffer.getChannelData(channel);
-    for (let i = 0; i < frameCount; i++) channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+    for (let i = 0; i < frameCount; i++) {
+      channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+    }
   }
   return buffer;
 }
@@ -178,8 +158,15 @@ export const generateSpeech = async (text: string, voiceName: string): Promise<s
         contents: [{ parts: [{ text }] }],
         config: {
             responseModalities: [Modality.AUDIO],
-            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName } } },
+            speechConfig: {
+                voiceConfig: {
+                    prebuiltVoiceConfig: { voiceName },
+                },
+            },
         },
     });
-    return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data || "";
+    
+    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (!base64Audio) throw new Error("No audio data returned from AI");
+    return base64Audio;
 };

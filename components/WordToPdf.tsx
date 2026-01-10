@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';
@@ -121,7 +122,8 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
         await doc.html(tempDiv, {
             callback: (doc) => {
                 const url = doc.output('bloburl');
-                setPdfUrl(url as string);
+                // Fix: Convert URL to string using unknown as intermediate type to avoid TS error
+                setPdfUrl(url as unknown as string);
                 setProgress(t.conversionComplete);
                 onConversionComplete({fileName: wordFile.name});
             },

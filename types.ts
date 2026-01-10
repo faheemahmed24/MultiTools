@@ -99,3 +99,25 @@ export interface AudioMergerHistoryItem {
     fileName: string;
     fileCount: number;
 }
+
+export interface TtsHistoryItem {
+    id: string;
+    date: string;
+    text: string;
+    voice: string;
+}
+
+export interface SmartSummary {
+    summary: string;
+    contacts: { name: string; info: string; type: string }[];
+    languages: string[];
+    keyInsights: string[];
+    numbers: { label: string; value: string }[];
+}
+
+export interface DataSummarizerHistoryItem {
+    id: string;
+    date: string;
+    inputText: string;
+    result: SmartSummary;
+}
