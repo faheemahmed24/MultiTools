@@ -18,7 +18,8 @@ const AdUnit: React.FC<AdUnitProps> = ({
   const adInitRef = useRef<boolean>(false);
 
   useEffect(() => {
-    // Prevent double initialization during React strict mode or navigation
+    // Safety check for browser environment
+    if (typeof window === 'undefined') return;
     if (adInitRef.current) return;
     
     const initTimer = setTimeout(() => {
@@ -28,12 +29,12 @@ const AdUnit: React.FC<AdUnitProps> = ({
         if (typeof adsbygoogle.push === 'function') {
           adsbygoogle.push({});
           adInitRef.current = true;
-          console.debug(`[AdSense] Slot ${slot} initialized.`);
+          console.debug(`[AdSense] Slot ${slot} mounted.`);
         }
       } catch (e) {
-        console.warn("[AdSense] Initialization skipped or blocked:", e);
+        console.warn("[AdSense] Integration error:", e);
       }
-    }, 400); // Wait for page transitions to finish
+    }, 500);
 
     return () => {
       clearTimeout(initTimer);
@@ -43,10 +44,10 @@ const AdUnit: React.FC<AdUnitProps> = ({
 
   return (
     <div 
-      className={`ad-wrapper overflow-hidden bg-white/[0.01] border border-dashed border-white/5 flex flex-col items-center justify-center transition-opacity duration-700 rounded-2xl ${className}`}
-      style={{ minHeight, width: '100%' }}
+      className={`ad-wrapper overflow-hidden bg-white/[0.01] border border-dashed border-white/5 flex flex-col items-center justify-center rounded-2xl ${className}`}
+      style={{ minHeight, width: '100%', marginBottom: '2rem' }}
     >
-      <div className="w-full text-center text-[7px] font-black text-gray-800 uppercase tracking-[0.3em] mb-2 pointer-events-none select-none">
+      <div className="w-full text-center text-[8px] font-bold text-gray-800 uppercase tracking-widest mb-2 pointer-events-none select-none">
         Advertisements
       </div>
       <ins className="adsbygoogle"
