@@ -18,25 +18,25 @@ const AdUnit: React.FC<AdUnitProps> = ({
   const adInitRef = useRef<boolean>(false);
 
   useEffect(() => {
-    // Only initialize once per mount
-    if (adInitRef.current) return;
+    // Prevent SSR errors and double initialization
+    if (typeof window === 'undefined') return;
     
+    // Check if script is already pushed for this container
+    if (adInitRef.current) return;
+
     const initTimer = setTimeout(() => {
       try {
-        // @ts-ignore
         const adsbygoogle = (window as any).adsbygoogle || [];
-        if (adsbygoogle && typeof adsbygoogle.push === 'function') {
-          adsbygoogle.push({});
+        if (Array.isArray(adsbygoogle)) {
+          (window as any).adsbygoogle.push({});
           adInitRef.current = true;
         }
       } catch (e) {
-        console.warn("[AdSense] Integration notice: Waiting for script load.");
+        console.warn("[AdSense] Integration notice: Script not yet available or failed to push.");
       }
-    }, 1500); // 1.5s delay to ensure full page hydration
+    }, 1500);
 
-    return () => {
-      clearTimeout(initTimer);
-    };
+    return () => clearTimeout(initTimer);
   }, [slot]);
 
   return (
