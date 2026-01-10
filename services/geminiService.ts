@@ -1,7 +1,8 @@
+
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { Transcription, SmartSummary } from '../types';
 
-// The API key must be obtained exclusively from the environment variable process.env.API_KEY.
+// Accessing the API key exclusively from process.env.API_KEY
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const MODELS = {
@@ -57,13 +58,12 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
     required: ["language", "languageCode", "segments"]
   };
 
-  // Using ai.models.generateContent to query GenAI with model name and prompt.
   const response = await ai.models.generateContent({
     model: MODELS.primary,
     contents: { 
         parts: [
             { inlineData: { mimeType, data: base64Data } },
-            { text: `Transcribe with speaker diarization. Language: ${languageHint}` }
+            { text: `Transcribe with speaker diarization. Language hint: ${languageHint}` }
         ] 
     },
     config: {
@@ -72,7 +72,6 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
     }
   });
 
-  // Extract text content using .text property.
   const parsed = JSON.parse(response.text || '{}');
   return {
     fileName: file.name,
@@ -87,21 +86,13 @@ export const translateText = async (text: string, sourceLang: string, targetLang
         contents: text,
         config: { systemInstruction: `Translate from ${sourceLang} to ${targetLang}.` },
     });
-    return response.text?.trim() || "";
-};
-
-export const summarizeText = async (text: string): Promise<string> => {
-    const response = await ai.models.generateContent({
-        model: MODELS.flash,
-        contents: `Summarize: ${text}`,
-    });
-    return response.text?.trim() || "";
+    return response.text || "";
 };
 
 export const pureOrganizeData = async (text: string): Promise<any> => {
     const response = await ai.models.generateContent({
         model: MODELS.primary,
-        contents: `Organize verbatim: ${text}`,
+        contents: `Organize this data verbatim into JSON categories: ${text}`,
         config: { responseMimeType: "application/json" }
     });
     return JSON.parse(response.text || '{}');
@@ -110,17 +101,27 @@ export const pureOrganizeData = async (text: string): Promise<any> => {
 export const smartSummarize = async (text: string): Promise<SmartSummary> => {
     const response = await ai.models.generateContent({
         model: MODELS.primary,
-        contents: `Extract insights: ${text}`,
+        contents: `Provide a smart summary and extract entities from: ${text}`,
         config: { responseMimeType: "application/json" }
     });
     return JSON.parse(response.text || '{}');
+};
+
+// Fix: Exporting summarizeText used in ImageAnalyzer.tsx
+export const summarizeText = async (text: string): Promise<string> => {
+    const response = await ai.models.generateContent({
+        model: MODELS.primary,
+        contents: text,
+        config: { systemInstruction: "Provide a concise summary of the following text." },
+    });
+    return response.text || "";
 };
 
 export const runStrategicPlanning = async (text: string, images: {data: string, mime: string}[] = []): Promise<any> => {
     const imageParts = images.map(img => ({ inlineData: { mimeType: img.mime, data: img.data } }));
     const response = await ai.models.generateContent({
         model: MODELS.primary,
-        contents: { parts: [...imageParts, { text: `Strategic Plan: ${text}` }] },
+        contents: { parts: [...imageParts, { text: `Generate a strategic plan for: ${text}` }] },
         config: { responseMimeType: "application/json" }
     });
     return JSON.parse(response.text || '{}');
@@ -130,24 +131,24 @@ export const correctGrammar = async (text: string, language: string): Promise<st
     const response = await ai.models.generateContent({
         model: MODELS.primary,
         contents: text,
-        config: { systemInstruction: `Correct grammar in ${language}.` },
+        config: { systemInstruction: `Correct grammar and punctuation in ${language}.` },
     });
-    return response.text?.trim() || "";
+    return response.text || "";
 };
 
 export const analyzeImage = async (imageFile: File): Promise<string> => {
     const base64Data = await fileToBase64(imageFile);
     const response = await ai.models.generateContent({
         model: MODELS.vision,
-        contents: { parts: [{ inlineData: { mimeType: imageFile.type, data: base64Data } }, { text: "OCR Scan." }] },
+        contents: { parts: [{ inlineData: { mimeType: imageFile.type, data: base64Data } }, { text: "Perform OCR." }] },
     });
-    return response.text?.trim() || "";
+    return response.text || "";
 };
 
 export const extractTextFromUrl = async (url: string): Promise<string> => {
     const response = await ai.models.generateContent({
         model: MODELS.flash,
-        contents: `Extract text: ${url}`,
+        contents: `Extract text from: ${url}`,
         config: { tools: [{ googleSearch: {} }] }
     });
     return response.text || "";
