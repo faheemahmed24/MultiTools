@@ -1,9 +1,9 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import type { TranslationSet } from '../types';
 import { TrashIcon } from './icons/TrashIcon';
 import { HistoryIcon } from './icons/HistoryIcon';
 import { ClockIcon } from './icons/ClockIcon';
+import AdUnit from './AdUnit';
 
 interface HistoryPanelProps<T extends { id: string }> {
   items: T[];
@@ -51,44 +51,53 @@ const HistoryPanel = <T extends { id: string }>({
       ) : (
         <div className="flex-grow overflow-y-auto custom-scrollbar pr-2 -mr-2">
             <div className="grid grid-cols-1 gap-3 pb-8">
-              {items.map((item) => {
+              {items.map((item, index) => {
                 const isDeleting = item.id === deletingId;
                 const isActive = activeId === item.id;
                 
                 return (
-                  <div
-                    key={item.id}
-                    className={`group relative flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all duration-300 border ${
-                      isDeleting ? 'scale-95 opacity-0 -translate-x-12' : 'scale-100 opacity-100'
-                    } ${
-                      isActive 
-                        ? 'bg-purple-600/10 border-purple-500/50 shadow-lg' 
-                        : 'bg-gray-900/40 border-gray-800/50 hover:bg-gray-800/60 hover:border-gray-700'
-                    }`}
-                    onClick={() => !isDeleting && onSelect(item)}
-                  >
-                    {/* Visual Indicator */}
-                    <div className={`w-1.5 h-10 rounded-full flex-shrink-0 transition-colors ${isActive ? 'bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]' : 'bg-gray-800'}`}></div>
-                    
-                    {/* Content */}
-                    <div className="flex-grow min-w-0 overflow-hidden">
-                        {renderItem(item, isActive)}
+                  <Fragment key={item.id}>
+                    <div
+                      className={`group relative flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all duration-300 border ${
+                        isDeleting ? 'scale-95 opacity-0 -translate-x-12' : 'scale-100 opacity-100'
+                      } ${
+                        isActive 
+                          ? 'bg-purple-600/10 border-purple-500/50 shadow-lg' 
+                          : 'bg-gray-900/40 border-gray-800/50 hover:bg-gray-800/60 hover:border-gray-700'
+                      }`}
+                      onClick={() => !isDeleting && onSelect(item)}
+                    >
+                      {/* Visual Indicator */}
+                      <div className={`w-1.5 h-10 rounded-full flex-shrink-0 transition-colors ${isActive ? 'bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]' : 'bg-gray-800'}`}></div>
+                      
+                      {/* Content */}
+                      <div className="flex-grow min-w-0 overflow-hidden">
+                          {renderItem(item, isActive)}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteClick(item.id);
+                            }}
+                            className="p-2.5 rounded-xl bg-gray-800/50 text-gray-500 hover:bg-red-500/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all transform hover:scale-110 active:scale-95"
+                            title={t.delete}
+                          >
+                            <TrashIcon className="w-5 h-5" />
+                          </button>
+                      </div>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteClick(item.id);
-                          }}
-                          className="p-2.5 rounded-xl bg-gray-800/50 text-gray-500 hover:bg-red-500/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all transform hover:scale-110 active:scale-95"
-                          title={t.delete}
-                        >
-                          <TrashIcon className="w-5 h-5" />
-                        </button>
-                    </div>
-                  </div>
+                    {/* Insert Ad every 3 items */}
+                    {(index + 1) % 3 === 0 && (
+                      <div className="my-2 p-1 border border-dashed border-white/5 rounded-2xl">
+                         <p className="text-[7px] text-gray-800 font-black uppercase text-center mb-1 tracking-widest">Sponsored Archive Entry</p>
+                         <AdUnit slot="7406471479" className="my-0 opacity-80" />
+                      </div>
+                    )}
+                  </Fragment>
                 )
               })}
             </div>

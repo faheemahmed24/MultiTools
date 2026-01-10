@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import type { TranslationSet } from '../types';
 import { useDebounce } from '../hooks/useDebounce';
@@ -61,21 +60,16 @@ const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete })
 
   React.useEffect(() => {
     handleTranslate();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedInputText, sourceLang, targetLang]);
 
   const handleSwapLanguages = () => {
     if (sourceLang.code === 'auto' || isSwapping) return; 
-    
     setIsSwapping(true);
-    setTimeout(() => setIsSwapping(false), 500); // Animation duration
-
+    setTimeout(() => setIsSwapping(false), 500);
     const currentSource = sourceLang;
     const currentTarget = targetLang;
-    
     const newSourceInTargetList = targetLanguages.find(l => l.code === currentTarget.code);
     const newTargetInSourceList = sourceLanguages.find(l => l.code === currentSource.code);
-
     if (newSourceInTargetList && newTargetInSourceList) {
         setSourceLang(newSourceInTargetList);
         setTargetLang(newTargetInSourceList);
@@ -88,135 +82,92 @@ const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete })
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  const createDownload = (filename: string, blob: Blob) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setShowExportMenu(false);
+  const isRTL = (text: string) => {
+    const rtlChars = /[\u0590-\u083F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+    return rtlChars.test(text);
   };
 
   const handleExport = async (format: 'txt' | 'docx' | 'pdf') => {
+    const content = editedTranslatedText;
     const filename = `translation-${targetLang.code}`;
     if (format === 'txt') {
-      const blob = new Blob([editedTranslatedText], { type: 'text/plain;charset=utf-8' });
-      createDownload(`${filename}.txt`, blob);
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `${filename}.txt`; a.click();
     } else if (format === 'docx') {
-      const doc = new docx.Document({
-        sections: [{
-          children: editedTranslatedText.split('\n').map(text => new docx.Paragraph(text)),
-        }],
-      });
+      const doc = new docx.Document({ sections: [{ children: content.split('\n').map(text => new docx.Paragraph(text)) }] });
       const blob = await docx.Packer.toBlob(doc);
-      createDownload(`${filename}.docx`, blob);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `${filename}.docx`; a.click();
     } else if (format === 'pdf') {
       const doc = new jsPDF();
-      doc.text(editedTranslatedText, 10, 10);
-      const blob = doc.output('blob');
-      createDownload(`${filename}.pdf`, blob);
+      doc.text(content, 10, 10);
+      doc.save(`${filename}.pdf`);
     }
+    setShowExportMenu(false);
   };
-
-  const handleClear = () => {
-    setInputText('');
-    setTranslatedText('');
-    setEditedTranslatedText('');
-    setError(null);
-  };
-
-  const characterCount = inputText.length;
-  const wordCount = inputText.trim().split(/\s+/).filter(Boolean).length;
 
   return (
-    <div className="bg-gray-800 rounded-2xl shadow-lg p-6">
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
-        <LanguageDropdown
-          languages={sourceLanguages}
-          selectedLang={sourceLang}
-          onSelectLang={setSourceLang}
-          title={t.sourceLanguage}
-          searchPlaceholder="Search source language"
-        />
-        <button
-          onClick={handleSwapLanguages}
-          disabled={sourceLang.code === 'auto' || isLoading || isSwapping}
-          className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          <SwapIcon className={`w-6 h-6 text-gray-300 transition-transform duration-500 ${isSwapping ? 'rotate-[360deg]' : ''}`} />
+    <div className="bg-[#05050C] rounded-[2.5rem] border border-white/5 p-8 max-w-7xl mx-auto w-full animate-fadeIn shadow-2xl">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-10">
+        <LanguageDropdown languages={sourceLanguages} selectedLang={sourceLang} onSelectLang={setSourceLang} title="From" searchPlaceholder="Search source" />
+        <button onClick={handleSwapLanguages} disabled={sourceLang.code === 'auto' || isLoading} className="p-4 rounded-2xl bg-white/5 hover:bg-purple-600/20 text-gray-400 hover:text-purple-400 transition-all">
+          <SwapIcon className={`w-6 h-6 transition-transform duration-500 ${isSwapping ? 'rotate-[360deg]' : ''}`} />
         </button>
-        <LanguageDropdown
-          languages={targetLanguages}
-          selectedLang={targetLang}
-          onSelectLang={setTargetLang}
-          title={t.targetLanguage}
-          searchPlaceholder="Search target language"
-        />
+        <LanguageDropdown languages={targetLanguages} selectedLang={targetLang} onSelectLang={setTargetLang} title="To" searchPlaceholder="Search target" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <textarea
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            placeholder={t.enterText}
-            disabled={isLoading}
-            className="w-full h-64 bg-gray-900/50 rounded-lg p-4 text-gray-200 resize-none focus:ring-2 focus:ring-purple-500 border border-transparent focus:border-purple-500 disabled:opacity-70"
-          />
-          <div className="flex justify-end items-center gap-2 text-sm text-gray-400 mt-1 px-1">
-            <span>{characterCount} chars / {wordCount} words</span>
-            {inputText && (
-                <button onClick={handleClear} title="Clear text" className="text-gray-500 hover:text-white transition-colors">
-                    <XCircleIcon className="w-5 h-5"/>
-                </button>
-            )}
-          </div>
-        </div>
-        <div className="relative">
-           <div className={`w-full h-64 bg-gray-900/50 rounded-lg overflow-y-auto ${error ? 'text-red-400 p-4' : ''}`}>
-             {isLoading ? (
-                <div className="p-4"><SkeletonLoader lines={4} /></div>
-             ) : error ? (
-                <p>{error}</p>
-             ) : (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="flex flex-col">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 mb-3 ml-2">Source Terminal</h3>
+            <div className="relative group bg-[#0A0A15] border border-white/5 rounded-[2rem] p-6 focus-within:border-purple-500/30 transition-all">
                 <textarea
-                    value={editedTranslatedText}
-                    onChange={(e) => setEditedTranslatedText(e.target.value)}
-                    placeholder={t.translationResult}
-                    className="w-full h-full bg-transparent rounded-lg p-4 text-gray-200 resize-none focus:ring-0 border-0"
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    placeholder="Enter text to translate..."
+                    className="w-full h-80 bg-transparent text-gray-200 text-lg leading-relaxed resize-none outline-none font-medium custom-scrollbar"
+                    dir="auto"
                 />
-             )}
-          </div>
-          {!isLoading && !error && translatedText && (
-            <div className="absolute top-3 end-3 flex items-center space-x-2 rtl:space-x-reverse">
-                <button
-                    onClick={handleCopy}
-                    className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200"
-                >
-                    {isCopied ? <CheckIcon className="w-4 h-4 me-2" /> : <CopyIcon className="w-4 h-4 me-2" />}
-                    {isCopied ? t.copied : t.copy}
-                </button>
-                <div className="relative">
-                    <button
-                        onClick={() => setShowExportMenu(!showExportMenu)}
-                        className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200"
-                    >
-                        <DownloadIcon className="w-4 h-4 me-2" />
-                        {t.export}
-                    </button>
-                    {showExportMenu && (
-                      <div className="absolute top-full mt-2 end-0 w-32 bg-gray-600 rounded-lg shadow-xl py-1 z-10 animate-slide-in-up">
-                        <button onClick={() => handleExport('txt')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">TXT (.txt)</button>
-                        <button onClick={() => handleExport('docx')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">DOCX (.docx)</button>
-                        <button onClick={() => handleExport('pdf')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">PDF (.pdf)</button>
-                      </div>
-                    )}
-                </div>
             </div>
-          )}
+        </div>
+
+        <div className="flex flex-col">
+            <div className="flex justify-between items-center mb-3 px-2">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400">Translation Outcome</h3>
+                {editedTranslatedText && (
+                    <div className="flex items-center gap-3">
+                        <button onClick={handleCopy} className="flex items-center gap-2 px-4 py-1.5 bg-purple-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-purple-500 transition-all">
+                            {isCopied ? <CheckIcon className="w-3 h-3" /> : <CopyIcon className="w-3 h-3" />}
+                            {isCopied ? 'Copied' : 'Copy'}
+                        </button>
+                        <div className="relative">
+                            <button onClick={() => setShowExportMenu(!showExportMenu)} className="p-1.5 bg-white/5 text-gray-500 hover:text-white rounded-lg border border-white/10">
+                                <DownloadIcon className="w-4 h-4" />
+                            </button>
+                            {showExportMenu && (
+                                <div onMouseLeave={() => setShowExportMenu(false)} className="absolute top-full mt-2 right-0 w-32 bg-gray-900 border border-white/10 rounded-xl shadow-2xl py-2 z-50">
+                                    {['txt', 'docx', 'pdf'].map(fmt => (
+                                        <button key={fmt} onClick={() => handleExport(fmt as any)} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase text-gray-400 hover:text-white hover:bg-purple-600 transition-all">{fmt}</button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+            <div className={`relative bg-[#0A0A10]/60 backdrop-blur-xl border border-white/10 rounded-[2rem] p-6 h-80 transition-all ${isLoading ? 'opacity-50' : 'opacity-100'}`}>
+                {isLoading ? (
+                    <div className="space-y-4"><SkeletonLoader lines={6} /></div>
+                ) : (
+                    <textarea
+                        value={editedTranslatedText}
+                        onChange={(e) => setEditedTranslatedText(e.target.value)}
+                        className={`w-full h-full bg-transparent text-gray-100 text-xl leading-relaxed resize-none outline-none font-medium custom-scrollbar ${isRTL(editedTranslatedText) ? 'font-urdu' : ''}`}
+                        placeholder="Outcome will appear here..."
+                        dir="auto"
+                    />
+                )}
+            </div>
         </div>
       </div>
     </div>

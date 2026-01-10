@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import type { TranslationSet, SmartSummary } from '../types';
 import { smartSummarize } from '../services/geminiService';
@@ -9,7 +8,6 @@ import { SkeletonLoader } from './Loader';
 import { SummarizerIcon } from './icons/SummarizerIcon';
 import { SearchIcon } from './icons/SearchIcon';
 import { BoltIcon } from './icons/BoltIcon';
-import { DocumentDuplicateIcon } from './icons/DocumentDuplicateIcon';
 import { ArrowPathIcon } from './icons/ArrowPathIcon';
 
 interface DataSummarizerProps {
@@ -46,7 +44,6 @@ const DataSummarizer: React.FC<DataSummarizerProps> = ({ t, onComplete, external
   const [activeCategory, setActiveCategory] = useState(externalCategory);
   const [activeToolId, setActiveToolId] = useState<string | null>(null);
 
-  // Functional state for the main summarizer tool
   const [inputText, setInputText] = useState('');
   const [result, setResult] = useState<SmartSummary | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -95,7 +92,7 @@ const DataSummarizer: React.FC<DataSummarizerProps> = ({ t, onComplete, external
 
   const handleCopy = () => {
     if (!result) return;
-    const text = JSON.stringify(result, null, 2);
+    const text = `SUMMARY:\n${result.summary}\n\nCONTACTS:\n${result.contacts.map(c => `${c.name}: ${c.info} (${c.type})`).join('\n')}\n\nKEY NUMBERS:\n${result.numbers.map(n => `${n.label}: ${n.value}`).join('\n')}`;
     navigator.clipboard.writeText(text);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
@@ -161,9 +158,9 @@ const DataSummarizer: React.FC<DataSummarizerProps> = ({ t, onComplete, external
                     ) : result ? (
                         <div className="space-y-6 pb-12 animate-fadeIn">
                             <div className="flex justify-end gap-2 mb-2">
-                                <button onClick={handleCopy} className="flex items-center px-4 py-2 bg-gray-800/80 rounded-xl text-xs font-black uppercase tracking-widest text-gray-400 hover:text-white border border-gray-700/50 transition-all">
-                                    {isCopied ? <CheckIcon className="w-4 h-4 me-2 text-green-500"/> : <CopyIcon className="w-4 h-4 me-2"/>}
-                                    {isCopied ? 'COPIED' : 'COPY JSON'}
+                                <button onClick={handleCopy} className="flex items-center px-4 py-2 bg-purple-600/20 rounded-xl text-xs font-black uppercase tracking-widest text-purple-400 hover:bg-purple-600 hover:text-white border border-purple-500/20 transition-all">
+                                    {isCopied ? <CheckIcon className="w-4 h-4 me-2"/> : <CopyIcon className="w-4 h-4 me-2"/>}
+                                    {isCopied ? 'COPIED' : 'COPY SUMMARY'}
                                 </button>
                             </div>
                             <CategoryCard title={t.summaryLabel}>
@@ -209,21 +206,6 @@ const DataSummarizer: React.FC<DataSummarizerProps> = ({ t, onComplete, external
     );
   }
 
-  if (activeToolId) {
-      return (
-        <div className="h-full flex flex-col">
-            <button onClick={() => setActiveToolId(null)} className="mb-6 self-start flex items-center gap-2 text-xs font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors bg-gray-900 px-4 py-2 rounded-xl border border-gray-800">
-                <ArrowPathIcon className="w-4 h-4" /> Back to Summary List
-            </button>
-            <div className="flex-grow flex flex-col items-center justify-center bg-gray-900/40 rounded-3xl border-2 border-dashed border-gray-800">
-                <BoltIcon className="w-16 h-16 text-gray-700 mb-4 animate-pulse" />
-                <h2 className="text-xl font-black text-white uppercase tracking-widest">Under Development</h2>
-                <p className="text-gray-500 text-sm mt-2">This tool will be available in the next AI update.</p>
-            </div>
-        </div>
-      );
-  }
-
   return (
     <div className="flex flex-col h-full animate-fadeIn max-w-7xl mx-auto w-full">
       <div className="mb-8">
@@ -244,17 +226,6 @@ const DataSummarizer: React.FC<DataSummarizerProps> = ({ t, onComplete, external
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full bg-gray-800/50 border border-gray-700/50 rounded-2xl py-3.5 pl-12 pr-6 text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none transition-all shadow-xl"
                 />
-            </div>
-            <div className="flex overflow-x-auto gap-2 pb-1 w-full md:w-auto custom-scrollbar no-scrollbar">
-                {categoryNames.map(name => (
-                    <button
-                        key={name}
-                        onClick={() => handleCategorySwitch(name)}
-                        className={`whitespace-nowrap px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${activeCategory === name ? 'bg-purple-600 border-purple-500 text-white shadow-lg' : 'bg-gray-800 border-gray-700 text-gray-500 hover:text-gray-300'}`}
-                    >
-                        {name}
-                    </button>
-                ))}
             </div>
         </div>
       </div>
@@ -287,27 +258,11 @@ const DataSummarizer: React.FC<DataSummarizerProps> = ({ t, onComplete, external
                     </div>
                     <p className="text-xs text-gray-500 line-clamp-1 group-hover:text-gray-400 transition-colors">{tool.description}</p>
                   </div>
-                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-purple-400 hidden sm:inline">Open</span>
-                    <div className="bg-purple-600/20 p-2 rounded-full text-purple-400">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"></path></svg>
-                    </div>
-                  </div>
                 </button>
               ))}
             </div>
           </section>
         ))}
-
-        {filteredCategories.length === 0 && (
-            <div className="py-24 text-center">
-                <div className="inline-block p-6 bg-gray-900/50 rounded-full mb-6 border border-gray-800">
-                    <SearchIcon className="w-12 h-12 text-gray-700" />
-                </div>
-                <p className="text-gray-500 font-bold uppercase tracking-widest">No summarizer match</p>
-                <button onClick={() => {setSearchTerm(''); handleCategorySwitch('All');}} className="mt-4 text-purple-400 text-sm font-black uppercase tracking-widest hover:underline">Clear Filters</button>
-            </div>
-        )}
       </div>
     </div>
   );
