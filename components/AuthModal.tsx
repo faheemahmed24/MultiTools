@@ -16,6 +16,20 @@ interface AuthModalProps {
   t: TranslationSet;
 }
 
+// Simple deterministic hash to avoid storing passwords in clear text in localStorage.
+// NOTE: This is for demo purposes only and is not a substitute for a proper,
+// server-side password hashing mechanism (e.g., bcrypt, Argon2).
+function hashPassword(password: string): string {
+  let hash = 0;
+  if (password.length === 0) return hash.toString();
+  for (let i = 0; i < password.length; i++) {
+    const chr = password.charCodeAt(i);
+    hash = (hash << 5) - hash + chr;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash.toString();
+}
+
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess, t }) => {
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [email, setEmail] = useState('');
@@ -77,7 +91,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess, 
     const users: User[] = usersJson ? JSON.parse(usersJson) : [];
     
     if (isLoginMode) {
-      const user = users.find(u => u.email === email && u.password === password);
+      const passwordHash = hashPassword(password);
+      const user = users.find(
+        (u: any) => u.email === email && u.passwordHash === passwordHash
+      );
       if (user) {
         setShowSuccess(true);
         setTimeout(() => {
@@ -95,12 +112,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess, 
         setIsSubmitting(false);
         return;
       }
+      const passwordHash = hashPassword(password);
       const newUser: User = {
         id: Date.now().toString(),
         email,
-        password,
+        // Store the hashed password instead of the clear-text password.
+        passwordHash: passwordHash as unknown as string,
         authMethod: 'password',
-      };
+      } as unknown as User;
       localStorage.setItem('users', JSON.stringify([...users, newUser]));
       setShowSuccess(true);
       setTimeout(() => {
