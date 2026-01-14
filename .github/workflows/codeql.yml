@@ -1,0 +1,17 @@
+# Advanced CodeQL workflow disabled by automation on 2026-01-10 to avoid conflict with repository default CodeQL setup.
+# If you prefer the advanced setup later, restore the original workflow from commit b3a7dc2cbcdc77b35dc6f3b583ce61062dc6680a (ref used in diagnostics).
+name: "CodeQL Advanced (disabled)"
+permissions: {}
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  disabled:
+    name: Disabled placeholder
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify
+        run: |
+          echo "This workflow has been intentionally disabled to avoid conflicts with the repository's default CodeQL/code-scanning setup."
+          echo "If you want the advanced CodeQL workflow enabled, either disable the default setup in the repository Security settings or restore the original workflow file."
