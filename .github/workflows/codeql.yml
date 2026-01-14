@@ -1,6 +1,7 @@
 # Advanced CodeQL workflow disabled by automation on 2026-01-10 to avoid conflict with repository default CodeQL setup.
 # If you prefer the advanced setup later, restore the original workflow from commit b3a7dc2cbcdc77b35dc6f3b583ce61062dc6680a (ref used in diagnostics).
 name: "CodeQL Advanced (disabled)"
+permissions: {}
 
 on:
   workflow_dispatch: {}
