@@ -36,7 +36,6 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   const [editedSegments, setEditedSegments] = useState<TranscriptionSegment[]>([]);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const exportMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsEditing(false);
@@ -84,17 +83,26 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
       const rows = transcription.segments.map(s => `"${s.startTime}","${s.endTime}","${s.speaker}","${s.text.replace(/"/g, '""')}"`).join('\n');
       download(`${base}.csv`, `Start,End,Speaker,Text\n${rows}`, 'text/csv');
     } else if (format === 'docx') {
-      const paragraphs = transcription.segments.map(s => new docx.Paragraph({ children: [new docx.TextRun({ text: `${s.speaker} (${s.startTime}): `, bold: true }), new docx.TextRun(s.text)], spacing: { after: 120 } }));
+      const paragraphs = transcription.segments.map(s => new docx.Paragraph({ 
+          children: [
+              new docx.TextRun({ text: `[${s.startTime}] `, bold: true, color: "8b5cf6" }),
+              new docx.TextRun({ text: `${s.speaker}: `, bold: true }), 
+              new docx.TextRun(s.text)
+          ], 
+          spacing: { after: 200 } 
+      }));
       const blob = await docx.Packer.toBlob(new docx.Document({ sections: [{ children: paragraphs }] }));
       download(`${base}.docx`, blob);
     } else if (format === 'pdf') {
       const doc = new jsPDF();
+      doc.setFontSize(10);
       let y = 15;
       transcription.segments.forEach(s => {
-          const line = `${s.speaker} (${s.startTime}): ${s.text}`;
+          const line = `[${s.startTime}] ${s.speaker}: ${s.text}`;
           const split = doc.splitTextToSize(line, 180);
-          if (y + split.length * 7 > 280) { doc.addPage(); y = 15; }
-          doc.text(split, 15, y); y += split.length * 7 + 3;
+          if (y + split.length * 5 > 280) { doc.addPage(); y = 15; }
+          doc.text(split, 15, y); 
+          y += split.length * 5 + 2;
       });
       download(`${base}.pdf`, doc.output('blob'));
     }
@@ -124,7 +132,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
       </div>
 
       {/* Main Viewport */}
-      <div ref={containerRef} className="flex-grow p-8 overflow-y-auto space-y-1">
+      <div ref={containerRef} className="flex-grow p-8 overflow-y-auto custom-scrollbar">
         {isEditing ? (
           <div className="max-w-4xl mx-auto space-y-4">
             {editedSegments.map((seg, idx) => (
@@ -170,7 +178,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
             {isCopied ? <CheckIcon className="w-4 h-4 me-2 text-green-400"/> : <CopyIcon className="w-4 h-4 me-2" />}
             {isCopied ? 'COPIED' : 'COPY'}
           </button>
-          <div className="relative" ref={exportMenuRef}>
+          <div className="relative">
             <button onClick={() => setShowExportMenu(!showExportMenu)} className="flex items-center px-5 py-2.5 bg-gray-700/50 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-gray-700 transition-all transform active:scale-95">
               <DownloadIcon className="w-4 h-4 me-2" /> EXPORT
             </button>
