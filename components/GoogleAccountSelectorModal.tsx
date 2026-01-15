@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, FormEvent } from 'react';
 import type { TranslationSet, User } from '../types';
 import { GoogleIcon } from './icons/GoogleIcon';
@@ -30,10 +29,17 @@ const GoogleAccountSelectorModal: React.FC<GoogleAccountSelectorModalProps> = ({
         const users: User[] = usersJson ? JSON.parse(usersJson) : [];
         const userEmails = users.map(user => user.email);
         setAccounts(userEmails);
-        setShowNewAccountForm(userEmails.length === 0);
+
+        // If no accounts exist, automatically show the form to add one.
+        if (userEmails.length === 0) {
+            setShowNewAccountForm(true);
+        } else {
+            setShowNewAccountForm(false);
+        }
       } catch (e) {
+        console.error("Failed to parse users from localStorage", e);
         setAccounts([]);
-        setShowNewAccountForm(true);
+        setShowNewAccountForm(true); // Default to add account form on error
       }
       setNewEmail('');
       setError('');
@@ -47,79 +53,88 @@ const GoogleAccountSelectorModal: React.FC<GoogleAccountSelectorModalProps> = ({
   const handleAddNewAccount = (e: FormEvent) => {
     e.preventDefault();
     if (!newEmail.trim()) return;
+
     if (!/\S+@\S+\.\S+/.test(newEmail)) {
-      setError(t.invalidEmail);
-      return;
+        setError(t.invalidEmail);
+        return;
     }
+    
+    setError('');
     onAccountSelect(newEmail);
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[110] flex items-center justify-center p-4 transition-all duration-500 animate-fadeIn" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4" onClick={onClose}>
       <div 
-        className="bg-[#0D0D15] border border-white/10 rounded-[2rem] shadow-2xl w-full max-w-md p-10 transform transition-all animate-pop-in"
+        className="bg-gray-800 border border-gray-700 rounded-lg shadow-xl w-full max-w-md p-6 sm:p-8 transform transition-all"
         onClick={e => e.stopPropagation()}
       >
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl ring-4 ring-white/5">
-            <GoogleIcon className="w-8 h-8" />
-          </div>
-          <h2 className="text-2xl font-black text-white tracking-tighter uppercase">{t.chooseAnAccount}</h2>
-          <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mt-2">{t.continueToAppName}</p>
+        <div className="text-center mb-6">
+          <GoogleIcon className="w-10 h-10 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-100">{t.chooseAnAccount}</h2>
+          <p className="text-base text-gray-400">{t.continueToAppName}</p>
         </div>
 
         {!showNewAccountForm ? (
-          <div className="space-y-2">
+          <ul className="space-y-1">
             {accounts.map(email => (
-              <button
-                key={email}
-                onClick={() => handleSelectExisting(email)}
-                className="w-full group flex items-center gap-4 p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-transparent hover:border-white/10"
-              >
-                <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <UserCircleIcon className="w-6 h-6 text-purple-400" />
-                </div>
-                <span className="font-bold text-gray-200 text-sm truncate">{email}</span>
-              </button>
+              <li key={email}>
+                <button
+                  onClick={() => handleSelectExisting(email)}
+                  className="w-full flex items-center gap-4 p-3 rounded-lg hover:bg-gray-700/50 transition-colors text-left"
+                >
+                  <UserCircleIcon className="w-10 h-10 text-gray-400 flex-shrink-0" />
+                  <span className="font-semibold text-gray-200 text-lg truncate">{email}</span>
+                </button>
+              </li>
             ))}
-            <button
-              onClick={() => setShowNewAccountForm(true)}
-              className="w-full flex items-center gap-4 p-4 rounded-2xl bg-transparent hover:bg-white/5 transition-all border border-dashed border-white/10"
-            >
-              <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center">
-                <UserCircleIcon className="w-6 h-6 text-gray-500" />
-              </div>
-              <span className="font-bold text-gray-500 text-sm">{t.useAnotherAccount}</span>
-            </button>
-          </div>
+            <li>
+              <button
+                onClick={() => setShowNewAccountForm(true)}
+                className="w-full flex items-center gap-4 p-3 rounded-lg hover:bg-gray-700/50 transition-colors text-left"
+              >
+                <UserCircleIcon className="w-10 h-10 text-gray-400 flex-shrink-0" />
+                <span className="font-semibold text-gray-200 text-lg">{t.useAnotherAccount}</span>
+              </button>
+            </li>
+          </ul>
         ) : (
-          <form onSubmit={handleAddNewAccount} className="animate-fadeIn">
-            <div className="space-y-4">
+          <form onSubmit={handleAddNewAccount}>
+            <p className="text-center text-gray-300 mb-4">{t.signIn}</p>
+            <div>
               <input
                 type="email"
                 placeholder={t.enterYourEmail}
                 value={newEmail}
-                onChange={e => { setNewEmail(e.target.value); setError(''); }}
+                onChange={e => {
+                    setNewEmail(e.target.value);
+                    setError('');
+                }}
                 autoFocus
-                className="w-full bg-black/40 border border-white/10 focus:border-purple-500 text-white rounded-xl py-3.5 px-4 outline-none transition-all placeholder:text-gray-800 text-sm"
+                className="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
               />
-              {error && <p className="text-[10px] font-bold text-red-400">{error}</p>}
             </div>
-            
-            <div className="flex justify-between items-center mt-10">
+            {error && <p className="text-sm text-red-400 mt-2">{error}</p>}
+            <div className="flex justify-between items-center mt-6">
               <button
                 type="button"
-                onClick={() => accounts.length > 0 ? setShowNewAccountForm(false) : onClose()}
-                className="flex items-center gap-2 px-4 py-2 text-purple-400 font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-purple-600/10 transition-all"
+                onClick={() => {
+                    if (accounts.length > 0) {
+                        setShowNewAccountForm(false)
+                    } else {
+                        onClose();
+                    }
+                }}
+                className="flex items-center gap-2 px-4 py-2 text-purple-400 font-semibold rounded-lg hover:bg-purple-600/20 transition-colors"
               >
-                <ArrowLeftIcon className="w-4 h-4" />
+                <ArrowLeftIcon className="w-5 h-5" />
                 {accounts.length > 0 ? t.back : t.cancel}
               </button>
               <button
                 type="submit"
-                className="px-8 py-3 bg-purple-600 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-xl hover:bg-purple-500 shadow-xl transition-all"
+                className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
               >
                 {t.signIn}
               </button>

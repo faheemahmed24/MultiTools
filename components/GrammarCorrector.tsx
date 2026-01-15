@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import type { TranslationSet, DiffPart } from '../types';
 import { correctGrammar } from '../services/geminiService';
@@ -11,8 +12,6 @@ import LanguageDropdown from './LanguageDropdown';
 import { sourceLanguages } from '../lib/languages';
 import type { LanguageOption } from '../lib/languages';
 import { XCircleIcon } from './icons/XCircleIcon';
-// Fix: Import BoltIcon to resolve 'Cannot find name' error.
-import { BoltIcon } from './icons/BoltIcon';
 import { SkeletonLoader } from './Loader';
 
 // Simple diffing function
@@ -54,8 +53,8 @@ const DiffView: React.FC<{ diff: DiffPart[] }> = ({ diff }) => (
     <p className="whitespace-pre-wrap">
         {diff.map((part, index) => (
             <span key={index} className={
-                part.added ? "bg-green-500/20 text-green-300 rounded px-0.5" :
-                part.removed ? "bg-red-500/20 text-red-300 line-through rounded px-0.5" : ""
+                part.added ? "bg-green-500/20 text-green-300 rounded" :
+                part.removed ? "bg-red-500/20 text-red-300 line-through rounded" : ""
             }>
                 {part.value}
             </span>
@@ -156,14 +155,8 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
   const wordCount = inputText.trim().split(/\s+/).filter(Boolean).length;
 
   return (
-    <div className="bg-gray-800 rounded-3xl shadow-2xl p-8 max-w-7xl mx-auto w-full animate-fadeIn">
-        <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
-                <div className="p-3 bg-purple-600 rounded-2xl shadow-lg shadow-purple-900/20 text-white">
-                    <GrammarIcon className="w-6 h-6" />
-                </div>
-                <h2 className="text-2xl font-black text-white tracking-tight uppercase">Grammar Fixer</h2>
-            </div>
+    <div className="bg-gray-800 rounded-2xl shadow-lg p-6">
+        <div className="mb-4">
              <LanguageDropdown
                 languages={sourceLanguages}
                 selectedLang={language}
@@ -172,107 +165,73 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
                 searchPlaceholder="Search language"
             />
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            <div className="flex flex-col">
-                <div className="flex items-center justify-between mb-3 px-1">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">{t.originalText}</h3>
-                    <span className="text-[10px] font-mono text-gray-600">{characterCount} chars / {wordCount} words</span>
-                </div>
-                <div className="relative group bg-[#0A0A15] border border-white/5 rounded-3xl p-6 focus-within:border-purple-500/30 transition-all shadow-inner">
-                    <textarea
-                        value={inputText}
-                        onChange={(e) => setInputText(e.target.value)}
-                        placeholder={t.noTextToCorrect}
-                        disabled={isLoading}
-                        className="w-full h-72 bg-transparent text-gray-200 text-lg leading-relaxed resize-none outline-none font-medium placeholder:text-gray-800 custom-scrollbar"
-                    />
-                    {inputText && !isLoading && (
-                        <button onClick={handleClear} title="Clear text" className="absolute top-4 right-4 p-2 bg-white/5 hover:bg-red-500/20 text-gray-500 hover:text-red-400 rounded-xl transition-all">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <h3 className="font-semibold mb-2 text-gray-300">{t.originalText}</h3>
+                <textarea
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    placeholder={t.noTextToCorrect}
+                    disabled={isLoading}
+                    className="w-full h-64 bg-gray-900/50 rounded-lg p-4 text-gray-200 resize-none focus:ring-2 focus:ring-purple-500 border border-transparent focus:border-purple-500 disabled:opacity-70"
+                />
+                <div className="flex justify-end items-center gap-2 text-sm text-gray-400 mt-1 px-1">
+                    <span>{characterCount} chars / {wordCount} words</span>
+                     {inputText && (
+                        <button onClick={handleClear} title="Clear text" className="text-gray-500 hover:text-white transition-colors">
                             <XCircleIcon className="w-5 h-5"/>
                         </button>
                     )}
                 </div>
             </div>
-
-            <div className="flex flex-col relative">
-                <div className="flex items-center justify-between mb-3 px-1">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400">{t.grammarResult}</h3>
-                    {correctedText && (
-                         <div className="flex items-center gap-2">
-                             <span className="text-[9px] font-bold text-green-500 uppercase tracking-widest bg-green-500/10 px-2 py-0.5 rounded">Analysis Complete</span>
-                         </div>
-                    )}
-                </div>
-                <div className={`relative w-full h-72 bg-[#0A0A10]/60 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl p-6 group`}>
+            <div className="relative">
+                <h3 className="font-semibold mb-2 text-gray-300">{t.grammarResult}</h3>
+                <div className={`w-full h-64 bg-gray-900/50 rounded-lg overflow-y-auto p-4 ${error ? 'text-red-400' : 'text-gray-200'}`}>
                     {isLoading ? (
-                        <div className="space-y-4">
-                            <div className="h-4 w-1/2 bg-purple-500/10 rounded animate-pulse"></div>
-                            <SkeletonLoader lines={6} />
-                        </div>
+                        <SkeletonLoader lines={4} />
                     ) : error ? (
-                        <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-                            <XCircleIcon className="w-10 h-10 text-red-500/50" />
-                            <p className="text-red-400 font-bold text-sm">{error}</p>
-                        </div>
-                    ) : correctedText ? (
-                        <div className="h-full overflow-y-auto custom-scrollbar text-lg leading-relaxed text-gray-200 font-medium">
-                            <DiffView diff={diff} />
-                        </div>
+                        <p>{error}</p>
                     ) : (
-                        <div className="h-full flex flex-col items-center justify-center text-center opacity-20">
-                            <GrammarIcon className="w-12 h-12 mb-4" />
-                            <p className="text-sm font-black uppercase tracking-widest">Awaiting Input</p>
-                        </div>
-                    )}
-
-                    {!isLoading && !error && correctedText && (
-                        <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                                onClick={handleCopy}
-                                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-purple-500 shadow-xl transition-all active:scale-95"
-                            >
-                                {isCopied ? <CheckIcon className="w-3.5 h-3.5" /> : <CopyIcon className="w-3.5 h-3.5" />}
-                                {isCopied ? t.copied : 'Copy Fixed'}
-                            </button>
-                            <div className="relative">
-                                <button
-                                    onClick={() => setShowExportMenu(!showExportMenu)}
-                                    className="p-2 bg-gray-800 text-gray-300 hover:text-white rounded-xl border border-white/10 hover:border-white/20 transition-all"
-                                >
-                                    <DownloadIcon className="w-4 h-4" />
-                                </button>
-                                {showExportMenu && (
-                                <div onMouseLeave={() => setShowExportMenu(false)} className="absolute top-full mt-2 right-0 w-36 bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl py-2 z-50 animate-pop-in">
-                                    <button onClick={() => handleExport('txt')} className="block w-full text-start px-5 py-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white hover:bg-purple-600 transition-all">TXT (.txt)</button>
-                                    <button onClick={() => handleExport('docx')} className="block w-full text-start px-5 py-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white hover:bg-purple-600 transition-all">DOCX (.docx)</button>
-                                    <button onClick={() => handleExport('pdf')} className="block w-full text-start px-5 py-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white hover:bg-purple-600 transition-all">PDF (.pdf)</button>
-                                </div>
-                                )}
-                            </div>
-                        </div>
+                        <DiffView diff={diff} />
                     )}
                 </div>
+                {!isLoading && !error && correctedText && (
+                <div className="absolute top-11 end-3 flex items-center space-x-2 rtl:space-x-reverse">
+                    <button
+                        onClick={handleCopy}
+                        className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200"
+                    >
+                        {isCopied ? <CheckIcon className="w-4 h-4 me-2" /> : <CopyIcon className="w-4 h-4 me-2" />}
+                        {isCopied ? t.copied : t.copy}
+                    </button>
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowExportMenu(!showExportMenu)}
+                            className="flex items-center px-3 py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200"
+                        >
+                            <DownloadIcon className="w-4 h-4 me-2" />
+                            {t.export}
+                        </button>
+                        {showExportMenu && (
+                        <div onMouseLeave={() => setShowExportMenu(false)} className="absolute top-full mt-2 end-0 w-32 bg-gray-600 rounded-lg shadow-xl py-1 z-10 animate-slide-in-up">
+                            <button onClick={() => handleExport('txt')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">TXT (.txt)</button>
+                            <button onClick={() => handleExport('docx')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">DOCX (.docx)</button>
+                            <button onClick={() => handleExport('pdf')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">PDF (.pdf)</button>
+                        </div>
+                        )}
+                    </div>
+                </div>
+                )}
             </div>
         </div>
-
-        <div className="flex justify-center">
+        <div className="mt-4 flex justify-center">
             <button
                 onClick={handleCorrectGrammar}
                 disabled={isLoading || !inputText.trim()}
-                className="w-full sm:w-auto px-16 py-5 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-black uppercase tracking-[0.3em] text-xs rounded-3xl transition-all shadow-2xl shadow-purple-900/40 active:scale-95 flex items-center justify-center gap-4 disabled:opacity-30 disabled:grayscale"
+                className="px-8 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200 flex items-center gap-2"
             >
-                {isLoading ? (
-                    <>
-                        <div className="w-5 h-5 border-3 border-white/20 border-t-white rounded-full animate-spin" /> 
-                        Correcting...
-                    </>
-                ) : (
-                    <>
-                        <BoltIcon className="w-5 h-5" />
-                        Run AI Correction
-                    </>
-                )}
+                <GrammarIcon className="w-5 h-5" />
+                {isLoading ? t.correctingGrammar : t.correctGrammar}
             </button>
         </div>
     </div>

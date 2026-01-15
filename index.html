@@ -3,66 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="canonical" href="https://multitools.click/" />
 
-    <!-- START: AdSense Global Configuration -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3766117905337171" crossorigin="anonymous"></script>
-    <meta name="google-adsense-account" content="ca-pub-3766117905337171">
-    <!-- AMP Ad Library -->
-    <script async custom-element="amp-ad" src="https://cdn.ampproject.org/v0/amp-ad-0.1.js"></script>
-    <!-- END: AdSense Global Configuration -->
-
-    <title>MultiTools | Professional AI Ecosystem</title>
-    <meta name="description" content="One-stop hub for AI transcription, data organization, and visual intelligence. Powered by high-fidelity neural engines.">
+    <title>MultiTools | Professional AI Transcriber & Media Converter</title>
+    <meta name="description" content="Convert speech from audio and video files into text with auto-language detection. Supports 20+ audio formats including WAV, MP3, FLAC, and GSM.">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
       :root {
-        --bg-deep: #05050C;
+        --bg-dark-gray: #111827;
+        --bg-med-gray: #1f2937;
+        --bg-light-gray: #374151;
+        --border-gray: #4b5563;
+        --text-light: #f3f4f6;
+        --text-med: #9ca3af;
+        --accent-purple: #8b5cf6;
         --font-sans: 'Inter', sans-serif;
       }
+
+      html { scroll-behavior: smooth; }
       body {
         font-family: var(--font-sans);
-        background-color: var(--bg-deep);
-        color: #fff;
+        background-color: var(--bg-dark-gray);
+        background-image: radial-gradient(circle at 1px 1px, rgba(139, 92, 246, 0.1) 1px, transparent 0);
+        background-size: 2rem 2rem;
         margin: 0;
-        overflow-x: hidden;
       }
-      /* CLS Safety Dividers */
-      .ad-wrapper {
-        margin: 2.5rem 0;
-        transition: all 0.3s ease;
-      }
+      
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-track { background: var(--bg-dark-gray); }
+      ::-webkit-scrollbar-thumb { background: var(--bg-light-gray); border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: var(--text-dark); }
+
       @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
       }
-      .animate-fadeIn { animation: fadeIn 0.5s ease-out forwards; }
+      .animate-fadeIn { animation: fadeIn 0.3s ease-in-out forwards; }
+
+      @keyframes pop-in {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      .animate-pop-in { animation: pop-in 0.2s ease-out forwards; }
+
+      .progress-bar-shimmer {
+        background: linear-gradient(to right, var(--accent-purple) 4%, #a855f7 25%, var(--accent-purple) 36%);
+        background-size: 1000px 100%;
+        animation: shimmer 2s infinite linear;
+      }
+      @keyframes shimmer {
+        0% { background-position: -1000px 0; }
+        100% { background-position: 1000px 0; }
+      }
     </style>
 
     <script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.28.0",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "jspdf": "https://aistudiocdn.com/jspdf@^2.5.1/dist/jspdf.umd.min.js",
-    "docx": "https://aistudiocdn.com/docx@^8.5.0/build/index.js",
-    "jszip": "https://aistudiocdn.com/jszip@^3.10.1/dist/jszip.min.js",
-    "mammoth": "https://esm.sh/mammoth@^1.11.0",
-    "xlsx": "https://esm.sh/xlsx@^0.18.5",
-    "pdfjs-dist/": "https://esm.sh/pdfjs-dist@^5.4.530/",
-    "pptxgenjs": "https://esm.sh/pptxgenjs@^4.0.1",
-    "vite": "https://esm.sh/vite@^7.3.1",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
-  }
-}
-</script>
+    {
+      "imports": {
+        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.28.0",
+        "react/": "https://aistudiocdn.com/react@^19.2.0/",
+        "react": "https://aistudiocdn.com/react@^19.2.0",
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+        "pdfjs-dist/": "https://aistudiocdn.com/pdfjs-dist@^4.5.136/",
+        "jszip": "https://aistudiocdn.com/jszip@^3.10.1/dist/jszip.min.js",
+        "jspdf": "https://aistudiocdn.com/jspdf@^2.5.1/dist/jspdf.umd.min.js",
+        "docx": "https://aistudiocdn.com/docx@^8.5.0/build/index.js",
+        "mammoth": "https://aistudiocdn.com/mammoth@^1.7.2/mammoth.browser.min.js"
+      }
+    }
+    </script>
 </head>
 <body>
     <div id="root"></div>

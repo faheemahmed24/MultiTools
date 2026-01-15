@@ -1,8 +1,5 @@
 {
   "name": "MultiTools",
-  "description": "Enterprise-grade AI workbench for high-fidelity transcription, strategic planning, and visual data intelligence. Production deployment at multitools.click.",
-  "requestFramePermissions": [
-    "camera",
-    "microphone"
-  ]
+  "description": "A powerful, local-first transcription application that converts speech from audio and video files into text. It features auto-language detection, multi-language support (English, Arabic, Urdu, Hindi), timestamp toggling, and a persistent history of your transcriptions.",
+  "requestFramePermissions": []
 }
