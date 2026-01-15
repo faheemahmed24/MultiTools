@@ -1,6 +1,6 @@
 {
   "name": "MultiTools",
-  "description": "High-performance universal AI workstation for transcription, strategic planning, and visual intelligence. Powered by Gemini 3 Pro.",
+  "description": "The professional AI engine for transcription, data mirroring, and high-fidelity reporting. Authorized for production at multitools.click.",
   "requestFramePermissions": [
     "camera",
     "microphone"

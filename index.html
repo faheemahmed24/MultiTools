@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="canonical" href="https://multitools.click/" />
 
     <!-- START: AdSense Verification -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3766117905337171" crossorigin="anonymous"></script>
@@ -12,10 +13,17 @@
     <title>MultiTools | High-Performance AI Workstation</title>
     <meta name="description" content="Professional dashboard for speech transcription, business strategy, and visual processing. One universal engine for your high-stakes workflow.">
 
+    <!-- Open Graph / SEO -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://multitools.click/">
+    <meta property="og:title" content="MultiTools | High-Performance AI Workstation">
+    <meta property="og:description" content="One universal engine for transcription, strategy, and visual intelligence.">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Montserrat:wght@700;900&family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <!-- PREMIUM FONT STACK: Inter (Sans), Noto Sans Arabic (Professional Arabic), Jameel Noori (Urdu Style via Noto Nastaliq), Montserrat (Display) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@700;900&family=Noto+Sans+Arabic:wght@400;700;900&family=Noto+Nastaliq+Urdu:wght@400;700&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     
     <style>
       :root {
@@ -23,6 +31,8 @@
         --accent-purple: #A855F7;
         --accent-pink: #E11D48;
         --font-sans: 'Inter', sans-serif;
+        --font-arabic: 'Noto Sans Arabic', sans-serif;
+        --font-urdu: 'Noto Nastaliq Urdu', serif;
       }
 
       html { scroll-behavior: smooth; }
@@ -32,6 +42,10 @@
         margin: 0;
         overflow-x: hidden;
       }
+
+      /* Global Language Font Application */
+      [lang="ar"], .font-arabic { font-family: var(--font-arabic); }
+      [lang="ur"], .font-urdu { font-family: var(--font-urdu); line-height: 2.5; }
 
       ::-webkit-scrollbar { width: 4px; height: 4px; }
       ::-webkit-scrollbar-track { background: transparent; }
@@ -72,12 +86,6 @@
       }
       .animate-float-delayed { animation: float-delayed 25s ease-in-out infinite; }
 
-      @keyframes pulse {
-        0% { transform: scale(0.9); opacity: 0.2; }
-        50% { transform: scale(1.5); opacity: 0.5; }
-        100% { transform: scale(0.9); opacity: 0.2; }
-      }
-
       .modal-active main, .modal-active aside {
         filter: blur(12px) brightness(0.6);
         pointer-events: none;
@@ -85,11 +93,16 @@
 
       .no-scrollbar::-webkit-scrollbar { display: none; }
       
-      .font-mono { font-family: 'JetBrains Mono', monospace; }
-      
       ::selection {
         background: rgba(168, 85, 247, 0.3);
         color: #fff;
+      }
+
+      /* High-quality card styling for output */
+      .output-card {
+        background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
       }
     </style>
 
