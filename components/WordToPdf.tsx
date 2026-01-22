@@ -1,12 +1,9 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
 import * as mammoth from 'mammoth';
 import { jsPDF } from 'jspdf';
-import { CopyIcon } from './icons/CopyIcon';
-import { CheckIcon } from './icons/CheckIcon';
-import * as docx from 'docx';
 
 interface WordToPdfProps {
     t: TranslationSet;
@@ -21,16 +18,10 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [extractedText, setExtractedText] = useState('');
-  const [isExtracting, setIsExtracting] = useState(false);
-  const [extractionError, setExtractionError] = useState('');
-  const [isTextCopied, setIsTextCopied] = useState(false);
-
   const handleFileChange = (file: File | null) => {
     if (file && (file.name.endsWith('.docx') || file.name.endsWith('.doc'))) {
       setWordFile(file);
       setPdfUrl(null);
-      setExtractedText('');
     }
   };
 
@@ -44,6 +35,7 @@ const WordToPdf: React.FC<WordToPdfProps> = ({ t, onConversionComplete }) => {
       const buffer = event.target?.result;
       if (!(buffer instanceof ArrayBuffer)) {
         setIsConverting(false);
+        setProgress('Internal buffer error');
         return;
       }
 

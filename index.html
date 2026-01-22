@@ -5,11 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="canonical" href="https://multitools.click/" />
 
-    <!-- START: AdSense Verification -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3766117905337171" crossorigin="anonymous"></script>
-    <meta name="google-adsense-account" content="ca-pub-3766117905337171">
-    <!-- END: AdSense Verification -->
-
     <title>MultiTools | High-Performance AI Workstation</title>
     <meta name="description" content="Professional dashboard for speech transcription, business strategy, and visual processing. One universal engine for your high-stakes workflow.">
 
@@ -22,7 +17,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- PREMIUM FONT STACK: Inter (Sans), Noto Sans Arabic (Professional Arabic), Jameel Noori (Urdu Style via Noto Nastaliq), Montserrat (Display) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@700;900&family=Noto+Sans+Arabic:wght@400;700;900&family=Noto+Nastaliq+Urdu:wght@400;700&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     
     <style>
@@ -43,7 +37,6 @@
         overflow-x: hidden;
       }
 
-      /* Global Language Font Application */
       [lang="ar"], .font-arabic { font-family: var(--font-arabic); }
       [lang="ur"], .font-urdu { font-family: var(--font-urdu); line-height: 2.5; }
 
@@ -68,24 +61,6 @@
       }
       .animate-pop-in { animation: pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
 
-      @keyframes shimmer {
-        from { transform: translateX(-100%); }
-        to { transform: translateX(100%); }
-      }
-      .animate-shimmer { animation: shimmer 2.5s infinite; }
-
-      @keyframes float {
-        0%, 100% { transform: translate(0, 0) scale(1); }
-        50% { transform: translate(30px, 20px) scale(1.05); }
-      }
-      .animate-float { animation: float 20s ease-in-out infinite; }
-      
-      @keyframes float-delayed {
-        0%, 100% { transform: translate(0, 0) scale(1); }
-        50% { transform: translate(-30px, -20px) scale(1.1); }
-      }
-      .animate-float-delayed { animation: float-delayed 25s ease-in-out infinite; }
-
       .modal-active main, .modal-active aside {
         filter: blur(12px) brightness(0.6);
         pointer-events: none;
@@ -98,7 +73,6 @@
         color: #fff;
       }
 
-      /* High-quality card styling for output */
       .output-card {
         background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
         border: 1px solid rgba(255,255,255,0.08);

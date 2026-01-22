@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef } from 'react';
 import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';
@@ -14,15 +13,14 @@ interface FileUploadProps {
 const LANGUAGES = [
     { code: 'auto', name: 'Auto-detect Language' },
     { code: 'en', name: 'English' },
-    { code: 'hi', name: 'Hindi' },
-    { code: 'ur', name: 'Urdu' },
-    { code: 'ar', name: 'Arabic' },
+    { code: 'hi', name: 'Hindi / हिन्दी' },
+    { code: 'ur', name: 'Urdu / اردو' },
+    { code: 'ar', name: 'Arabic / العربية' },
     { code: 'es', name: 'Spanish' },
     { code: 'fr', name: 'French' },
     { code: 'de', name: 'German' },
     { code: 'zh', name: 'Chinese' },
     { code: 'ja', name: 'Japanese' },
-    { code: 'ru', name: 'Russian' },
 ];
 
 const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing }) => {
@@ -79,79 +77,81 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
         onFilesSelect([file], languageHint);
         setLinkUrl('');
     } catch (err) {
-        setLinkError(t.linkError || 'Could not load file.');
+        setLinkError(t.linkError || 'CORS restriction or invalid link.');
     } finally {
         setIsFetchingLink(false);
     }
   };
 
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl shadow-lg p-6 max-w-4xl mx-auto">
-      <div className="mb-6">
-          <label className="block text-sm font-bold text-gray-400 mb-2 flex items-center gap-2">
-              <GlobeIcon className="w-4 h-4" />
-              Language Hint (Optional)
-          </label>
-          <select 
-            value={languageHint} 
-            onChange={(e) => setLanguageHint(e.target.value)}
-            disabled={isProcessing}
-            className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-gray-200 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none"
-          >
-              {LANGUAGES.map(lang => (
-                  <option key={lang.code} value={lang.code === 'auto' ? 'auto' : lang.name}>
-                      {lang.name}
-                  </option>
-              ))}
-          </select>
-          <p className="mt-2 text-xs text-gray-500"> गाइड: यदि "ऑटो-डिटेक्ट" गलत भाषा पहचानता है, तो कृपया यहाँ से भाषा चुनें।</p>
-      </div>
+    <div className="bg-white/[0.02] border border-white/5 backdrop-blur-3xl rounded-[2.5rem] p-10 max-w-4xl mx-auto animate-fadeIn">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+        <div className="md:col-span-8 flex flex-col gap-6">
+            <div
+                className={`relative flex-grow flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-[2rem] transition-all duration-500 ${isProcessing ? 'border-gray-800' : (isDragging ? 'border-purple-500 bg-purple-500/10' : 'border-white/10 hover:border-purple-500/40')}`}
+                onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}
+            >
+                <div className="p-5 bg-purple-500/10 rounded-full mb-6 border border-purple-500/20 group-hover:scale-110 transition-transform">
+                    <UploadIcon className="w-16 h-16 text-purple-400" />
+                </div>
+                <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="audio/*,video/*,.ogg,.mp3,.wav,.m4a,.aac,.flac,.mp4,.mov,.webm,.opus"
+                className="hidden"
+                multiple
+                disabled={isProcessing}
+                />
+                <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isProcessing}
+                className="px-10 py-4 bg-purple-600 text-white font-black uppercase tracking-[0.2em] text-xs rounded-2xl hover:bg-purple-700 transition-all transform active:scale-95 shadow-[0_0_30px_rgba(168,85,247,0.3)]"
+                >
+                {isProcessing ? 'Engine Active' : 'Browse Files'}
+                </button>
+                <p className="mt-6 text-sm text-gray-500 font-bold uppercase tracking-widest">{t.dropFile}</p>
+                <p className="mt-3 text-[10px] text-gray-600 font-black uppercase tracking-widest px-4 py-1.5 rounded-full border border-white/5">Multi-Format Node (Max 2GB)</p>
+            </div>
 
-      <div
-        className={`relative flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-xl transition-all duration-300 ${isProcessing ? 'border-gray-600' : (isDragging ? 'border-purple-500 bg-purple-500/10' : 'border-gray-700 hover:border-purple-500')}`}
-        onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}
-      >
-        <div className="p-4 bg-gray-700/50 rounded-full mb-4 border border-gray-600 group-hover:scale-110 transition-transform">
-            <UploadIcon className="w-12 h-12 text-gray-400" />
+            <div className="flex gap-2">
+                <div className="relative flex-grow">
+                    <div className="absolute inset-y-0 start-0 flex items-center ps-4 pointer-events-none">
+                        <LinkIcon className="w-5 h-5 text-gray-600" />
+                    </div>
+                    <input type="text" className="block w-full p-4 ps-12 text-sm text-gray-300 border border-white/5 rounded-2xl bg-black/40 focus:border-purple-500/50 transition-all outline-none" placeholder="Paste media URL..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLinkUpload()} disabled={isProcessing || isFetchingLink} />
+                </div>
+                <button onClick={handleLinkUpload} disabled={isFetchingLink || !linkUrl || isProcessing} className="px-8 py-4 text-xs font-black uppercase tracking-widest text-white bg-white/5 border border-white/10 rounded-2xl hover:bg-purple-600 transition-all active:scale-95">
+                    {isFetchingLink ? '...' : 'Add'}
+                </button>
+            </div>
+            {linkError && <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest px-2">{linkError}</p>}
         </div>
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          accept="audio/*,video/*,.ogg,.mp3,.wav,.m4a,.aac,.flac,.mp4,.mov,.webm,.opus"
-          className="hidden"
-          multiple
-          disabled={isProcessing}
-        />
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isProcessing}
-          className="px-8 py-3.5 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-all transform hover:scale-105 shadow-lg shadow-purple-900/20"
-        >
-          {isProcessing ? t.transcribing : t.uploadFile}
-        </button>
-        <p className="mt-4 text-sm text-gray-400">{t.dropFile}</p>
-        <p className="mt-2 text-xs text-gray-500 font-medium bg-gray-900/30 px-3 py-1 rounded-full border border-gray-700/50">Supports all formats up to 1GB</p>
-      </div>
 
-      <div className="flex items-center gap-4 my-8">
-          <div className="h-px bg-gray-700 flex-1"></div>
-          <span className="text-gray-500 text-xs font-bold">{t.orSeparator}</span>
-          <div className="h-px bg-gray-700 flex-1"></div>
+        <div className="md:col-span-4 space-y-6">
+            <div className="p-6 bg-black/20 rounded-[2rem] border border-white/5">
+                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
+                    <GlobeIcon className="w-4 h-4" /> Language Node
+                </label>
+                <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+                    {LANGUAGES.map(lang => (
+                        <button
+                            key={lang.code}
+                            onClick={() => setLanguageHint(lang.code === 'auto' ? 'auto' : lang.name)}
+                            className={`w-full text-left p-3 rounded-xl text-xs font-bold transition-all border ${languageHint === (lang.code === 'auto' ? 'auto' : lang.name) ? 'bg-purple-600/20 border-purple-500 text-purple-400 shadow-lg shadow-purple-900/10' : 'bg-white/5 border-white/5 text-gray-500 hover:bg-white/10'}`}
+                        >
+                            {lang.name}
+                        </button>
+                    ))}
+                </div>
+            </div>
+            <div className="p-6 bg-purple-500/5 rounded-[2rem] border border-purple-500/10">
+                <p className="text-[9px] font-black text-purple-400/60 uppercase tracking-widest leading-relaxed">
+                    Gemini 3 Pro auto-detects code-switching (mixed languages) with precision. Manual selection is only required for rare dialects.
+                </p>
+            </div>
+        </div>
       </div>
-
-      <div className="flex gap-2">
-          <div className="relative flex-grow">
-              <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                  <LinkIcon className="w-5 h-5 text-gray-400" />
-              </div>
-              <input type="text" className="block w-full p-3 ps-10 text-sm text-gray-200 border border-gray-600 rounded-lg bg-gray-700/50 focus:ring-purple-500 focus:border-purple-500 transition-all" placeholder={t.pasteLinkPlaceholder} value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLinkUpload()} disabled={isProcessing || isFetchingLink} />
-          </div>
-          <button onClick={handleLinkUpload} disabled={isFetchingLink || !linkUrl || isProcessing} className="px-6 py-2.5 text-sm font-bold text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors shadow-lg">
-              {isFetchingLink ? '...' : t.addLink}
-          </button>
-      </div>
-      {linkError && <p className="mt-2 text-xs text-red-400">{linkError}</p>}
     </div>
   );
 };

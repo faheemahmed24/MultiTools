@@ -23,13 +23,9 @@ import ExportToSheets from './components/ExportToSheets';
 import StrategicPlanner from './components/StrategicPlanner';
 import PureOrganizer from './components/PureOrganizer';
 import AuthModal from './components/AuthModal';
-import { XCircleIcon } from './components/icons/XCircleIcon';
-import { UserIcon } from './components/icons/UserIcon';
 import { SparklesIcon } from './components/icons/SparklesIcon';
-import { SearchIcon } from './components/icons/SearchIcon';
-import { UploadIcon } from './components/icons/UploadIcon';
 import { ClockIcon } from './components/icons/ClockIcon';
-import { BoltIcon } from './components/icons/BoltIcon';
+import Loader from './components/Loader';
 
 const LandingPage: React.FC<{ 
   onStart: () => void; 
@@ -42,17 +38,17 @@ const LandingPage: React.FC<{
 
   return (
     <div className="min-h-full flex flex-col items-center justify-center relative animate-fadeIn py-12 px-6">
-      <div className="max-w-4xl w-full text-center space-y-10 mb-16">
+      <div className="max-w-4xl w-full text-center space-y-10 mb-24">
         <div className="space-y-4">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">
-            <SparklesIcon className="w-3 h-3" /> System v3.0 Powered
+            <SparklesIcon className="w-3 h-3" /> Professional AI Node
           </div>
           <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white uppercase leading-none">
             Multi<span className="text-transparent bg-clip-text bg-gradient-to-br from-purple-400 to-pink-600">Tools</span>
           </h1>
           <p className="text-2xl md:text-3xl text-gray-400 font-medium leading-tight max-w-2xl mx-auto">
-            One powerful engine for your <br/> 
-            <span className="text-white">entire professional workflow.</span>
+            Universal Transcriber & <br/> 
+            <span className="text-white">Business Intelligence Engine.</span>
           </p>
         </div>
 
@@ -62,7 +58,7 @@ const LandingPage: React.FC<{
             className="group relative px-14 py-5 bg-purple-600 text-white font-black uppercase tracking-[0.2em] text-xs rounded-2xl transition-all shadow-[0_0_30px_rgba(168,85,247,0.4)] hover:shadow-[0_0_50px_rgba(168,85,247,0.6)] active:scale-95 flex items-center gap-3"
           >
             <SparklesIcon className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-            {currentUser ? 'Enter Workspace' : 'Launch Dashboard'}
+            {currentUser ? 'Enter Dashboard' : 'Get Started'}
           </button>
           
           {!currentUser && (
@@ -70,16 +66,16 @@ const LandingPage: React.FC<{
               onClick={onLogin}
               className="px-14 py-5 bg-transparent border border-white/10 hover:border-white/20 text-gray-400 font-black uppercase tracking-[0.2em] text-xs rounded-2xl transition-all active:scale-95"
             >
-              Secure Sync
+              Sign In
             </button>
           )}
         </div>
       </div>
 
       {recentItems.length > 0 && (
-        <div className="w-full max-w-7xl mb-12 animate-fadeIn" style={{animationDelay: '0.2s'}}>
-            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-4 ml-2 flex items-center gap-2">
-                <ClockIcon className="w-3 h-3" /> Jump Back In
+        <div className="w-full max-w-7xl mb-24 animate-fadeIn" style={{animationDelay: '0.2s'}}>
+            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-6 ml-2 flex items-center gap-2">
+                <ClockIcon className="w-3 h-3" /> Recent Activity
             </h3>
             <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4">
                 {recentItems.slice(0, 5).map(item => (
@@ -103,23 +99,23 @@ const LandingPage: React.FC<{
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 w-full max-w-7xl">
         <div className="md:col-span-8">
-            <div className={cardStyle}>
+            <div className={cardStyle} onClick={onStart}>
                 <div>
                     <div className="flex items-center justify-between mb-6">
-                         <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Strategic Plan</h2>
-                         <div className="w-12 h-12 bg-yellow-500/10 rounded-2xl flex items-center justify-center border border-yellow-500/20">
-                            <SparklesIcon className="w-6 h-6 text-yellow-500" />
+                         <h2 className="text-3xl font-black text-white uppercase tracking-tighter">AI Transcriber</h2>
+                         <div className="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center border border-purple-500/20">
+                            <SparklesIcon className="w-6 h-6 text-purple-500" />
                          </div>
                     </div>
-                    <p className="text-gray-400 text-lg leading-relaxed max-w-md">Turn chaotic data into structured visual reports, task matrices, and high-fidelity presentations.</p>
+                    <p className="text-gray-400 text-lg leading-relaxed max-w-md">Transform any audio or video into precise text with speaker identification and auto-language detection.</p>
                 </div>
             </div>
         </div>
         <div className="md:col-span-4">
             <div className={cardStyle}>
                 <div>
-                    <h2 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Voice Archive</h2>
-                    <p className="text-gray-500 text-sm leading-relaxed">Deep-learning transcription with speaker identification and auto-summarization.</p>
+                    <h2 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Master Archives</h2>
+                    <p className="text-gray-500 text-sm leading-relaxed">Secure storage for your professional sessions, plans, and translations.</p>
                 </div>
             </div>
         </div>
@@ -132,10 +128,6 @@ function App() {
   const [currentUser, setCurrentUser] = useLocalStorage<User | null>('currentUser', null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isCmdPaletteOpen, setIsCmdPaletteOpen] = useState(false);
-  const [isGlobalDragging, setIsGlobalDragging] = useState(false);
-  const [showSystemHealth, setShowSystemHealth] = useState(false);
-  
   const [activeTool, setActiveTool] = useUserLocalStorage<string>(currentUser?.id, 'activeTool', 'Home');
   const [activeImageCategory, setActiveImageCategory] = useUserLocalStorage<string>(currentUser?.id, 'activeImageCategory', 'All');
   const [activeSummaryCategory, setActiveSummaryCategory] = useUserLocalStorage<string>(currentUser?.id, 'activeSummaryCategory', 'All');
@@ -143,42 +135,44 @@ function App() {
   
   const [transcriptions, setTranscriptions] = useUserLocalStorage<Transcription[]>(currentUser?.id, 'transcriptions', []);
   const [currentTranscriptionId, setCurrentTranscriptionId] = useUserLocalStorage<string | null>(currentUser?.id, 'currentTranscriptionId', null);
-  const [processingFiles, setProcessingFiles] = useState<any[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const t = useMemo(() => getTranslations('en'), []);
 
-  const handleFilesSelect = useCallback((files: File[], languageHint: string) => {
-    const newFiles = files.map(file => ({
-      id: `${file.name}-${Date.now()}-${Math.random()}`,
-      file,
-      status: 'pending',
-      languageHint,
-    }));
-    setProcessingFiles(current => [...current, ...newFiles]);
-    setActiveTool('AI Transcriber');
-    setCurrentTranscriptionId(null);
-  }, [setActiveTool, setCurrentTranscriptionId]);
-
-  useEffect(() => {
-    const handleDragOver = (e: DragEvent) => { e.preventDefault(); setIsGlobalDragging(true); };
-    const handleDragLeave = (e: DragEvent) => { if (e.clientX <= 0) setIsGlobalDragging(false); };
-    const handleDrop = (e: DragEvent) => { e.preventDefault(); setIsGlobalDragging(false); if (e.dataTransfer?.files?.length) handleFilesSelect(Array.from(e.dataTransfer.files), 'auto'); };
-    window.addEventListener('dragover', handleDragOver);
-    window.addEventListener('dragleave', handleDragLeave);
-    window.addEventListener('drop', handleDrop);
-    return () => { window.removeEventListener('dragover', handleDragOver); window.removeEventListener('dragleave', handleDragLeave); window.removeEventListener('drop', handleDrop); };
-  }, [handleFilesSelect]);
+  const handleFilesSelect = useCallback(async (files: File[], languageHint: string) => {
+    if (files.length === 0) return;
+    setIsProcessing(true);
+    try {
+      const file = files[0];
+      const result = await transcribeAudio(file, languageHint);
+      const newTranscription: Transcription = {
+        ...result,
+        id: Date.now().toString(),
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      };
+      setTranscriptions(prev => [newTranscription, ...prev]);
+      setCurrentTranscriptionId(newTranscription.id);
+      setActiveTool('AI Transcriber');
+    } catch (error) {
+      console.error("Transcription failure:", error);
+      alert("System node error. Check console for details.");
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [setActiveTool, setTranscriptions, setCurrentTranscriptionId]);
 
   const renderActiveTool = () => {
+    if (isProcessing) return <Loader t={t} />;
+
     switch (activeTool) {
       case 'Home':
-        return <LandingPage currentUser={currentUser} onStart={() => currentUser ? setActiveTool('AI Transcriber') : setIsAuthModalOpen(true)} onLogin={() => setIsAuthModalOpen(true)} recentItems={transcriptions} onSelectItem={(item) => { setActiveTool('AI Transcriber'); setCurrentTranscriptionId(item.id); }} />;
+        return <LandingPage currentUser={currentUser} onStart={() => setActiveTool('AI Transcriber')} onLogin={() => setIsAuthModalOpen(true)} recentItems={transcriptions} onSelectItem={(item) => { setActiveTool('AI Transcriber'); setCurrentTranscriptionId(item.id); }} />;
       case 'AI Transcriber':
         if (currentTranscriptionId) {
              const ct = transcriptions.find(tr => tr.id === currentTranscriptionId);
              if (ct) return <TranscriptionView transcription={ct} onSave={() => {}} onUpdate={(id, segs) => setTranscriptions(prev => prev.map(t => t.id === id ? {...t, segments: segs} : t))} onClose={() => setCurrentTranscriptionId(null)} t={t} />;
         }
-        return <FileUpload onFilesSelect={handleFilesSelect} t={t} isProcessing={false} />;
+        return <FileUpload onFilesSelect={handleFilesSelect} t={t} isProcessing={isProcessing} />;
       case 'Pure Organizer': return <PureOrganizer t={t} />;
       case 'Strategic Planner': return <StrategicPlanner t={t} />;
       case 'Image Related Tools': return <ImageToolsHub t={t} externalCategory={activeImageCategory} onCategoryChange={setActiveImageCategory} />;
@@ -194,7 +188,7 @@ function App() {
       case 'History':
         return <div className="h-full flex flex-col animate-fadeIn">
             <div className="mb-10"><h2 className="text-4xl font-black text-white uppercase tracking-tighter">System History</h2></div>
-            <HistoryPanel items={transcriptions} onSelect={(i) => setCurrentTranscriptionId(i.id)} onDelete={(id) => setTranscriptions(p => p.filter(i => i.id !== id))} t={t} renderItem={(item) => (
+            <HistoryPanel items={transcriptions} onSelect={(i) => { setActiveTool('AI Transcriber'); setCurrentTranscriptionId(i.id); }} onDelete={(id) => setTranscriptions(p => p.filter(i => i.id !== id))} t={t} renderItem={(item) => (
                <div className="flex-grow min-w-0"><p className="font-bold truncate text-gray-100">{item.fileName}</p><p className="text-[10px] text-purple-400 font-black uppercase mt-1.5">{item.date}</p></div>
             )} />
         </div>;
@@ -203,11 +197,12 @@ function App() {
   };
 
   return (
-    <div className={`bg-[#05050C] text-white min-h-screen font-sans flex overflow-x-hidden ${isAuthModalOpen || isCmdPaletteOpen ? 'modal-active' : ''}`}>
-      {isGlobalDragging && <div className="fixed inset-0 z-[1000] bg-purple-600/40 backdrop-blur-md flex items-center justify-center border-4 border-dashed border-purple-400/50 pointer-events-none animate-fadeIn"><p className="text-3xl font-black text-white uppercase tracking-tighter">Drop to start AI Processing</p></div>}
-      <Header activeTool={activeTool} setActiveTool={setActiveTool} activeImageCategory={activeImageCategory} setActiveImageCategory={setActiveImageCategory} activeSummaryCategory={activeSummaryCategory} setActiveSummaryCategory={setActiveSummaryCategory} activeHistoryTab={historyTab} setActiveHistoryTab={setHistoryTab} t={t} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} onStatusClick={() => setShowSystemHealth(true)} />
+    <div className={`bg-[#05050C] text-white min-h-screen font-sans flex overflow-x-hidden ${isAuthModalOpen ? 'modal-active' : ''}`}>
+      <Header activeTool={activeTool} setActiveTool={setActiveTool} activeImageCategory={activeImageCategory} setActiveImageCategory={setActiveImageCategory} activeSummaryCategory={activeSummaryCategory} setActiveSummaryCategory={setActiveSummaryCategory} activeHistoryTab={historyTab} setActiveHistoryTab={setHistoryTab} t={t} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
       <div className="flex-1 flex flex-col relative">
-        <main className="flex-grow p-8 md:p-16 pt-28 max-w-7xl mx-auto w-full min-h-screen">{renderActiveTool()}</main>
+        <main className="flex-grow p-8 md:p-16 pt-28 max-w-7xl mx-auto w-full min-h-screen">
+          {renderActiveTool()}
+        </main>
       </div>
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onLoginSuccess={setCurrentUser} t={t} />
     </div>

@@ -16,13 +16,7 @@ const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
-    reader.onload = () => {
-        if (typeof reader.result === 'string') {
-            resolve(reader.result.split(',')[1]);
-        } else {
-            reject(new Error("Failed to convert file to base64"));
-        }
-    };
+    reader.onload = () => resolve((reader.result as string).split(',')[1]);
     reader.onerror = (error) => reject(error);
   });
 };
@@ -56,10 +50,10 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
         items: {
           type: Type.OBJECT,
           properties: {
-            startTime: { type: Type.STRING, description: "Format MM:SS" },
-            endTime: { type: Type.STRING, description: "Format MM:SS" },
-            speaker: { type: Type.STRING, description: "Speaker identifier" },
-            text: { type: Type.STRING, description: "Transcribed text" },
+            startTime: { type: Type.STRING, description: "Timestamp in MM:SS" },
+            endTime: { type: Type.STRING, description: "Timestamp in MM:SS" },
+            speaker: { type: Type.STRING, description: "Identifier like 'Speaker 1' or 'Speaker 2'" },
+            text: { type: Type.STRING, description: "Transcribed text for this segment" },
           },
           required: ["startTime", "endTime", "speaker", "text"]
         }
@@ -73,7 +67,14 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
     contents: { 
         parts: [
             { inlineData: { mimeType, data: base64Data } },
-            { text: `System: Transcribe verbatim. Diarize speakers. Detect language. Strategy: ${languageHint === 'auto' ? 'Auto' : languageHint}. Return JSON.` }
+            { text: `System Instruction: 
+              1. Transcribe the provided media with 100% verbal accuracy.
+              2. Detect language automatically (Special optimization for English, Hindi, Urdu, and Arabic). 
+              3. Perform precise speaker diarization to separate voices.
+              4. Break content into readable segments based on speaker changes or logical pauses.
+              5. Language strategy: ${languageHint === 'auto' ? 'Full Auto-detect' : 'Assume language is ' + languageHint}.
+              Return valid JSON matching the schema.` 
+            }
         ] 
     },
     config: {
@@ -93,26 +94,17 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
 export const translateText = async (text: string, sourceLang: string, targetLang: string): Promise<string> => {
     const response = await ai.models.generateContent({
         model: MODELS.primary,
-        contents: [{ parts: [{ text: `Translate from ${sourceLang} to ${targetLang}. Return ONLY translated text: ${text}` }] }],
+        contents: [{ parts: [{ text: `Translate from ${sourceLang} to ${targetLang}. Return ONLY the translated string: ${text}` }] }],
     });
-    return response.text || "";
+    return response.text?.trim() || "";
 };
 
 export const correctGrammar = async (text: string, language: string): Promise<string> => {
     const response = await ai.models.generateContent({
         model: MODELS.primary,
-        contents: [{ parts: [{ text: `Fix grammar and punctuation in ${language}. Return ONLY corrected text: ${text}` }] }],
+        contents: [{ parts: [{ text: `Fix all grammar/punctuation errors in ${language}. Return ONLY the corrected text: ${text}` }] }],
     });
-    return response.text || "";
-};
-
-// Fix: Added exported summarizeText function used in ImageAnalyzer.tsx
-export const summarizeText = async (text: string): Promise<string> => {
-    const response = await ai.models.generateContent({
-        model: MODELS.primary,
-        contents: [{ parts: [{ text: `Summarize the following text concisely: ${text}` }] }],
-    });
-    return response.text || "";
+    return response.text?.trim() || "";
 };
 
 export const analyzeImage = async (imageFile: File): Promise<string> => {
@@ -121,22 +113,40 @@ export const analyzeImage = async (imageFile: File): Promise<string> => {
         model: MODELS.vision,
         contents: { parts: [{ inlineData: { mimeType: imageFile.type, data: base64Data } }, { text: "Perform high-accuracy OCR." }] },
     });
+    return response.text?.trim() || "";
+};
+
+export const extractTextFromUrl = async (url: string): Promise<string> => {
+    const response = await ai.models.generateContent({
+        model: MODELS.flash,
+        contents: [{ parts: [{ text: `Extract main article text from: ${url}` }] }],
+        config: { tools: [{ googleSearch: {} }] }
+    });
     return response.text || "";
 };
 
-export const pureOrganizeData = async (text: string): Promise<any> => {
+// Added summarizeText to fix import error in ImageAnalyzer.tsx
+export const summarizeText = async (text: string): Promise<string> => {
     const response = await ai.models.generateContent({
-        model: MODELS.primary,
-        contents: [{ parts: [{ text: `Group this data into categories verbatim. Return JSON: ${text}` }] }],
-        config: { responseMimeType: "application/json" }
+        model: MODELS.flash,
+        contents: [{ parts: [{ text: `Summarize the following text concisely and clearly: ${text}` }] }],
     });
-    return JSON.parse(response.text || '{}');
+    return response.text || "";
 };
 
 export const smartSummarize = async (text: string): Promise<SmartSummary> => {
     const response = await ai.models.generateContent({
         model: MODELS.primary,
-        contents: [{ parts: [{ text: `Analyze and extract entities: ${text}` }] }],
+        contents: [{ parts: [{ text: `Analyze and extract categories from: ${text}` }] }],
+        config: { responseMimeType: "application/json" }
+    });
+    return JSON.parse(response.text || '{}');
+};
+
+export const pureOrganizeData = async (text: string): Promise<any> => {
+    const response = await ai.models.generateContent({
+        model: MODELS.primary,
+        contents: [{ parts: [{ text: `Organize this data verbatim into JSON categories: ${text}` }] }],
         config: { responseMimeType: "application/json" }
     });
     return JSON.parse(response.text || '{}');
@@ -146,19 +156,10 @@ export const runStrategicPlanning = async (text: string, images: {data: string, 
     const imageParts = images.map(img => ({ inlineData: { mimeType: img.mime, data: img.data } }));
     const response = await ai.models.generateContent({
         model: MODELS.primary,
-        contents: { parts: [...imageParts, { text: `Generate strategic blueprint from input: ${text}` }] },
+        contents: { parts: [...imageParts, { text: `Analyze goals and provide a strategic blueprint for: ${text}` }] },
         config: { responseMimeType: "application/json" }
     });
     return JSON.parse(response.text || '{}');
-};
-
-export const extractTextFromUrl = async (url: string): Promise<string> => {
-    const response = await ai.models.generateContent({
-        model: MODELS.flash,
-        contents: [{ parts: [{ text: `Extract article content from: ${url}` }] }],
-        config: { tools: [{ googleSearch: {} }] }
-    });
-    return response.text || "";
 };
 
 export function decode(base64: string): Uint8Array {
