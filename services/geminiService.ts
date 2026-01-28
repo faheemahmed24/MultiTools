@@ -68,12 +68,13 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
         parts: [
             { inlineData: { mimeType, data: base64Data } },
             { text: `System Instruction: 
-              1. Transcribe the provided media with 100% verbal accuracy.
-              2. Detect language automatically (Special optimization for English, Hindi, Urdu, and Arabic). 
-              3. Perform precise speaker diarization to separate voices.
-              4. Break content into readable segments based on speaker changes or logical pauses.
-              5. Language strategy: ${languageHint === 'auto' ? 'Full Auto-detect' : 'Assume language is ' + languageHint}.
-              Return valid JSON matching the schema.` 
+              1. Transcribe the provided media with absolute verbal accuracy.
+              2. AUTO-DETECT language (Support ALL global languages including dialects and code-switching).
+              3. Special precision optimized for: English, Hindi, Urdu, Arabic, Spanish, French, and Chinese.
+              4. Perform high-fidelity speaker diarization to isolate distinct voices.
+              5. Partition content into readable segments based on semantic pauses or speaker transitions.
+              6. Language strategy: ${languageHint === 'auto' ? 'Full Universal Auto-detect' : 'Prioritize ' + languageHint + ' but allow for mixed language detection'}.
+              Return strictly valid JSON matching the schema.` 
             }
         ] 
     },
@@ -125,7 +126,6 @@ export const extractTextFromUrl = async (url: string): Promise<string> => {
     return response.text || "";
 };
 
-// Added summarizeText to fix import error in ImageAnalyzer.tsx
 export const summarizeText = async (text: string): Promise<string> => {
     const response = await ai.models.generateContent({
         model: MODELS.flash,
@@ -137,7 +137,7 @@ export const summarizeText = async (text: string): Promise<string> => {
 export const smartSummarize = async (text: string): Promise<SmartSummary> => {
     const response = await ai.models.generateContent({
         model: MODELS.primary,
-        contents: [{ parts: [{ text: `Analyze and extract categories from: ${text}` }] }],
+        contents: [{ parts: [{ text: `Analyze and extract categories (summary, contacts, keyInsights, numbers) from: ${text}` }] }],
         config: { responseMimeType: "application/json" }
     });
     return JSON.parse(response.text || '{}');
@@ -146,7 +146,7 @@ export const smartSummarize = async (text: string): Promise<SmartSummary> => {
 export const pureOrganizeData = async (text: string): Promise<any> => {
     const response = await ai.models.generateContent({
         model: MODELS.primary,
-        contents: [{ parts: [{ text: `Organize this data verbatim into JSON categories: ${text}` }] }],
+        contents: [{ parts: [{ text: `Organize this data verbatim into JSON categories (heading, items): ${text}` }] }],
         config: { responseMimeType: "application/json" }
     });
     return JSON.parse(response.text || '{}');
@@ -156,7 +156,7 @@ export const runStrategicPlanning = async (text: string, images: {data: string, 
     const imageParts = images.map(img => ({ inlineData: { mimeType: img.mime, data: img.data } }));
     const response = await ai.models.generateContent({
         model: MODELS.primary,
-        contents: { parts: [...imageParts, { text: `Analyze goals and provide a strategic blueprint for: ${text}` }] },
+        contents: { parts: [...imageParts, { text: `Analyze goals and provide a strategic blueprint (executiveSummary, strategicAnalysis, missingWorkflows, slides, tableData) for: ${text}` }] },
         config: { responseMimeType: "application/json" }
     });
     return JSON.parse(response.text || '{}');

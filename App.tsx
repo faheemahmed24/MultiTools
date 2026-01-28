@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useUserLocalStorage } from './hooks/useUserLocalStorage';
@@ -23,8 +24,24 @@ import ExportToSheets from './components/ExportToSheets';
 import StrategicPlanner from './components/StrategicPlanner';
 import PureOrganizer from './components/PureOrganizer';
 import AuthModal from './components/AuthModal';
+import PdfManager from './components/PdfManager';
+// Added explicit imports for icons to fix 'require' errors
 import { SparklesIcon } from './components/icons/SparklesIcon';
 import { ClockIcon } from './components/icons/ClockIcon';
+import { BoltIcon } from './components/icons/BoltIcon';
+import { TranscriberIcon } from './components/icons/TranscriberIcon';
+import { TranslatorIcon } from './components/icons/TranslatorIcon';
+import { GrammarIcon } from './components/icons/GrammarIcon';
+import { Squares2x2Icon } from './components/icons/Squares2x2Icon';
+import { CubeIcon } from './components/icons/CubeIcon';
+import { SummarizerIcon } from './components/icons/SummarizerIcon';
+import { DocumentDuplicateIcon } from './components/icons/DocumentDuplicateIcon';
+import { PdfToImageIcon } from './components/icons/PdfToImageIcon';
+import { ImageToPdfIcon } from './components/icons/ImageToPdfIcon';
+import { PdfToWordIcon } from './components/icons/PdfToWordIcon';
+import { SheetIcon } from './components/icons/SheetIcon';
+import { VideoToAudioIcon } from './components/icons/VideoToAudioIcon';
+import { SpeakerIcon } from './components/icons/SpeakerIcon';
 import Loader from './components/Loader';
 
 const LandingPage: React.FC<{ 
@@ -32,8 +49,10 @@ const LandingPage: React.FC<{
   onLogin: () => void; 
   currentUser: User | null;
   recentItems: Transcription[];
+  mostUsedTools: Array<{key: string, label: string, icon: React.FC<React.SVGProps<SVGSVGElement>>}>;
+  onSelectTool: (tool: string) => void;
   onSelectItem: (item: Transcription) => void;
-}> = ({ onStart, onLogin, currentUser, recentItems, onSelectItem }) => {
+}> = ({ onStart, onLogin, currentUser, recentItems, mostUsedTools, onSelectTool, onSelectItem }) => {
   const cardStyle = "group relative overflow-hidden backdrop-blur-xl bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-10 transition-all duration-500 hover:-translate-y-2 hover:border-purple-500/30 shadow-2xl cursor-pointer flex flex-col justify-between h-full min-h-[320px]";
 
   return (
@@ -71,6 +90,31 @@ const LandingPage: React.FC<{
           )}
         </div>
       </div>
+
+      {mostUsedTools.length > 0 && (
+        <div className="w-full max-w-7xl mb-16 animate-fadeIn" style={{animationDelay: '0.1s'}}>
+            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-6 ml-2 flex items-center gap-2">
+                <BoltIcon className="w-3 h-3 text-yellow-500" /> Frequently Used
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {mostUsedTools.map(tool => (
+                    <button 
+                        key={tool.key}
+                        onClick={() => onSelectTool(tool.key)}
+                        className="flex flex-col items-center gap-4 p-6 bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 rounded-[2rem] transition-all hover:border-purple-500/40 group relative overflow-hidden"
+                    >
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-purple-600/5 blur-2xl group-hover:bg-purple-600/10 transition-all"></div>
+                        <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-all shadow-lg">
+                            <tool.icon className="w-6 h-6" />
+                        </div>
+                        <div className="text-center">
+                            <p className="text-[11px] font-black text-gray-200 uppercase tracking-widest">{tool.label}</p>
+                        </div>
+                    </button>
+                ))}
+            </div>
+        </div>
+      )}
 
       {recentItems.length > 0 && (
         <div className="w-full max-w-7xl mb-24 animate-fadeIn" style={{animationDelay: '0.2s'}}>
@@ -132,12 +176,26 @@ function App() {
   const [activeImageCategory, setActiveImageCategory] = useUserLocalStorage<string>(currentUser?.id, 'activeImageCategory', 'All');
   const [activeSummaryCategory, setActiveSummaryCategory] = useUserLocalStorage<string>(currentUser?.id, 'activeSummaryCategory', 'All');
   const [historyTab, setHistoryTab] = useUserLocalStorage<string>(currentUser?.id, 'historyTab', 'transcriptions');
+  const [usageCounts, setUsageCounts] = useUserLocalStorage<Record<string, number>>(currentUser?.id, 'toolUsageCounts', {});
   
   const [transcriptions, setTranscriptions] = useUserLocalStorage<Transcription[]>(currentUser?.id, 'transcriptions', []);
   const [currentTranscriptionId, setCurrentTranscriptionId] = useUserLocalStorage<string | null>(currentUser?.id, 'currentTranscriptionId', null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const t = useMemo(() => getTranslations('en'), []);
+
+  const handleToolSelect = useCallback((toolKey: string) => {
+    if (toolKey === 'Home') {
+      setActiveTool(toolKey);
+      return;
+    }
+    
+    setActiveTool(toolKey);
+    setUsageCounts(prev => ({
+      ...prev,
+      [toolKey]: (prev[toolKey] || 0) + 1
+    }));
+  }, [setActiveTool, setUsageCounts]);
 
   const handleFilesSelect = useCallback(async (files: File[], languageHint: string) => {
     if (files.length === 0) return;
@@ -152,21 +210,50 @@ function App() {
       };
       setTranscriptions(prev => [newTranscription, ...prev]);
       setCurrentTranscriptionId(newTranscription.id);
-      setActiveTool('AI Transcriber');
+      handleToolSelect('AI Transcriber');
     } catch (error) {
       console.error("Transcription failure:", error);
       alert("System node error. Check console for details.");
     } finally {
       setIsProcessing(false);
     }
-  }, [setActiveTool, setTranscriptions, setCurrentTranscriptionId]);
+  }, [handleToolSelect, setTranscriptions, setCurrentTranscriptionId]);
+
+  // Define flat tool list for icon mapping
+  // Fixed: Replaced dynamic 'require' calls with imported icon components
+  const allToolsRegistry = useMemo(() => {
+    const list = [
+        { key: 'AI Transcriber', label: t.aiTranscriber, icon: TranscriberIcon },
+        { key: 'AI Translator', label: t.aiTranslatorTitle, icon: TranslatorIcon },
+        { key: 'Grammar Corrector', label: t.grammarCorrector, icon: GrammarIcon },
+        { key: 'Pure Organizer', label: 'Pure Organizer', icon: Squares2x2Icon },
+        { key: 'Strategic Planner', label: 'Plan Architect', icon: CubeIcon },
+        { key: 'Smart Summarizer', label: 'Auto Summarize', icon: SummarizerIcon },
+        { key: 'PDF Manager', label: t.pdfManager, icon: DocumentDuplicateIcon },
+        { key: 'PDF to Image', label: 'PDF to Image', icon: PdfToImageIcon },
+        { key: 'Image to PDF', label: 'Image to PDF', icon: ImageToPdfIcon },
+        { key: 'PDF to Word', label: 'PDF to Word', icon: PdfToWordIcon },
+        { key: 'Export to Sheets', label: 'To Sheets', icon: SheetIcon },
+        { key: 'Video to Audio', label: 'Extract Audio', icon: VideoToAudioIcon },
+        { key: 'Text to Speech', label: 'AI Voice', icon: SpeakerIcon },
+    ];
+    return list;
+  }, [t]);
+
+  const mostUsedTools = useMemo(() => {
+    return Object.entries(usageCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 6)
+      .map(([key]) => allToolsRegistry.find(tool => tool.key === key))
+      .filter(Boolean) as Array<{key: string, label: string, icon: React.FC<React.SVGProps<SVGSVGElement>>}>;
+  }, [usageCounts, allToolsRegistry]);
 
   const renderActiveTool = () => {
     if (isProcessing) return <Loader t={t} />;
 
     switch (activeTool) {
       case 'Home':
-        return <LandingPage currentUser={currentUser} onStart={() => setActiveTool('AI Transcriber')} onLogin={() => setIsAuthModalOpen(true)} recentItems={transcriptions} onSelectItem={(item) => { setActiveTool('AI Transcriber'); setCurrentTranscriptionId(item.id); }} />;
+        return <LandingPage currentUser={currentUser} onStart={() => handleToolSelect('AI Transcriber')} onLogin={() => setIsAuthModalOpen(true)} recentItems={transcriptions} mostUsedTools={mostUsedTools} onSelectTool={handleToolSelect} onSelectItem={(item) => { handleToolSelect('AI Transcriber'); setCurrentTranscriptionId(item.id); }} />;
       case 'AI Transcriber':
         if (currentTranscriptionId) {
              const ct = transcriptions.find(tr => tr.id === currentTranscriptionId);
@@ -178,6 +265,7 @@ function App() {
       case 'Image Related Tools': return <ImageToolsHub t={t} externalCategory={activeImageCategory} onCategoryChange={setActiveImageCategory} />;
       case 'AI Translator': return <AITranslator t={t} onTranslationComplete={() => {}} />;
       case 'Grammar Corrector': return <GrammarCorrector t={t} onCorrectionComplete={() => {}} />;
+      case 'PDF Manager': return <PdfManager t={t} />;
       case 'PDF to Image': return <PdfToImage t={t} onConversionComplete={() => {}} />;
       case 'Image to PDF': return <ImageToPdf t={t} onConversionComplete={() => {}} />;
       case 'PDF to Word': return <PdfToWord t={t} onConversionComplete={() => {}} />;
@@ -188,7 +276,7 @@ function App() {
       case 'History':
         return <div className="h-full flex flex-col animate-fadeIn">
             <div className="mb-10"><h2 className="text-4xl font-black text-white uppercase tracking-tighter">System History</h2></div>
-            <HistoryPanel items={transcriptions} onSelect={(i) => { setActiveTool('AI Transcriber'); setCurrentTranscriptionId(i.id); }} onDelete={(id) => setTranscriptions(p => p.filter(i => i.id !== id))} t={t} renderItem={(item) => (
+            <HistoryPanel items={transcriptions} onSelect={(i) => { handleToolSelect('AI Transcriber'); setCurrentTranscriptionId(i.id); }} onDelete={(id) => setTranscriptions(p => p.filter(i => i.id !== id))} t={t} renderItem={(item) => (
                <div className="flex-grow min-w-0"><p className="font-bold truncate text-gray-100">{item.fileName}</p><p className="text-[10px] text-purple-400 font-black uppercase mt-1.5">{item.date}</p></div>
             )} />
         </div>;
@@ -198,7 +286,7 @@ function App() {
 
   return (
     <div className={`bg-[#05050C] text-white min-h-screen font-sans flex overflow-x-hidden ${isAuthModalOpen ? 'modal-active' : ''}`}>
-      <Header activeTool={activeTool} setActiveTool={setActiveTool} activeImageCategory={activeImageCategory} setActiveImageCategory={setActiveImageCategory} activeSummaryCategory={activeSummaryCategory} setActiveSummaryCategory={setActiveSummaryCategory} activeHistoryTab={historyTab} setActiveHistoryTab={setHistoryTab} t={t} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
+      <Header activeTool={activeTool} setActiveTool={handleToolSelect} activeImageCategory={activeImageCategory} setActiveImageCategory={setActiveImageCategory} activeSummaryCategory={activeSummaryCategory} setActiveSummaryCategory={setActiveSummaryCategory} activeHistoryTab={historyTab} setActiveHistoryTab={setHistoryTab} t={t} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} mostUsedTools={mostUsedTools} />
       <div className="flex-1 flex flex-col relative">
         <main className="flex-grow p-8 md:p-16 pt-28 max-w-7xl mx-auto w-full min-h-screen">
           {renderActiveTool()}

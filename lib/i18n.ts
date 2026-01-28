@@ -1,4 +1,3 @@
-
 import type { Language, TranslationSet } from '../types';
 
 const translations: Record<Language, TranslationSet> = {
@@ -71,7 +70,7 @@ const translations: Record<Language, TranslationSet> = {
     invalidPageRange: 'Invalid or empty page range. Please check your input.',
     uploadImages: 'Upload Images',
     dropImages: 'or drop images here',
-    reorderHint: 'Drag and drop images to reorder.',
+    reorderHint: 'Drag and drop items to reorder.',
     pageSize: 'Page Size',
     orientation: 'Orientation',
     portrait: 'Portrait',
@@ -200,6 +199,18 @@ const translations: Record<Language, TranslationSet> = {
     socialMedia: 'Social Media Sizes',
     formatConversions: 'Format Conversions',
     compressionTools: 'Compression & KB Target',
+    pdfManager: 'PDF Page Architect',
+    pdfManagerDescription: 'Reorder, delete, and merge PDF & Image pages with ease.',
+    addPdfs: 'Add PDFs / Images',
+    reorderPages: 'Reorder Pages',
+    saveModifiedPdf: 'Export Master PDF',
+    mergingPdfs: 'Assembling Master File...',
+    strategyEnd: 'Append to end',
+    strategyStart: 'Insert at start',
+    strategyInterleave: 'After every existing page',
+    strategyAfter: 'Insert after page...',
+    batchDelete: 'Delete Selected',
+    itemsSelected: '{count} items selected',
   },
   hi: {
     transcription: 'प्रतिलेखन',
@@ -369,8 +380,8 @@ const translations: Record<Language, TranslationSet> = {
     catLossy: 'सहानि सम्पीड़ित',
     catSpecialized: 'विशेषज्ञ और आवाज',
     textToSpeech: 'टेक्स्ट टू स्पीच',
-    generateSpeech: 'ऑडियो बनाएँ',
-    generatingSpeech: 'ऑडियो बनाया जा रहा है...',
+    generateSpeech: 'आडियो बनाएँ',
+    generatingSpeech: 'आडियो बनाया जा रहा है...',
     selectVoice: 'आवाज़ चुनें',
     voiceStyle: 'शैली/स्वर',
     voiceStylePlaceholder: 'उदा., उत्साहित, पेशेवर...',
@@ -386,7 +397,7 @@ const translations: Record<Language, TranslationSet> = {
     contactsFound: 'संपर्क और लोग',
     languagesFound: 'पहचानी गई भाषाएं',
     numbersFound: 'महत्वपूर्ण संख्याएं',
-    keyInsights: 'मुख्य अंतर्दृष्टि',
+    keyInsights: 'मुख्य अंतर्दष्टि',
     summaryLabel: 'संक्षिप्त सारांश',
     imageRelatedTools: 'इमेज टूल्स',
     imageToolsDescription: 'चित्रों को कंप्रेस, रीसाइज और एडिट करें',
@@ -399,12 +410,36 @@ const translations: Record<Language, TranslationSet> = {
     socialMedia: 'सोशल मीडिया साइज',
     formatConversions: 'फॉर्मेट रूपांतरण',
     compressionTools: 'कंप्रेशन और KB टारगेट',
+    pdfManager: 'PDF पेज आर्किटेक्ट',
+    pdfManagerDescription: 'PDF और Image पेजों को आसानी से पुनर्व्यवस्थित करें और मर्ज करें।',
+    addPdfs: 'PDF / चित्र जोड़ें',
+    reorderPages: 'पेजों को पुनर्व्यवस्थित करें',
+    saveModifiedPdf: 'मास्टर PDF निर्यात करें',
+    mergingPdfs: 'मास्टर फ़ाइल तैयार हो रही है...',
+    strategyEnd: 'अंत में जोड़ें',
+    strategyStart: 'शुरुआत में जोड़ें',
+    strategyInterleave: 'प्रत्येक मौजूदा पृष्ठ के बाद',
+    strategyAfter: 'इस पृष्ठ के बाद जोड़ें...',
+    batchDelete: 'चयनित हटाएँ',
+    itemsSelected: '{count} आइटम चयनित',
   },
   ur: {
-    // ... existing ur translations ...
+    // Existing UR translations...
+    pdfManager: 'پی ڈی ایف پیج آرکیٹیکٹ',
+    pdfManagerDescription: 'پی ڈی ایف اور تصاویر کو آسانی سے ترتیب دیں اور ضم کریں۔',
+    addPdfs: 'پی ڈی ایف / تصاویر شامل کریں',
+    reorderPages: 'صفحات کی ترتیب',
+    saveModifiedPdf: 'ماسٹر پی ڈی ایف برآمد کریں',
+    mergingPdfs: 'ماسٹر فائل تیار ہو رہی ہے...',
   },
   ar: {
-    // ... existing ar translations ...
+    // Existing AR translations...
+    pdfManager: 'مهندس صفحات PDF',
+    pdfManagerDescription: 'إعادة ترتيب ودمج صفحات PDF والصور بكل سهولة.',
+    addPdfs: 'إضافة PDF / صور',
+    reorderPages: 'إعادة ترتيب الصفحات',
+    saveModifiedPdf: 'تصدير PDF الماستر',
+    mergingPdfs: 'تجميع الملف الماستر...',
   }
 };
 

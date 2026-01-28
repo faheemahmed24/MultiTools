@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import type { TranslationSet } from '../types';
 import { TranscriberIcon } from './icons/TranscriberIcon';
@@ -31,6 +32,7 @@ interface HeaderProps {
   isSidebarOpen: boolean;
   setIsSidebarOpen: (isOpen: boolean) => void;
   onStatusClick?: () => void;
+  mostUsedTools: Array<{key: string, label: string, icon: React.FC<React.SVGProps<SVGSVGElement>>}>;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -42,13 +44,16 @@ const Header: React.FC<HeaderProps> = ({
     isSidebarOpen, 
     setIsSidebarOpen,
     setActiveHistoryTab,
-    onStatusClick
+    onStatusClick,
+    mostUsedTools
 }) => {
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
     'Transcription': true,
     'Visual Lab': false,
-    'Strategy': true
+    'Strategy': true,
+    'Documents': true,
+    'Favorites': true
   });
   
   const toggleMenu = (key: string) => {
@@ -96,6 +101,7 @@ const Header: React.FC<HeaderProps> = ({
         group: 'Documents',
         icon: DocumentDuplicateIcon,
         items: [
+            { key: 'PDF Manager', label: t.pdfManager, icon: DocumentDuplicateIcon },
             { key: 'PDF to Image', label: 'PDF to Image', icon: PdfToImageIcon },
             { key: 'Image to PDF', label: 'Image to PDF', icon: ImageToPdfIcon },
             { key: 'PDF to Word', label: 'PDF to Word', icon: PdfToWordIcon },
@@ -125,7 +131,36 @@ const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      <nav className="flex-grow overflow-y-auto px-3 space-y-2 no-scrollbar">
+      <nav className="flex-grow overflow-y-auto px-3 space-y-2 no-scrollbar pb-10">
+        {mostUsedTools.length > 0 && (
+          <div className="mb-6">
+            <button 
+              onClick={() => toggleMenu('Favorites')}
+              className={`w-full flex items-center gap-4 p-3 rounded-2xl transition-all relative ${isSidebarOpen ? 'text-yellow-500/80' : 'text-yellow-500'}`}
+            >
+              <BoltIcon className="w-6 h-6 shrink-0" />
+              <span className={`text-sm font-black uppercase tracking-[0.1em] transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                  Quick Links
+              </span>
+            </button>
+            {expandedMenus['Favorites'] && isSidebarOpen && (
+              <div className="mt-1 ml-4 border-l border-yellow-500/20 space-y-1">
+                {mostUsedTools.map(tool => (
+                  <button 
+                    key={tool.key} 
+                    onClick={() => setActiveTool(tool.key)}
+                    className={`w-full text-left px-5 py-2 text-xs font-bold rounded-xl transition-all ${activeTool === tool.key ? 'text-yellow-400 bg-yellow-500/5' : 'text-gray-500 hover:text-gray-300'}`}
+                  >
+                    {tool.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="h-[1px] bg-white/5 mx-2 my-4"></div>
+
         {toolStructure.map((group) => {
             const isActive = group.isHub ? activeTool === group.hubKey : group.items?.some(i => i.key === activeTool);
             const isOpen = expandedMenus[group.group];
