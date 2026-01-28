@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { Transcription, SmartSummary } from '../types';
 
@@ -93,17 +94,19 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
 };
 
 export const translateText = async (text: string, sourceLang: string, targetLang: string): Promise<string> => {
+    // Fix: Simplified contents structure to use raw string for text-only task
     const response = await ai.models.generateContent({
         model: MODELS.primary,
-        contents: [{ parts: [{ text: `Translate from ${sourceLang} to ${targetLang}. Return ONLY the translated string: ${text}` }] }],
+        contents: `Translate from ${sourceLang} to ${targetLang}. Return ONLY the translated string: ${text}`,
     });
     return response.text?.trim() || "";
 };
 
 export const correctGrammar = async (text: string, language: string): Promise<string> => {
+    // Fix: Simplified contents structure
     const response = await ai.models.generateContent({
         model: MODELS.primary,
-        contents: [{ parts: [{ text: `Fix all grammar/punctuation errors in ${language}. Return ONLY the corrected text: ${text}` }] }],
+        contents: `Fix all grammar/punctuation errors in ${language}. Return ONLY the corrected text: ${text}`,
     });
     return response.text?.trim() || "";
 };
@@ -118,46 +121,143 @@ export const analyzeImage = async (imageFile: File): Promise<string> => {
 };
 
 export const extractTextFromUrl = async (url: string): Promise<string> => {
+    // Fix: Simplified contents structure and tool use
     const response = await ai.models.generateContent({
         model: MODELS.flash,
-        contents: [{ parts: [{ text: `Extract main article text from: ${url}` }] }],
+        contents: `Extract main article text from: ${url}`,
         config: { tools: [{ googleSearch: {} }] }
     });
     return response.text || "";
 };
 
 export const summarizeText = async (text: string): Promise<string> => {
+    // Fix: Simplified contents structure
     const response = await ai.models.generateContent({
         model: MODELS.flash,
-        contents: [{ parts: [{ text: `Summarize the following text concisely and clearly: ${text}` }] }],
+        contents: `Summarize the following text concisely and clearly: ${text}`,
     });
     return response.text || "";
 };
 
 export const smartSummarize = async (text: string): Promise<SmartSummary> => {
+    // Fix: Added responseSchema for smartSummarize
+    const schema = {
+        type: Type.OBJECT,
+        properties: {
+            summary: { type: Type.STRING },
+            contacts: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        name: { type: Type.STRING },
+                        info: { type: Type.STRING },
+                        type: { type: Type.STRING }
+                    },
+                    required: ["name", "info", "type"]
+                }
+            },
+            languages: { type: Type.ARRAY, items: { type: Type.STRING } },
+            keyInsights: { type: Type.ARRAY, items: { type: Type.STRING } },
+            numbers: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        label: { type: Type.STRING },
+                        value: { type: Type.STRING }
+                    },
+                    required: ["label", "value"]
+                }
+            }
+        },
+        required: ["summary", "contacts", "languages", "keyInsights", "numbers"]
+    };
+
     const response = await ai.models.generateContent({
         model: MODELS.primary,
-        contents: [{ parts: [{ text: `Analyze and extract categories (summary, contacts, keyInsights, numbers) from: ${text}` }] }],
-        config: { responseMimeType: "application/json" }
+        contents: `Analyze and extract categories from: ${text}`,
+        config: { 
+            responseMimeType: "application/json",
+            responseSchema: schema
+        }
     });
     return JSON.parse(response.text || '{}');
 };
 
 export const pureOrganizeData = async (text: string): Promise<any> => {
+    // Fix: Added responseSchema for pureOrganizeData
+    const schema = {
+        type: Type.OBJECT,
+        properties: {
+            categories: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        heading: { type: Type.STRING },
+                        items: { type: Type.ARRAY, items: { type: Type.STRING } }
+                    },
+                    required: ["heading", "items"]
+                }
+            },
+            structuredTable: {
+                type: Type.ARRAY,
+                items: { type: Type.OBJECT, additionalProperties: { type: Type.STRING } }
+            }
+        },
+        required: ["categories", "structuredTable"]
+    };
+
     const response = await ai.models.generateContent({
         model: MODELS.primary,
-        contents: [{ parts: [{ text: `Organize this data verbatim into JSON categories (heading, items): ${text}` }] }],
-        config: { responseMimeType: "application/json" }
+        contents: `Organize this data verbatim into JSON categories (heading, items): ${text}`,
+        config: { 
+            responseMimeType: "application/json",
+            responseSchema: schema
+        }
     });
     return JSON.parse(response.text || '{}');
 };
 
 export const runStrategicPlanning = async (text: string, images: {data: string, mime: string}[] = []): Promise<any> => {
     const imageParts = images.map(img => ({ inlineData: { mimeType: img.mime, data: img.data } }));
+    // Fix: Added responseSchema for strategic planning
+    const schema = {
+        type: Type.OBJECT,
+        properties: {
+            mirror: { type: Type.STRING },
+            executiveSummary: { type: Type.STRING },
+            strategicAnalysis: { type: Type.STRING },
+            missingWorkflows: { type: Type.ARRAY, items: { type: Type.STRING } },
+            slides: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        title: { type: Type.STRING },
+                        content: { type: Type.ARRAY, items: { type: Type.STRING } },
+                        visualSuggestion: { type: Type.STRING },
+                        criticalDetail: { type: Type.STRING }
+                    },
+                    required: ["title", "content", "visualSuggestion"]
+                }
+            },
+            tableData: {
+                type: Type.ARRAY,
+                items: { type: Type.OBJECT, additionalProperties: { type: Type.STRING } }
+            }
+        },
+        required: ["mirror", "executiveSummary", "strategicAnalysis", "missingWorkflows", "slides", "tableData"]
+    };
+
     const response = await ai.models.generateContent({
         model: MODELS.primary,
-        contents: { parts: [...imageParts, { text: `Analyze goals and provide a strategic blueprint (executiveSummary, strategicAnalysis, missingWorkflows, slides, tableData) for: ${text}` }] },
-        config: { responseMimeType: "application/json" }
+        contents: { parts: [...imageParts, { text: `Analyze goals and provide a strategic blueprint for: ${text}` }] },
+        config: { 
+            responseMimeType: "application/json",
+            responseSchema: schema
+        }
     });
     return JSON.parse(response.text || '{}');
 };

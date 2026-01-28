@@ -18,6 +18,12 @@ import { Squares2x2Icon } from './icons/Squares2x2Icon';
 import { PdfToImageIcon } from './icons/PdfToImageIcon';
 import { ImageToPdfIcon } from './icons/ImageToPdfIcon';
 import { PdfToWordIcon } from './icons/PdfToWordIcon';
+import { LockClosedIcon } from './icons/LockClosedIcon';
+import { ChatBubbleLeftRightIcon } from './icons/ChatBubbleLeftRightIcon';
+import { PencilSquareIcon } from './icons/PencilSquareIcon';
+import { SwatchIcon } from './icons/SwatchIcon';
+// Fix: Moved SparklesIcon import to top and removed it from bottom
+import { SparklesIcon } from './icons/SparklesIcon';
 
 interface HeaderProps {
   activeTool: string;
@@ -49,9 +55,8 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
-    'Transcription': true,
-    'Visual Lab': false,
-    'Strategy': true,
+    'Intelligence': true,
+    'Collaboration': false,
     'Documents': true,
     'Favorites': true
   });
@@ -67,48 +72,39 @@ const Header: React.FC<HeaderProps> = ({
 
   const toolStructure = useMemo(() => [
     {
-      group: 'Transcription',
-      icon: TranscriberIcon,
+      group: 'Intelligence',
+      icon: SparklesIcon,
       items: [
+        { key: 'PDF Copilot', label: 'AI Copilot', icon: BoltIcon },
+        { key: 'Chat PDF', label: 'Chat PDF', icon: ChatBubbleLeftRightIcon },
+        { key: 'AI PDF Editor', label: 'AI Text Editor', icon: PencilSquareIcon },
         { key: 'AI Transcriber', label: t.aiTranscriber, icon: TranscriberIcon },
-        { key: 'AI Translator', label: t.aiTranslatorTitle, icon: TranslatorIcon },
-        { key: 'Grammar Corrector', label: t.grammarCorrector, icon: GrammarIcon },
       ]
     },
     {
-        group: 'Strategy',
-        icon: CubeIcon,
+        group: 'Collaboration',
+        icon: SwatchIcon,
         items: [
-          { key: 'Pure Organizer', label: 'Pure Organizer', icon: Squares2x2Icon },
+          { key: 'AI Whiteboard', label: 'Whiteboards', icon: SwatchIcon },
+          { key: 'Pages & Spaces', label: 'Workspaces', icon: Squares2x2Icon },
           { key: 'Strategic Planner', label: 'Plan Architect', icon: CubeIcon },
           { key: 'Smart Summarizer', label: 'Auto Summarize', icon: SummarizerIcon },
         ]
     },
     {
-        group: 'Visual Lab',
-        icon: ImageIcon,
-        isHub: true,
-        items: [
-            { key: 'All', label: 'Full Studio', icon: BoltIcon },
-            { key: 'Conversion & OCR', label: 'OCR Scan', icon: ArrowPathIcon },
-            { key: 'Basic Editing & Retouch', label: 'Photo Edit', icon: ScissorsIcon },
-        ],
-        setSubKey: setActiveImageCategory,
-        activeSubKey: activeImageCategory,
-        hubKey: 'Image Related Tools'
-    },
-    {
         group: 'Documents',
         icon: DocumentDuplicateIcon,
         items: [
-            { key: 'PDF Manager', label: t.pdfManager, icon: DocumentDuplicateIcon },
+            { key: 'PDF Manager', label: 'Page Architect', icon: DocumentDuplicateIcon },
+            { key: 'Compress PDF', label: 'Compressor', icon: ArrowPathIcon },
+            { key: 'Security Vault', label: 'Unlock/Lock', icon: LockClosedIcon },
+            { key: 'Watermark AI', label: 'Watermark', icon: PencilSquareIcon },
             { key: 'PDF to Image', label: 'PDF to Image', icon: PdfToImageIcon },
             { key: 'Image to PDF', label: 'Image to PDF', icon: ImageToPdfIcon },
-            { key: 'PDF to Word', label: 'PDF to Word', icon: PdfToWordIcon },
             { key: 'Export to Sheets', label: 'To Sheets', icon: SheetIcon },
         ]
     }
-  ], [t, activeImageCategory, setActiveImageCategory]);
+  ], [t]);
 
   return (
     <aside 
@@ -126,7 +122,7 @@ const Header: React.FC<HeaderProps> = ({
             </div>
             <div className={`transition-all duration-500 ${isSidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
                 <span className="text-2xl font-black text-white tracking-tighter">MultiTools</span>
-                <p className="text-[9px] font-black text-purple-500 uppercase tracking-[0.35em] mt-1">v3.0 Click</p>
+                <p className="text-[9px] font-black text-purple-500 uppercase tracking-[0.35em] mt-1">PRO Elite</p>
             </div>
         </div>
       </div>
@@ -139,8 +135,8 @@ const Header: React.FC<HeaderProps> = ({
               className={`w-full flex items-center gap-4 p-3 rounded-2xl transition-all relative ${isSidebarOpen ? 'text-yellow-500/80' : 'text-yellow-500'}`}
             >
               <BoltIcon className="w-6 h-6 shrink-0" />
-              <span className={`text-sm font-black uppercase tracking-[0.1em] transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                  Quick Links
+              <span className={`text-[10px] font-black uppercase tracking-[0.2em] transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                  Quick Access
               </span>
             </button>
             {expandedMenus['Favorites'] && isSidebarOpen && (
@@ -162,7 +158,7 @@ const Header: React.FC<HeaderProps> = ({
         <div className="h-[1px] bg-white/5 mx-2 my-4"></div>
 
         {toolStructure.map((group) => {
-            const isActive = group.isHub ? activeTool === group.hubKey : group.items?.some(i => i.key === activeTool);
+            const isActive = group.items?.some(i => i.key === activeTool);
             const isOpen = expandedMenus[group.group];
 
             return (
@@ -174,7 +170,7 @@ const Header: React.FC<HeaderProps> = ({
                                 {group.items?.map(item => (
                                     <button 
                                         key={item.key} 
-                                        onClick={() => { if(group.isHub) { setActiveTool(group.hubKey!); group.setSubKey?.(item.key); } else { setActiveTool(item.key); } }} 
+                                        onClick={() => setActiveTool(item.key)} 
                                         className="w-full text-left px-4 py-2 text-xs font-bold text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"
                                     >
                                         {item.label}
@@ -200,11 +196,11 @@ const Header: React.FC<HeaderProps> = ({
                     {isOpen && isSidebarOpen && (
                         <div className="mt-1 ml-4 border-l border-white/5 space-y-1">
                             {group.items?.map(item => {
-                                const isSubActive = group.isHub ? (activeTool === group.hubKey && group.activeSubKey === item.key) : (activeTool === item.key);
+                                const isSubActive = activeTool === item.key;
                                 return (
                                     <button 
                                       key={item.key} 
-                                      onClick={() => { if(group.isHub) { setActiveTool(group.hubKey!); group.setSubKey?.(item.key); } else { setActiveTool(item.key); } }} 
+                                      onClick={() => setActiveTool(item.key)} 
                                       className={`w-full text-left px-5 py-2.5 text-xs font-bold rounded-xl transition-all ${isSubActive ? 'text-purple-400 bg-purple-500/5' : 'text-gray-500 hover:text-gray-300'}`}
                                     >
                                         {item.label}
@@ -221,7 +217,7 @@ const Header: React.FC<HeaderProps> = ({
              <button onClick={() => { setActiveTool('History'); setActiveHistoryTab('transcriptions'); }} className={`w-full flex items-center gap-4 p-3 rounded-2xl transition-all relative ${activeTool === 'History' ? 'bg-pink-600/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}>
                 {activeTool === 'History' && <div className="absolute left-[-12px] top-1/2 -translate-y-1/2 w-1 h-8 bg-pink-500 rounded-full" />}
                 <HistoryIcon className="w-6 h-6 shrink-0" />
-                <span className={`text-sm font-bold truncate ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>Archive Hub</span>
+                <span className={`text-sm font-bold truncate ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>Global Archive</span>
              </button>
         </div>
       </nav>
@@ -233,8 +229,8 @@ const Header: React.FC<HeaderProps> = ({
                   <div className="w-2.5 h-2.5 bg-green-500 rounded-full shadow-[0_0_15px_rgba(34,197,94,0.8)]"></div>
               </div>
               <div className={`flex flex-col transition-all duration-500 overflow-hidden ${isSidebarOpen ? 'opacity-100 w-auto ml-2' : 'opacity-0 w-0'}`}>
-                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 font-mono whitespace-nowrap group-hover:text-white transition-colors">Engine Operational</span>
-                <span className="text-[8px] font-mono text-gray-700 uppercase tracking-widest">Master Node Live</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 font-mono whitespace-nowrap group-hover:text-white transition-colors">Workspace Live</span>
+                <span className="text-[8px] font-mono text-gray-700 uppercase tracking-widest">MultiTools Node</span>
               </div>
           </div>
       </div>
