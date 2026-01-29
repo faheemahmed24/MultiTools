@@ -22,7 +22,6 @@ import { LockClosedIcon } from './icons/LockClosedIcon';
 import { ChatBubbleLeftRightIcon } from './icons/ChatBubbleLeftRightIcon';
 import { PencilSquareIcon } from './icons/PencilSquareIcon';
 import { SwatchIcon } from './icons/SwatchIcon';
-// Fix: Moved SparklesIcon import to top and removed it from bottom
 import { SparklesIcon } from './icons/SparklesIcon';
 
 interface HeaderProps {
@@ -75,10 +74,10 @@ const Header: React.FC<HeaderProps> = ({
       group: 'Intelligence',
       icon: SparklesIcon,
       items: [
-        { key: 'PDF Copilot', label: 'AI Copilot', icon: BoltIcon },
+        { key: 'AI Transcriber', label: 'AI Transcriber', icon: TranscriberIcon, isCore: true },
+        { key: 'PDF Copilot', label: 'AI Copilot', icon: BoltIcon, isCore: true },
         { key: 'Chat PDF', label: 'Chat PDF', icon: ChatBubbleLeftRightIcon },
         { key: 'AI PDF Editor', label: 'AI Text Editor', icon: PencilSquareIcon },
-        { key: 'AI Transcriber', label: t.aiTranscriber, icon: TranscriberIcon },
       ]
     },
     {
@@ -98,13 +97,12 @@ const Header: React.FC<HeaderProps> = ({
             { key: 'PDF Manager', label: 'Page Architect', icon: DocumentDuplicateIcon },
             { key: 'Compress PDF', label: 'Compressor', icon: ArrowPathIcon },
             { key: 'Security Vault', label: 'Unlock/Lock', icon: LockClosedIcon },
-            { key: 'Watermark AI', label: 'Watermark', icon: PencilSquareIcon },
             { key: 'PDF to Image', label: 'PDF to Image', icon: PdfToImageIcon },
             { key: 'Image to PDF', label: 'Image to PDF', icon: ImageToPdfIcon },
             { key: 'Export to Sheets', label: 'To Sheets', icon: SheetIcon },
         ]
     }
-  ], [t]);
+  ], []);
 
   return (
     <aside 
@@ -122,7 +120,7 @@ const Header: React.FC<HeaderProps> = ({
             </div>
             <div className={`transition-all duration-500 ${isSidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
                 <span className="text-2xl font-black text-white tracking-tighter">MultiTools</span>
-                <p className="text-[9px] font-black text-purple-500 uppercase tracking-[0.35em] mt-1">PRO Elite</p>
+                <p className="text-[9px] font-black text-purple-500 uppercase tracking-[0.35em] mt-1">PRO ELITE</p>
             </div>
         </div>
       </div>
@@ -201,9 +199,10 @@ const Header: React.FC<HeaderProps> = ({
                                     <button 
                                       key={item.key} 
                                       onClick={() => setActiveTool(item.key)} 
-                                      className={`w-full text-left px-5 py-2.5 text-xs font-bold rounded-xl transition-all ${isSubActive ? 'text-purple-400 bg-purple-500/5' : 'text-gray-500 hover:text-gray-300'}`}
+                                      className={`group/item w-full text-left px-5 py-2.5 text-xs font-bold rounded-xl transition-all flex items-center justify-between ${isSubActive ? 'text-purple-400 bg-purple-500/5' : 'text-gray-500 hover:text-gray-300'}`}
                                     >
-                                        {item.label}
+                                        <span>{item.label}</span>
+                                        {(item as any).isCore && <SparklesIcon className="w-3 h-3 text-purple-500/40" />}
                                     </button>
                                 );
                             })}

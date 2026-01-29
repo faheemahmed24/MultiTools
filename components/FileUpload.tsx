@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef } from 'react';
 import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';
@@ -98,7 +99,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
                 type="file"
                 ref={fileInputRef}
                 onChange={handleFileChange}
-                accept="audio/*,video/*,.ogg,.mp3,.wav,.m4a,.aac,.flac,.mp4,.mov,.webm,.opus"
+                accept="audio/*,video/*,application/pdf,.pdf,.ogg,.mp3,.wav,.m4a,.aac,.flac,.mp4,.mov,.webm,.opus"
                 className="hidden"
                 multiple
                 disabled={isProcessing}
@@ -119,7 +120,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
                     <div className="absolute inset-y-0 start-0 flex items-center ps-4 pointer-events-none">
                         <LinkIcon className="w-5 h-5 text-gray-600" />
                     </div>
-                    <input type="text" className="block w-full p-4 ps-12 text-sm text-gray-300 border border-white/5 rounded-2xl bg-black/40 focus:border-purple-500/50 transition-all outline-none" placeholder="Paste media URL..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLinkUpload()} disabled={isProcessing || isFetchingLink} />
+                    <input type="text" className="block w-full p-4 ps-12 text-sm text-gray-300 border border-white/5 rounded-2xl bg-black/40 focus:border-purple-500/50 transition-all outline-none" placeholder="Paste media or PDF URL..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLinkUpload()} disabled={isProcessing || isFetchingLink} />
                 </div>
                 <button onClick={handleLinkUpload} disabled={isFetchingLink || !linkUrl || isProcessing} className="px-8 py-4 text-xs font-black uppercase tracking-widest text-white bg-white/5 border border-white/10 rounded-2xl hover:bg-purple-600 transition-all active:scale-95">
                     {isFetchingLink ? '...' : 'Add'}
@@ -147,7 +148,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
             </div>
             <div className="p-6 bg-purple-500/5 rounded-[2rem] border border-purple-500/10">
                 <p className="text-[9px] font-black text-purple-400/60 uppercase tracking-widest leading-relaxed">
-                    Gemini 3 Pro auto-detects code-switching (mixed languages) with precision. Manual selection is only required for rare dialects.
+                    Gemini 3 Pro auto-detects code-switching (mixed languages) in audio, video, and PDF documents with extreme precision.
                 </p>
             </div>
         </div>

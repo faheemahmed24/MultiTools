@@ -26,6 +26,10 @@ import PureOrganizer from './components/PureOrganizer';
 import AuthModal from './components/AuthModal';
 import PdfManager from './components/PdfManager';
 import AICopilot from './components/AICopilot';
+import ChatPDF from './components/ChatPDF';
+import AIPDFEditor from './components/AIPDFEditor';
+import AIWhiteboard from './components/AIWhiteboard';
+
 // Icons
 import { SparklesIcon } from './components/icons/SparklesIcon';
 import { ClockIcon } from './components/icons/ClockIcon';
@@ -47,7 +51,6 @@ import { LockClosedIcon } from './components/icons/LockClosedIcon';
 import { ChatBubbleLeftRightIcon } from './components/icons/ChatBubbleLeftRightIcon';
 import { PencilSquareIcon } from './components/icons/PencilSquareIcon';
 import { SwatchIcon } from './components/icons/SwatchIcon';
-// Fix: Added missing ArrowPathIcon import for tool registry
 import { ArrowPathIcon } from './components/icons/ArrowPathIcon';
 import Loader from './components/Loader';
 
@@ -63,18 +66,18 @@ const LandingPage: React.FC<{
   const cardStyle = "group relative overflow-hidden backdrop-blur-xl bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-10 transition-all duration-500 hover:-translate-y-2 hover:border-purple-500/30 shadow-2xl cursor-pointer flex flex-col justify-between h-full min-h-[320px]";
 
   return (
-    <div className="min-h-full flex flex-col items-center justify-center relative animate-fadeIn py-12 px-6">
-      <div className="max-w-4xl w-full text-center space-y-10 mb-24">
+    <div className="min-h-full flex flex-col items-center justify-center relative animate-fadeIn py-12 px-6 text-center">
+      <div className="max-w-4xl w-full space-y-10 mb-24">
         <div className="space-y-4">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">
-            <SparklesIcon className="w-3 h-3" /> MultiTools Enterprise v3.5
+            <SparklesIcon className="w-3 h-3" /> MultiTools Enterprise PRO ELITE
           </div>
           <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white uppercase leading-none">
             Universal<span className="text-transparent bg-clip-text bg-gradient-to-br from-purple-400 to-pink-600">Engine</span>
           </h1>
           <p className="text-2xl md:text-3xl text-gray-400 font-medium leading-tight max-w-2xl mx-auto">
-            High-Performance AI Suite & <br/> 
-            <span className="text-white">Cognitive Document Terminal.</span>
+            All-in-One AI Workstation & <br/> 
+            <span className="text-white">Business Intelligence Suite.</span>
           </p>
         </div>
 
@@ -84,7 +87,7 @@ const LandingPage: React.FC<{
             className="group relative px-14 py-5 bg-purple-600 text-white font-black uppercase tracking-[0.2em] text-xs rounded-2xl transition-all shadow-[0_0_30px_rgba(168,85,247,0.4)] hover:shadow-[0_0_50px_rgba(168,85,247,0.6)] active:scale-95 flex items-center gap-3"
           >
             <SparklesIcon className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-            {currentUser ? 'Enter Core Dashboard' : 'Get Access'}
+            {currentUser ? 'Enter Workspace' : 'Get Full Access'}
           </button>
           
           {!currentUser && (
@@ -100,7 +103,7 @@ const LandingPage: React.FC<{
 
       {mostUsedTools.length > 0 && (
         <div className="w-full max-w-7xl mb-16 animate-fadeIn" style={{animationDelay: '0.1s'}}>
-            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-6 ml-2 flex items-center gap-2">
+            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-6 text-left ml-2 flex items-center gap-2">
                 <BoltIcon className="w-3 h-3 text-yellow-500" /> Selective Clusters
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -115,7 +118,7 @@ const LandingPage: React.FC<{
                             <tool.icon className="w-6 h-6" />
                         </div>
                         <div className="text-center">
-                            <p className="text-[11px] font-black text-gray-200 uppercase tracking-widest">{tool.label}</p>
+                            <p className="text-[11px] font-black text-gray-200 uppercase tracking-widest leading-none">{tool.label}</p>
                         </div>
                     </button>
                 ))}
@@ -123,50 +126,25 @@ const LandingPage: React.FC<{
         </div>
       )}
 
-      {recentItems.length > 0 && (
-        <div className="w-full max-w-7xl mb-24 animate-fadeIn" style={{animationDelay: '0.2s'}}>
-            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-6 ml-2 flex items-center gap-2">
-                <ClockIcon className="w-3 h-3" /> Recent Cognitive Activity
-            </h3>
-            <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4">
-                {recentItems.slice(0, 5).map(item => (
-                    <button 
-                        key={item.id}
-                        onClick={() => onSelectItem(item)}
-                        className="flex-shrink-0 flex items-center gap-3 px-6 py-4 bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 rounded-2xl transition-all hover:border-purple-500/20 group"
-                    >
-                        <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-all">
-                            <ClockIcon className="w-4 h-4" />
-                        </div>
-                        <div className="text-left">
-                            <p className="text-xs font-bold text-gray-200 truncate max-w-[150px]">{item.fileName}</p>
-                            <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest">{item.date}</p>
-                        </div>
-                    </button>
-                ))}
-            </div>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 w-full max-w-7xl">
-        <div className="md:col-span-8" onClick={() => onSelectTool('PDF Copilot')}>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 w-full max-w-7xl text-left">
+        <div className="md:col-span-8" onClick={() => onSelectTool('AI Transcriber')}>
             <div className={cardStyle}>
                 <div>
                     <div className="flex items-center justify-between mb-6">
-                         <h2 className="text-3xl font-black text-white uppercase tracking-tighter">AI Copilot</h2>
+                         <h2 className="text-3xl font-black text-white uppercase tracking-tighter">AI Transcriber</h2>
                          <div className="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center border border-purple-500/20">
-                            <BoltIcon className="w-6 h-6 text-purple-500" />
+                            <TranscriberIcon className="w-6 h-6 text-purple-500" />
                          </div>
                     </div>
-                    <p className="text-gray-400 text-lg leading-relaxed max-w-md">Natural language command terminal for mass document transformation, rotation, and reordering.</p>
+                    <p className="text-gray-400 text-lg leading-relaxed max-w-md">Transform Audio, Video & PDF into precise verbatim text with deep diarization.</p>
                 </div>
             </div>
         </div>
-        <div className="md:col-span-4" onClick={() => onSelectTool('AI Whiteboard')}>
+        <div className="md:col-span-4" onClick={() => onSelectTool('Chat PDF')}>
             <div className={cardStyle}>
                 <div>
-                    <h2 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">AI Whiteboards</h2>
-                    <p className="text-gray-500 text-sm leading-relaxed">Cognitive visual space for brainstorming, flowcharts, and team strategy mapping.</p>
+                    <h2 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Chat PDF</h2>
+                    <p className="text-gray-500 text-sm leading-relaxed">AI chatbot for instant summarizing, translating and querying any document node.</p>
                 </div>
             </div>
         </div>
@@ -228,18 +206,18 @@ function App() {
 
   const allToolsRegistry = useMemo(() => {
     return [
+        { key: 'AI Transcriber', label: 'AI Transcriber', icon: TranscriberIcon },
         { key: 'PDF Copilot', label: 'AI Copilot', icon: BoltIcon },
         { key: 'Chat PDF', label: 'Chat PDF', icon: ChatBubbleLeftRightIcon },
         { key: 'AI PDF Editor', label: 'AI Text Editor', icon: PencilSquareIcon },
-        { key: 'AI Transcriber', label: t.aiTranscriber, icon: TranscriberIcon },
         { key: 'AI Whiteboard', label: 'Whiteboards', icon: SwatchIcon },
+        { key: 'AI Translator', label: 'AI Translator', icon: TranslatorIcon },
         { key: 'Pages & Spaces', label: 'Workspaces', icon: Squares2x2Icon },
         { key: 'Strategic Planner', label: 'Plan Architect', icon: CubeIcon },
         { key: 'Smart Summarizer', label: 'Auto Summarize', icon: SummarizerIcon },
         { key: 'PDF Manager', label: 'Page Architect', icon: DocumentDuplicateIcon },
         { key: 'Compress PDF', label: 'Compressor', icon: ArrowPathIcon },
         { key: 'Security Vault', label: 'Unlock/Lock', icon: LockClosedIcon },
-        { key: 'Watermark AI', label: 'Watermark', icon: PencilSquareIcon },
         { key: 'PDF to Image', label: 'PDF to Image', icon: PdfToImageIcon },
         { key: 'Image to PDF', label: 'Image to PDF', icon: ImageToPdfIcon },
         { key: 'Export to Sheets', label: 'To Sheets', icon: SheetIcon },
@@ -259,7 +237,7 @@ function App() {
 
     switch (activeTool) {
       case 'Home':
-        return <LandingPage currentUser={currentUser} onStart={() => handleToolSelect('PDF Copilot')} onLogin={() => setIsAuthModalOpen(true)} recentItems={transcriptions} mostUsedTools={mostUsedTools} onSelectTool={handleToolSelect} onSelectItem={(item) => { handleToolSelect('AI Transcriber'); setCurrentTranscriptionId(item.id); }} />;
+        return <LandingPage currentUser={currentUser} onStart={() => handleToolSelect('AI Transcriber')} onLogin={() => setIsAuthModalOpen(true)} recentItems={transcriptions} mostUsedTools={mostUsedTools} onSelectTool={handleToolSelect} onSelectItem={(item) => { handleToolSelect('AI Transcriber'); setCurrentTranscriptionId(item.id); }} />;
       case 'AI Transcriber':
         if (currentTranscriptionId) {
              const ct = transcriptions.find(tr => tr.id === currentTranscriptionId);
@@ -267,6 +245,9 @@ function App() {
         }
         return <FileUpload onFilesSelect={handleFilesSelect} t={t} isProcessing={isProcessing} />;
       case 'PDF Copilot': return <AICopilot t={t} />;
+      case 'Chat PDF': return <ChatPDF t={t} />;
+      case 'AI PDF Editor': return <AIPDFEditor t={t} />;
+      case 'AI Whiteboard': return <AIWhiteboard t={t} />;
       case 'Pure Organizer': return <PureOrganizer t={t} />;
       case 'Strategic Planner': return <StrategicPlanner t={t} />;
       case 'Image Related Tools': return <ImageToolsHub t={t} externalCategory={activeImageCategory} onCategoryChange={setActiveImageCategory} />;

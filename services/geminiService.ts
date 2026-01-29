@@ -32,7 +32,8 @@ function getMimeType(file: File): string {
     'ogg': 'audio/ogg',
     'mp4': 'video/mp4', 
     'webm': 'video/webm', 
-    'mov': 'video/quicktime'
+    'mov': 'video/quicktime',
+    'pdf': 'application/pdf'
   };
   return map[ext || ''] || 'application/octet-stream';
 }
@@ -51,9 +52,9 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
         items: {
           type: Type.OBJECT,
           properties: {
-            startTime: { type: Type.STRING, description: "Timestamp in MM:SS" },
-            endTime: { type: Type.STRING, description: "Timestamp in MM:SS" },
-            speaker: { type: Type.STRING, description: "Identifier like 'Speaker 1' or 'Speaker 2'" },
+            startTime: { type: Type.STRING, description: "Timestamp in MM:SS (Use 00:00 for documents)" },
+            endTime: { type: Type.STRING, description: "Timestamp in MM:SS (Use 00:00 for documents)" },
+            speaker: { type: Type.STRING, description: "Identifier like 'Speaker 1' or 'Document Section'" },
             text: { type: Type.STRING, description: "Transcribed text for this segment" },
           },
           required: ["startTime", "endTime", "speaker", "text"]
@@ -69,11 +70,11 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
         parts: [
             { inlineData: { mimeType, data: base64Data } },
             { text: `System Instruction: 
-              1. Transcribe the provided media with absolute verbal accuracy.
-              2. AUTO-DETECT language (Support ALL global languages including dialects and code-switching).
-              3. Special precision optimized for: English, Hindi, Urdu, Arabic, Spanish, French, and Chinese.
-              4. Perform high-fidelity speaker diarization to isolate distinct voices.
-              5. Partition content into readable segments based on semantic pauses or speaker transitions.
+              1. Process the provided file (Audio, Video, or PDF Document).
+              2. For Media: Transcribe with absolute verbal accuracy and high-fidelity speaker diarization.
+              3. For Documents: Extract text content preserving the logical structure and hierarchy.
+              4. AUTO-DETECT language (Support ALL global languages including dialects and code-switching).
+              5. Partition content into readable segments.
               6. Language strategy: ${languageHint === 'auto' ? 'Full Universal Auto-detect' : 'Prioritize ' + languageHint + ' but allow for mixed language detection'}.
               Return strictly valid JSON matching the schema.` 
             }
@@ -94,7 +95,6 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
 };
 
 export const translateText = async (text: string, sourceLang: string, targetLang: string): Promise<string> => {
-    // Fix: Simplified contents structure to use raw string for text-only task
     const response = await ai.models.generateContent({
         model: MODELS.primary,
         contents: `Translate from ${sourceLang} to ${targetLang}. Return ONLY the translated string: ${text}`,
@@ -103,7 +103,6 @@ export const translateText = async (text: string, sourceLang: string, targetLang
 };
 
 export const correctGrammar = async (text: string, language: string): Promise<string> => {
-    // Fix: Simplified contents structure
     const response = await ai.models.generateContent({
         model: MODELS.primary,
         contents: `Fix all grammar/punctuation errors in ${language}. Return ONLY the corrected text: ${text}`,
@@ -121,7 +120,6 @@ export const analyzeImage = async (imageFile: File): Promise<string> => {
 };
 
 export const extractTextFromUrl = async (url: string): Promise<string> => {
-    // Fix: Simplified contents structure and tool use
     const response = await ai.models.generateContent({
         model: MODELS.flash,
         contents: `Extract main article text from: ${url}`,
@@ -131,7 +129,6 @@ export const extractTextFromUrl = async (url: string): Promise<string> => {
 };
 
 export const summarizeText = async (text: string): Promise<string> => {
-    // Fix: Simplified contents structure
     const response = await ai.models.generateContent({
         model: MODELS.flash,
         contents: `Summarize the following text concisely and clearly: ${text}`,
@@ -140,7 +137,6 @@ export const summarizeText = async (text: string): Promise<string> => {
 };
 
 export const smartSummarize = async (text: string): Promise<SmartSummary> => {
-    // Fix: Added responseSchema for smartSummarize
     const schema = {
         type: Type.OBJECT,
         properties: {
@@ -186,7 +182,6 @@ export const smartSummarize = async (text: string): Promise<SmartSummary> => {
 };
 
 export const pureOrganizeData = async (text: string): Promise<any> => {
-    // Fix: Added responseSchema for pureOrganizeData
     const schema = {
         type: Type.OBJECT,
         properties: {
@@ -222,7 +217,6 @@ export const pureOrganizeData = async (text: string): Promise<any> => {
 
 export const runStrategicPlanning = async (text: string, images: {data: string, mime: string}[] = []): Promise<any> => {
     const imageParts = images.map(img => ({ inlineData: { mimeType: img.mime, data: img.data } }));
-    // Fix: Added responseSchema for strategic planning
     const schema = {
         type: Type.OBJECT,
         properties: {
