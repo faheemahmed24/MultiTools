@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import type { TranslationSet, SmartSummary } from '../types';
-import { smartSummarize } from '../services/geminiService';
+import { smartSummarize, processStructuredTask } from '../services/geminiService';
 import { CopyIcon } from './icons/CopyIcon';
 import { CheckIcon } from './icons/CheckIcon';
 import { XCircleIcon } from './icons/XCircleIcon';
@@ -9,7 +9,6 @@ import { SkeletonLoader } from './Loader';
 import { SummarizerIcon } from './icons/SummarizerIcon';
 import { SearchIcon } from './icons/SearchIcon';
 import { BoltIcon } from './icons/BoltIcon';
-import { DocumentDuplicateIcon } from './icons/DocumentDuplicateIcon';
 import { ArrowPathIcon } from './icons/ArrowPathIcon';
 
 interface DataSummarizerProps {
@@ -46,9 +45,8 @@ const DataSummarizer: React.FC<DataSummarizerProps> = ({ t, onComplete, external
   const [activeCategory, setActiveCategory] = useState(externalCategory);
   const [activeToolId, setActiveToolId] = useState<string | null>(null);
 
-  // Functional state for the main summarizer tool
   const [inputText, setInputText] = useState('');
-  const [result, setResult] = useState<SmartSummary | null>(null);
+  const [result, setResult] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
@@ -82,10 +80,19 @@ const DataSummarizer: React.FC<DataSummarizerProps> = ({ t, onComplete, external
     if (!inputText.trim()) return;
     setIsLoading(true);
     setError(null);
+    setResult(null);
+
+    const tool = categories.flatMap(c => c.tools).find(t => t.id === activeToolId);
+    
     try {
-      const data = await smartSummarize(inputText);
-      setResult(data);
-      onComplete({ inputText, result: data });
+      if (activeToolId === 'smart-sum') {
+        const data = await smartSummarize(inputText);
+        setResult(data);
+        onComplete({ inputText, result: data });
+      } else {
+        const data = await processStructuredTask(inputText, tool?.name || 'Summarize Data');
+        setResult(data);
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to extract data.');
     } finally {
@@ -95,7 +102,7 @@ const DataSummarizer: React.FC<DataSummarizerProps> = ({ t, onComplete, external
 
   const handleCopy = () => {
     if (!result) return;
-    const text = JSON.stringify(result, null, 2);
+    const text = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
     navigator.clipboard.writeText(text);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
@@ -116,12 +123,20 @@ const DataSummarizer: React.FC<DataSummarizerProps> = ({ t, onComplete, external
       setActiveToolId(null);
   };
 
-  if (activeToolId === 'smart-sum') {
+  const currentTool = categories.flatMap(c => c.tools).find(t => t.id === activeToolId);
+
+  if (activeToolId) {
     return (
         <div className="flex flex-col h-full animate-fadeIn">
-            <button onClick={() => setActiveToolId(null)} className="mb-6 self-start flex items-center gap-2 text-xs font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors bg-gray-900 px-4 py-2 rounded-xl border border-gray-800">
-                <ArrowPathIcon className="w-4 h-4" /> Back to Summary List
-            </button>
+            <div className="flex items-center justify-between mb-8">
+                <button onClick={() => { setActiveToolId(null); setResult(null); }} className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors bg-gray-900 px-4 py-2 rounded-xl border border-gray-800">
+                    <ArrowPathIcon className="w-4 h-4" /> Back to Summary List
+                </button>
+                <div className="text-right">
+                    <h2 className="text-xl font-black text-white uppercase tracking-tighter">{currentTool?.name}</h2>
+                    <p className="text-[10px] text-purple-400 font-black uppercase tracking-widest">Powered by MultiTools Engine</p>
+                </div>
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow min-h-0">
                 <div className="lg:col-span-5 flex flex-col gap-4">
@@ -129,7 +144,7 @@ const DataSummarizer: React.FC<DataSummarizerProps> = ({ t, onComplete, external
                         <textarea
                             value={inputText}
                             onChange={(e) => setInputText(e.target.value)}
-                            placeholder="Paste transcribed text, logs, or any unstructured data here..."
+                            placeholder={`Paste ${currentTool?.name.toLowerCase()} context here...`}
                             disabled={isLoading}
                             className="w-full flex-grow bg-gray-800/50 rounded-2xl p-6 text-gray-200 resize-none focus:ring-2 focus:ring-purple-500 border border-gray-700/50 outline-none shadow-inner"
                         />
@@ -145,61 +160,68 @@ const DataSummarizer: React.FC<DataSummarizerProps> = ({ t, onComplete, external
                         disabled={isLoading || !inputText.trim()}
                         className="w-full py-4 bg-purple-600 text-white font-black text-sm uppercase tracking-[0.2em] rounded-2xl hover:bg-purple-700 disabled:bg-gray-800 disabled:text-gray-600 transition-all shadow-xl shadow-purple-900/20 active:scale-95"
                     >
-                        {isLoading ? t.extracting : t.extractEntities}
+                        {isLoading ? 'Cognitive Rendering...' : `Execute ${currentTool?.name}`}
                     </button>
                 </div>
 
                 <div className="lg:col-span-7 overflow-y-auto pe-2 custom-scrollbar">
                     {isLoading ? (
                         <div className="space-y-6">
-                            <CategoryCard title={t.summaryLabel}><SkeletonLoader lines={3} /></CategoryCard>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <CategoryCard title={t.contactsFound}><SkeletonLoader lines={4} /></CategoryCard>
-                                <CategoryCard title={t.numbersFound}><SkeletonLoader lines={4} /></CategoryCard>
-                            </div>
+                            <CategoryCard title="Global Intelligence Output"><SkeletonLoader lines={8} /></CategoryCard>
                         </div>
                     ) : result ? (
                         <div className="space-y-6 pb-12 animate-fadeIn">
                             <div className="flex justify-end gap-2 mb-2">
                                 <button onClick={handleCopy} className="flex items-center px-4 py-2 bg-gray-800/80 rounded-xl text-xs font-black uppercase tracking-widest text-gray-400 hover:text-white border border-gray-700/50 transition-all">
                                     {isCopied ? <CheckIcon className="w-4 h-4 me-2 text-green-500"/> : <CopyIcon className="w-4 h-4 me-2"/>}
-                                    {isCopied ? 'COPIED' : 'COPY JSON'}
+                                    {isCopied ? 'COPIED' : 'COPY OUTPUT'}
                                 </button>
                             </div>
-                            <CategoryCard title={t.summaryLabel}>
-                                <p className="text-gray-200 leading-relaxed font-medium">{result.summary}</p>
-                            </CategoryCard>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <CategoryCard title={t.contactsFound}>
-                                    <ul className="space-y-3">
-                                        {result.contacts.map((c, i) => (
-                                            <li key={i} className="flex flex-col bg-gray-950/30 p-3 rounded-xl border border-gray-700/20">
-                                                <span className="text-sm font-bold text-gray-100">{c.name}</span>
-                                                <div className="flex justify-between items-center mt-1">
-                                                    <span className="text-xs text-purple-400 font-mono">{c.info}</span>
-                                                    <span className="text-[10px] font-black uppercase tracking-widest bg-gray-800 px-2 py-0.5 rounded text-gray-500">{c.type}</span>
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
+
+                            {activeToolId === 'smart-sum' ? (
+                                <>
+                                    <CategoryCard title={t.summaryLabel}>
+                                        <p className="text-gray-200 leading-relaxed font-medium">{result.summary}</p>
+                                    </CategoryCard>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <CategoryCard title={t.contactsFound}>
+                                            <ul className="space-y-3">
+                                                {result.contacts.map((c: any, i: number) => (
+                                                    <li key={i} className="flex flex-col bg-gray-950/30 p-3 rounded-xl border border-gray-700/20">
+                                                        <span className="text-sm font-bold text-gray-100">{c.name}</span>
+                                                        <div className="flex justify-between items-center mt-1">
+                                                            <span className="text-xs text-purple-400 font-mono">{c.info}</span>
+                                                            <span className="text-[10px] font-black uppercase tracking-widest bg-gray-800 px-2 py-0.5 rounded text-gray-500">{c.type}</span>
+                                                        </div>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </CategoryCard>
+                                        <CategoryCard title={t.numbersFound}>
+                                            <ul className="space-y-3">
+                                                {result.numbers.map((n: any, i: number) => (
+                                                    <li key={i} className="flex items-center justify-between bg-gray-950/30 p-3 rounded-xl border border-gray-700/20">
+                                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">{n.label}</span>
+                                                        <span className="text-sm font-mono font-black text-pink-400">{n.value}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </CategoryCard>
+                                    </div>
+                                </>
+                            ) : (
+                                <CategoryCard title="Structured Intelligence Result">
+                                    <div className="text-gray-200 leading-relaxed whitespace-pre-wrap font-medium prose prose-invert max-w-none">
+                                        {result}
+                                    </div>
                                 </CategoryCard>
-                                <CategoryCard title={t.numbersFound}>
-                                    <ul className="space-y-3">
-                                        {result.numbers.map((n, i) => (
-                                            <li key={i} className="flex items-center justify-between bg-gray-950/30 p-3 rounded-xl border border-gray-700/20">
-                                                <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">{n.label}</span>
-                                                <span className="text-sm font-mono font-black text-pink-400">{n.value}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </CategoryCard>
-                            </div>
+                            )}
                         </div>
                     ) : (
-                        <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-gray-900/20 rounded-3xl border border-gray-800/50 dashed border-2">
+                        <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-gray-900/20 rounded-3xl border border-gray-800/50 border-dashed border-2">
                             <SummarizerIcon className="w-16 h-16 text-gray-800 mb-6" />
-                            <p className="text-gray-500 font-bold uppercase tracking-widest text-sm">Ready for extraction</p>
-                            <p className="text-xs text-gray-600 mt-2 max-w-xs">Paste text on the left and click extract.</p>
+                            <p className="text-gray-500 font-bold uppercase tracking-widest text-sm">Engine Waiting for Input</p>
+                            <p className="text-xs text-gray-600 mt-2 max-w-xs">Paste content into the terminal to begin high-fidelity extraction.</p>
                         </div>
                     )}
                     {error && <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm">{error}</div>}
@@ -207,21 +229,6 @@ const DataSummarizer: React.FC<DataSummarizerProps> = ({ t, onComplete, external
             </div>
         </div>
     );
-  }
-
-  if (activeToolId) {
-      return (
-        <div className="h-full flex flex-col">
-            <button onClick={() => setActiveToolId(null)} className="mb-6 self-start flex items-center gap-2 text-xs font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors bg-gray-900 px-4 py-2 rounded-xl border border-gray-800">
-                <ArrowPathIcon className="w-4 h-4" /> Back to Summary List
-            </button>
-            <div className="flex-grow flex flex-col items-center justify-center bg-gray-900/40 rounded-3xl border-2 border-dashed border-gray-800">
-                <BoltIcon className="w-16 h-16 text-gray-700 mb-4 animate-pulse" />
-                <h2 className="text-xl font-black text-white uppercase tracking-widest">Under Development</h2>
-                <p className="text-gray-500 text-sm mt-2">This tool will be available in the next AI update.</p>
-            </div>
-        </div>
-      );
   }
 
   return (
@@ -288,7 +295,7 @@ const DataSummarizer: React.FC<DataSummarizerProps> = ({ t, onComplete, external
                     <p className="text-xs text-gray-500 line-clamp-1 group-hover:text-gray-400 transition-colors">{tool.description}</p>
                   </div>
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-purple-400 hidden sm:inline">Open</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-purple-400 hidden sm:inline">Open Terminal</span>
                     <div className="bg-purple-600/20 p-2 rounded-full text-purple-400">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"></path></svg>
                     </div>

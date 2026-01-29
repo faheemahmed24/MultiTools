@@ -76,7 +76,7 @@ const Header: React.FC<HeaderProps> = ({
       items: [
         { key: 'AI Transcriber', label: 'AI Transcriber', icon: TranscriberIcon, isCore: true },
         { key: 'PDF Copilot', label: 'AI Copilot', icon: BoltIcon, isCore: true },
-        { key: 'Chat PDF', label: 'Chat PDF', icon: ChatBubbleLeftRightIcon },
+        { key: 'Chat PDF', label: 'Chat PDF', icon: ChatBubbleLeftRightIcon, isCore: true },
         { key: 'AI PDF Editor', label: 'AI Text Editor', icon: PencilSquareIcon },
       ]
     },
@@ -86,7 +86,7 @@ const Header: React.FC<HeaderProps> = ({
         items: [
           { key: 'AI Whiteboard', label: 'Whiteboards', icon: SwatchIcon },
           { key: 'Pages & Spaces', label: 'Workspaces', icon: Squares2x2Icon },
-          { key: 'Strategic Planner', label: 'Plan Architect', icon: CubeIcon },
+          { key: 'Strategic Planner', label: 'Plan Architect', icon: CubeIcon, isCore: true },
           { key: 'Smart Summarizer', label: 'Auto Summarize', icon: SummarizerIcon },
         ]
     },
@@ -94,7 +94,7 @@ const Header: React.FC<HeaderProps> = ({
         group: 'Documents',
         icon: DocumentDuplicateIcon,
         items: [
-            { key: 'PDF Manager', label: 'Page Architect', icon: DocumentDuplicateIcon },
+            { key: 'PDF Manager', label: 'Page Architect', icon: DocumentDuplicateIcon, isCore: true },
             { key: 'Compress PDF', label: 'Compressor', icon: ArrowPathIcon },
             { key: 'Security Vault', label: 'Unlock/Lock', icon: LockClosedIcon },
             { key: 'PDF to Image', label: 'PDF to Image', icon: PdfToImageIcon },
@@ -199,9 +199,12 @@ const Header: React.FC<HeaderProps> = ({
                                     <button 
                                       key={item.key} 
                                       onClick={() => setActiveTool(item.key)} 
-                                      className={`group/item w-full text-left px-5 py-2.5 text-xs font-bold rounded-xl transition-all flex items-center justify-between ${isSubActive ? 'text-purple-400 bg-purple-500/5' : 'text-gray-500 hover:text-gray-300'}`}
+                                      className={`group/item w-full text-left px-5 py-2.5 text-xs font-bold rounded-xl transition-all flex items-center justify-between ${isSubActive ? 'text-purple-400 bg-purple-500/5' : 'text-gray-500 hover:text-gray-300'} ${(item as any).isCore ? 'relative' : ''}`}
                                     >
-                                        <span>{item.label}</span>
+                                        <span className="flex items-center gap-2">
+                                            {item.label}
+                                            {(item as any).isCore && <div className="w-1 h-1 rounded-full bg-purple-500 shadow-[0_0_5px_purple]"></div>}
+                                        </span>
                                         {(item as any).isCore && <SparklesIcon className="w-3 h-3 text-purple-500/40" />}
                                     </button>
                                 );

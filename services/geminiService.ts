@@ -90,6 +90,17 @@ export const runAICommand = async (command: string, file?: File): Promise<string
     return response.text || "Command execution returned empty result.";
 };
 
+export const processStructuredTask = async (text: string, taskType: string): Promise<any> => {
+    const response = await ai.models.generateContent({
+        model: MODELS.primary,
+        contents: `Task: ${taskType}\n\nInput Data:\n${text}`,
+        config: { 
+            systemInstruction: "You are a professional business architect. Provide a high-fidelity, actionable response based on the input text. If the task requires structured output, provide clear headings and bullets.",
+        }
+    });
+    return response.text || "";
+};
+
 export const generateWhiteboardImage = async (canvasBase64: string, prompt: string): Promise<string> => {
     const response = await ai.models.generateContent({
         model: MODELS.image,
@@ -117,7 +128,6 @@ export const translateText = async (text: string, src: string, target: string) =
     return res.text || "";
 };
 
-// Fix: Added missing summarizeText export for ImageAnalyzer.tsx
 export const summarizeText = async (text: string): Promise<string> => {
     const response = await ai.models.generateContent({
         model: MODELS.primary,
@@ -127,7 +137,6 @@ export const summarizeText = async (text: string): Promise<string> => {
     return response.text || "";
 };
 
-// Fix: Added missing correctGrammar export for GrammarCorrector.tsx
 export const correctGrammar = async (text: string, language: string): Promise<string> => {
     const response = await ai.models.generateContent({
         model: MODELS.primary,
@@ -137,7 +146,6 @@ export const correctGrammar = async (text: string, language: string): Promise<st
     return response.text || "";
 };
 
-// Fix: Added missing analyzeImage export for ImageAnalyzer, PdfToImage, and ImageToPdf components
 export const analyzeImage = async (file: File): Promise<string> => {
   const base64Data = await fileToBase64(file);
   const mimeType = getMimeType(file);
@@ -153,7 +161,6 @@ export const analyzeImage = async (file: File): Promise<string> => {
   return response.text || "";
 };
 
-// Fix: Added missing extractTextFromUrl export for TextToSpeech.tsx
 export const extractTextFromUrl = async (url: string): Promise<string> => {
     const response = await ai.models.generateContent({
         model: MODELS.flash,
