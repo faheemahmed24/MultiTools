@@ -5,6 +5,7 @@ import { BoltIcon } from './icons/BoltIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { UploadIcon } from './icons/UploadIcon';
 import { XCircleIcon } from './icons/XCircleIcon';
+import { runAICommand } from '../services/geminiService';
 
 const AICopilot: React.FC<{ t: TranslationSet }> = ({ t }) => {
   const [command, setCommand] = useState('');
@@ -23,11 +24,10 @@ const AICopilot: React.FC<{ t: TranslationSet }> = ({ t }) => {
     setIsProcessing(true);
 
     try {
-        // Here we would call geminiService for "PDF Copilot" logic
-        await new Promise(res => setTimeout(res, 2000));
-        setHistory(prev => [...prev, { role: 'ai', text: `Executing pattern analysis for: "${currentCmd}". Task queue updated.` }]);
-    } catch (err) {
-        setHistory(prev => [...prev, { role: 'ai', text: "Error in logic execution terminal." }]);
+        const result = await runAICommand(currentCmd, activeFile || undefined);
+        setHistory(prev => [...prev, { role: 'ai', text: result }]);
+    } catch (err: any) {
+        setHistory(prev => [...prev, { role: 'ai', text: `System Error: ${err.message}` }]);
     } finally {
         setIsProcessing(false);
     }
@@ -81,7 +81,7 @@ const AICopilot: React.FC<{ t: TranslationSet }> = ({ t }) => {
                 placeholder="Instruct the engine (e.g. Translate to Spanish and save as Word)"
                 className="w-full bg-black/40 border border-white/10 rounded-2xl py-5 px-6 pr-16 text-white outline-none focus:border-purple-500/50 transition-all shadow-inner placeholder:text-gray-700"
             />
-            <button type="submit" className="absolute right-4 top-1/2 -translate-y-1/2 bg-purple-600 p-3 rounded-xl text-white hover:bg-purple-500 transition-all shadow-lg active:scale-90">
+            <button type="submit" disabled={isProcessing} className="absolute right-4 top-1/2 -translate-y-1/2 bg-purple-600 p-3 rounded-xl text-white hover:bg-purple-500 transition-all shadow-lg active:scale-90 disabled:opacity-50">
                 <BoltIcon className="w-5 h-5" />
             </button>
         </form>
