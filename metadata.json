@@ -1,8 +1,9 @@
 {
   "name": "MultiTools",
-  "description": "The professional AI engine for transcription, data mirroring, and high-fidelity reporting. Authorized for production at multitools.click.",
+  "description": "High-fidelity universal engine for transcription, data mirroring, and professional reporting. Optimized for 100+ global languages.",
   "requestFramePermissions": [
     "camera",
-    "microphone"
+    "microphone",
+    "geolocation"
   ]
 }

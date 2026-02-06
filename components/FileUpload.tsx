@@ -12,7 +12,7 @@ interface FileUploadProps {
 }
 
 const LANGUAGES = [
-    { code: 'auto', name: 'Auto-detect Language' },
+    { code: 'auto', name: 'Auto-detect Language (Universal)' },
     { code: 'en', name: 'English' },
     { code: 'hi', name: 'Hindi / हिन्दी' },
     { code: 'ur', name: 'Urdu / اردو' },
@@ -78,7 +78,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
         onFilesSelect([file], languageHint);
         setLinkUrl('');
     } catch (err) {
-        setLinkError(t.linkError || 'CORS restriction or invalid link.');
+        setLinkError(t.linkError || 'Access restriction or invalid link.');
     } finally {
         setIsFetchingLink(false);
     }
@@ -109,7 +109,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
                 disabled={isProcessing}
                 className="px-14 py-5 bg-purple-600 text-white font-black uppercase tracking-[0.25em] text-xs rounded-2xl hover:bg-purple-700 transition-all transform active:scale-95 shadow-[0_0_40px_rgba(168,85,247,0.4)]"
                 >
-                {isProcessing ? 'Engine Syncing...' : 'Browse Intelligence Assets'}
+                {isProcessing ? 'Initializing Hub...' : 'Select Intel Assets'}
                 </button>
                 <p className="mt-8 text-sm text-gray-500 font-bold uppercase tracking-[0.2em]">{t.dropFile}</p>
                 <div className="mt-6 flex gap-3">
@@ -124,10 +124,10 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
                     <div className="absolute inset-y-0 start-0 flex items-center ps-5 pointer-events-none">
                         <LinkIcon className="w-6 h-6 text-gray-600" />
                     </div>
-                    <input type="text" className="block w-full p-5 ps-14 text-sm text-gray-300 border border-white/5 rounded-2xl bg-black/40 focus:border-purple-500/50 transition-all outline-none shadow-inner placeholder:text-gray-700" placeholder="Source URL (Media or Documents)..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLinkUpload()} disabled={isProcessing || isFetchingLink} />
+                    <input type="text" className="block w-full p-5 ps-14 text-sm text-gray-300 border border-white/5 rounded-2xl bg-black/40 focus:border-purple-500/50 transition-all outline-none shadow-inner placeholder:text-gray-700" placeholder="Paste asset URL (Audio/Video/Doc)..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLinkUpload()} disabled={isProcessing || isFetchingLink} />
                 </div>
                 <button onClick={handleLinkUpload} disabled={isFetchingLink || !linkUrl || isProcessing} className="px-10 py-5 text-xs font-black uppercase tracking-widest text-white bg-white/5 border border-white/10 rounded-2xl hover:bg-purple-600 transition-all active:scale-95 shadow-xl">
-                    {isFetchingLink ? 'FETCHING' : 'CONNECT'}
+                    {isFetchingLink ? 'FETCHING' : 'LINK'}
                 </button>
             </div>
             {linkError && <p className="text-[11px] font-bold text-red-500 uppercase tracking-widest px-2">{linkError}</p>}
@@ -136,7 +136,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
         <div className="md:col-span-4 space-y-8">
             <div className="p-8 bg-black/20 rounded-[3rem] border border-white/5 shadow-2xl">
                 <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.4em] mb-6 flex items-center gap-3">
-                    <GlobeIcon className="w-5 h-5 text-purple-500" /> Language Node
+                    <GlobeIcon className="w-5 h-5 text-purple-500" /> Cognitive Mode
                 </label>
                 <div className="space-y-2.5 max-h-[340px] overflow-y-auto custom-scrollbar pr-3">
                     {LANGUAGES.map(lang => (
@@ -152,7 +152,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
             </div>
             <div className="p-8 bg-purple-500/5 rounded-[2.5rem] border border-purple-500/10 shadow-inner">
                 <p className="text-[10px] font-bold text-purple-400/80 uppercase tracking-widest leading-loose">
-                    Gemini 3 Pro performs high-fidelity diarization & code-switching detection for all global dialects within the Engine Core.
+                    Gemini 3 Pro Universal Node handles 100+ global dialects with native diarization and code-switching detection.
                 </p>
             </div>
         </div>
