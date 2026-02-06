@@ -44,7 +44,7 @@ function getMimeType(file: File): string {
 
 /**
  * Universal Transcription Engine v4.0
- * Optimized for 100+ languages, code-switching detection, and high-fidelity diarization.
+ * Optimized for 100+ global languages, automatic dialect detection, and multi-speaker diarization.
  */
 export const transcribeAudio = async (file: File, languageHint: string = 'auto'): Promise<Omit<Transcription, 'id' | 'date'>> => {
   const base64Data = await fileToBase64(file);
@@ -63,7 +63,7 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
             startTime: { type: Type.STRING, description: "Timestamp in MM:SS format." },
             endTime: { type: Type.STRING, description: "Timestamp in MM:SS format." },
             speaker: { type: Type.STRING, description: "Identified speaker (e.g., Speaker 1, Speaker 2)." },
-            text: { type: Type.STRING, description: "The verbatim transcript for this specific segment." },
+            text: { type: Type.STRING, description: "Verbatim transcript for this segment." },
           },
           required: ["startTime", "endTime", "speaker", "text"]
         }
@@ -78,12 +78,12 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
         parts: [
             { inlineData: { mimeType, data: base64Data } },
             { text: `Universal Transcription Protocol v4.0:
-              1. ACTION: Transcribe the provided file with 99.9% verbal accuracy.
-              2. LANGUAGE: Automatically detect the primary language from all 100+ global dialects.
-              3. CODE-SWITCHING: If multiple languages are spoken (e.g., mixing Urdu and English), transcribe each part accurately in its native script.
+              1. ACTION: Transcribe the provided file with 99.9% verbal accuracy across all global languages.
+              2. LANGUAGE: Automatically detect the language from any dialect (Urdu, Arabic, Hindi, English, Spanish, Chinese, etc.).
+              3. CODE-SWITCHING: If multiple languages are spoken, transcribe each segment correctly in its native script.
               4. DIARIZATION: Perform high-fidelity speaker separation and identification.
-              5. STRUCTURE: Break the content into logical segments with precise timestamps.
-              6. HINT: User suggested "${languageHint}". If "auto", strictly rely on neural audio analysis for detection.
+              5. STRUCTURE: Break the content into logical segments with MM:SS timestamps.
+              6. HINT: User suggested "${languageHint}". If "auto", strictly rely on neural audio analysis for identification.
               7. OUTPUT: Return strictly valid JSON.` 
             }
         ] 

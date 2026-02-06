@@ -8,6 +8,12 @@
     <title>MultiTools | High-Performance AI Workstation</title>
     <meta name="description" content="Professional dashboard for speech transcription, business strategy, and visual processing. One universal engine for your high-stakes workflow.">
 
+    <!-- Open Graph / SEO -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://multitools.click/">
+    <meta property="og:title" content="MultiTools | High-Performance AI Workstation">
+    <meta property="og:description" content="One universal engine for transcription, strategy, and visual intelligence.">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,17 +25,59 @@
         --accent-purple: #A855F7;
         --accent-pink: #E11D48;
         --font-sans: 'Inter', sans-serif;
+        --font-arabic: 'Noto Sans Arabic', sans-serif;
+        --font-urdu: 'Noto Nastaliq Urdu', serif;
       }
+
+      html { scroll-behavior: smooth; }
       body {
         font-family: var(--font-sans);
         background-color: var(--bg-deep);
         margin: 0;
         overflow-x: hidden;
-        color: white;
       }
+
+      [lang="ar"], .font-arabic { font-family: var(--font-arabic); }
+      [lang="ur"], .font-urdu { font-family: var(--font-urdu); line-height: 2.5; }
+
       ::-webkit-scrollbar { width: 4px; height: 4px; }
+      ::-webkit-scrollbar-track { background: transparent; }
       ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
       ::-webkit-scrollbar-thumb:hover { background: var(--accent-purple); }
+
+      .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 20px; }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--accent-purple); }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fadeIn { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+      @keyframes pop-in {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      .animate-pop-in { animation: pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+      .modal-active main, .modal-active aside {
+        filter: blur(12px) brightness(0.6);
+        pointer-events: none;
+      }
+
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      
+      ::selection {
+        background: rgba(168, 85, 247, 0.3);
+        color: #fff;
+      }
+
+      .output-card {
+        background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      }
     </style>
 </head>
 <body class="selection:bg-purple-500/30">
