@@ -44,7 +44,7 @@ function getMimeType(file: File): string {
 
 /**
  * Universal Transcription Engine
- * Optimized for 100+ languages, auto-detection, and high-fidelity speaker diarization.
+ * Handles 100+ languages, auto-detection, and high-fidelity speaker diarization.
  */
 export const transcribeAudio = async (file: File, languageHint: string = 'auto'): Promise<Omit<Transcription, 'id' | 'date'>> => {
   const base64Data = await fileToBase64(file);
@@ -80,10 +80,10 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
             { text: `Universal Transcription Protocol v4.0:
               1. ACTION: Transcribe the provided file with 99.9% verbal accuracy.
               2. LANGUAGE: Automatically detect the primary language from all 100+ global dialects.
-              3. CODE-SWITCHING: If multiple languages are spoken (e.g., Mixing Hindi and English), transcribe each part accurately in its native script.
+              3. CODE-SWITCHING: If multiple languages are spoken, transcribe each segment accurately in its native script.
               4. DIARIZATION: Perform high-fidelity speaker separation and identification.
               5. STRUCTURE: Break the content into logical segments with precise timestamps.
-              6. HINT: User suggested "${languageHint}". If "auto", strictly rely on the neural audio analysis for global detection.
+              6. HINT: User suggested "${languageHint}". If "auto", strictly rely on neural analysis for detection.
               7. OUTPUT: Return strictly valid JSON.` 
             }
         ] 
@@ -284,4 +284,4 @@ export const generateSpeech = async (text: string, voiceName: string): Promise<s
         },
     });
     return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data || "";
-};
+}
