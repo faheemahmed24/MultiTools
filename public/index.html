@@ -1,20 +1,23 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="canonical" href="https://multitools.click/" />
+
     <title>MultiTools | High-Performance AI Workstation</title>
-    <meta name="description" content="Professional dashboard for speech transcription, business strategy, and visual processing.">
+    <meta name="description" content="Professional dashboard for speech transcription, business strategy, and visual processing. One universal engine for your high-stakes workflow.">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Montserrat:wght@700;900&family=Noto+Sans+Arabic:wght@400;700;900&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@700;900&family=Noto+Sans+Arabic:wght@400;700;900&family=Noto+Nastaliq+Urdu:wght@400;700&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
     <style>
       :root {
         --bg-deep: #05050C;
         --accent-purple: #A855F7;
+        --accent-pink: #E11D48;
         --font-sans: 'Inter', sans-serif;
       }
       body {
@@ -24,13 +27,13 @@
         overflow-x: hidden;
         color: white;
       }
-      ::-webkit-scrollbar { width: 4px; }
-      ::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.3); border-radius: 10px; }
-      @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-      .animate-fadeIn { animation: fadeIn 0.5s ease-out forwards; }
+      ::-webkit-scrollbar { width: 4px; height: 4px; }
+      ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
+      ::-webkit-scrollbar-thumb:hover { background: var(--accent-purple); }
     </style>
 </head>
-<body>
+<body class="selection:bg-purple-500/30">
+    <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
 </body>
 </html>

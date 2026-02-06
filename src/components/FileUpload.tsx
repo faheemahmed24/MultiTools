@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef } from 'react';
 import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';

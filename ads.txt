@@ -1,2 +1,1 @@
-
-# System Policy: No AdSense Allowed
+# System Policy Enforcement: No AdSense Allowed
