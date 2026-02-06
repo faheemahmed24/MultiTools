@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { Transcription, SmartSummary } from '../types';
 
@@ -45,7 +44,7 @@ function getMimeType(file: File): string {
 
 /**
  * Universal Transcription Engine
- * Handles 100+ languages, auto-detection, and speaker diarization.
+ * Optimized for 100+ languages, auto-detection, and high-fidelity speaker diarization.
  */
 export const transcribeAudio = async (file: File, languageHint: string = 'auto'): Promise<Omit<Transcription, 'id' | 'date'>> => {
   const base64Data = await fileToBase64(file);
@@ -78,13 +77,14 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
     contents: { 
         parts: [
             { inlineData: { mimeType, data: base64Data } },
-            { text: `Universal Transcription Protocol:
-              1. ACTION: Transcribe the provided media/document file with 99.9% verbal accuracy.
-              2. LANGUAGE: Automatically detect the primary language. Support ALL global languages and regional dialects.
-              3. CODE-SWITCHING: If multiple languages are used simultaneously (e.g., mixing Urdu and English), transcribe each part accurately in its native script.
-              4. DIARIZATION: Identify and separate distinct speakers.
-              5. HINT: User suggests "${languageHint}". If "auto", strictly rely on the neural audio analysis.
-              6. OUTPUT: Return strictly valid JSON conforming to the schema.` 
+            { text: `Universal Transcription Protocol v4.0:
+              1. ACTION: Transcribe the provided file with 99.9% verbal accuracy.
+              2. LANGUAGE: Automatically detect the primary language from all 100+ global dialects.
+              3. CODE-SWITCHING: If multiple languages are spoken (e.g., Mixing Hindi and English), transcribe each part accurately in its native script.
+              4. DIARIZATION: Perform high-fidelity speaker separation and identification.
+              5. STRUCTURE: Break the content into logical segments with precise timestamps.
+              6. HINT: User suggested "${languageHint}". If "auto", strictly rely on the neural audio analysis for global detection.
+              7. OUTPUT: Return strictly valid JSON.` 
             }
         ] 
     },
@@ -112,7 +112,7 @@ export const runAICommand = async (command: string, file?: File): Promise<string
         model: MODELS.primary,
         contents: { parts }
     });
-    return response.text || "Execution completed with no verbal output.";
+    return response.text || "Execution completed.";
 };
 
 export const processStructuredTask = async (text: string, taskType: string): Promise<any> => {
@@ -120,7 +120,7 @@ export const processStructuredTask = async (text: string, taskType: string): Pro
         model: MODELS.primary,
         contents: `Task: ${taskType}\n\nInput Context:\n${text}`,
         config: { 
-            systemInstruction: "You are a professional business strategist. Organize the input into a structured, verbatim report.",
+            systemInstruction: "You are a professional business strategist. Organize the input into a structured report.",
         }
     });
     return response.text || "";
@@ -132,7 +132,7 @@ export const generateWhiteboardImage = async (canvasBase64: string, prompt: stri
         contents: {
             parts: [
                 { inlineData: { data: canvasBase64.split(',')[1], mimeType: 'image/png' } },
-                { text: `Synthesize this sketch into a high-fidelity professional digital diagram. ${prompt}` }
+                { text: `Synthesize this sketch into a high-fidelity digital diagram: ${prompt}` }
             ]
         },
         config: { imageConfig: { aspectRatio: "1:1" } }
@@ -141,14 +141,14 @@ export const generateWhiteboardImage = async (canvasBase64: string, prompt: stri
     for (const part of response.candidates?.[0]?.content?.parts || []) {
         if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
     }
-    throw new Error("Vision Node Synthesis Error.");
+    throw new Error("Vision Node Error.");
 };
 
 export const translateText = async (text: string, src: string, target: string) => {
     const res = await ai.models.generateContent({
         model: MODELS.primary,
         contents: text,
-        config: { systemInstruction: `Translate from ${src} to ${target}. Maintain verbatim accuracy.` },
+        config: { systemInstruction: `Translate from ${src} to ${target}.` },
     });
     return res.text || "";
 };
@@ -157,7 +157,7 @@ export const summarizeText = async (text: string): Promise<string> => {
     const response = await ai.models.generateContent({
         model: MODELS.primary,
         contents: text,
-        config: { systemInstruction: "Provide a high-density professional executive summary." },
+        config: { systemInstruction: "Provide a high-density summary." },
     });
     return response.text || "";
 };
@@ -166,7 +166,7 @@ export const correctGrammar = async (text: string, language: string): Promise<st
     const response = await ai.models.generateContent({
         model: MODELS.primary,
         contents: text,
-        config: { systemInstruction: `Correct grammar for ${language}. Keep the professional tone.` },
+        config: { systemInstruction: `Correct grammar for ${language}.` },
     });
     return response.text || "";
 };
@@ -179,7 +179,7 @@ export const analyzeImage = async (file: File): Promise<string> => {
     contents: { 
         parts: [
             { inlineData: { mimeType, data: base64Data } },
-            { text: "Universal Vision Node: Perform high-accuracy OCR and content analysis." }
+            { text: "Universal Vision Node: Perform high-accuracy OCR." }
         ] 
     },
   });
@@ -192,7 +192,7 @@ export const extractTextFromUrl = async (url: string): Promise<string> => {
         contents: `Extract text intel from: ${url}`,
         config: { tools: [{ googleSearch: {} }] }
     });
-    return response.text || "Node extraction failed.";
+    return response.text || "Extraction failed.";
 };
 
 export const smartSummarize = async (text: string): Promise<SmartSummary> => {

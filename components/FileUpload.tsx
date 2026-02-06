@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef } from 'react';
 import type { TranslationSet } from '../types';
 import { UploadIcon } from './icons/UploadIcon';
@@ -12,8 +11,8 @@ interface FileUploadProps {
 }
 
 const LANGUAGES = [
-    { code: 'auto', name: 'Global Auto-Detect' },
-    { code: 'en', name: 'English (US/UK)' },
+    { code: 'auto', name: 'Universal Auto-Detect' },
+    { code: 'en', name: 'English (Global)' },
     { code: 'hi', name: 'Hindi / हिन्दी' },
     { code: 'ur', name: 'Urdu / اردو' },
     { code: 'ar', name: 'Arabic / العربية' },
@@ -78,7 +77,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
         onFilesSelect([file], languageHint);
         setLinkUrl('');
     } catch (err) {
-        setLinkError(t.linkError || 'Access blocked by CORS or invalid link.');
+        setLinkError(t.linkError || 'Access restricted by system policy or CORS.');
     } finally {
         setIsFetchingLink(false);
     }
@@ -109,9 +108,9 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
                 disabled={isProcessing}
                 className="px-14 py-5 bg-purple-600 text-white font-black uppercase tracking-[0.25em] text-xs rounded-2xl hover:bg-purple-700 transition-all transform active:scale-95 shadow-[0_0_40px_rgba(168,85,247,0.4)]"
                 >
-                {isProcessing ? 'System Syncing...' : 'Load Multi-Format Assets'}
+                {isProcessing ? 'Synchronizing Node...' : 'Initialize Universal Assets'}
                 </button>
-                <p className="mt-8 text-sm text-gray-500 font-bold uppercase tracking-[0.2em]">Universal Intel Processor</p>
+                <p className="mt-8 text-sm text-gray-500 font-bold uppercase tracking-[0.2em]">Universal Intel Core</p>
                 <div className="mt-6 flex gap-3">
                     {['AUDIO', 'VIDEO', 'PDF', 'IMAGE'].map(type => (
                         <span key={type} className="text-[10px] text-gray-600 font-black tracking-widest border border-white/5 px-4 py-1.5 rounded-full bg-black/20">{type}</span>
@@ -124,7 +123,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
                     <div className="absolute inset-y-0 start-0 flex items-center ps-5 pointer-events-none">
                         <LinkIcon className="w-6 h-6 text-gray-600" />
                     </div>
-                    <input type="text" className="block w-full p-5 ps-14 text-sm text-gray-300 border border-white/5 rounded-2xl bg-black/40 focus:border-purple-500/50 transition-all outline-none shadow-inner placeholder:text-gray-700" placeholder="Remote source link..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLinkUpload()} disabled={isProcessing || isFetchingLink} />
+                    <input type="text" className="block w-full p-5 ps-14 text-sm text-gray-300 border border-white/5 rounded-2xl bg-black/40 focus:border-purple-500/50 transition-all outline-none shadow-inner placeholder:text-gray-700" placeholder="Load from remote link..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLinkUpload()} disabled={isProcessing || isFetchingLink} />
                 </div>
                 <button onClick={handleLinkUpload} disabled={isFetchingLink || !linkUrl || isProcessing} className="px-10 py-5 text-xs font-black uppercase tracking-widest text-white bg-white/5 border border-white/10 rounded-2xl hover:bg-purple-600 transition-all active:scale-95 shadow-xl">
                     {isFetchingLink ? 'FETCH' : 'SYNC'}
@@ -152,7 +151,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
             </div>
             <div className="p-8 bg-purple-500/5 rounded-[2.5rem] border border-purple-500/10 shadow-inner">
                 <p className="text-[10px] font-bold text-purple-400/80 uppercase tracking-widest leading-loose">
-                    MultiTools Engine 3.0 supports high-density code-switching and 99.9% verbal accuracy across all global languages.
+                    MultiTools Core supports high-density code-switching and 99.9% verbal accuracy targets for 100+ languages.
                 </p>
             </div>
         </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useUserLocalStorage } from './hooks/useUserLocalStorage';
@@ -67,7 +66,7 @@ const LandingPage: React.FC<{
       <div className="max-w-5xl w-full space-y-12 mb-28">
         <div className="space-y-6">
           <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[11px] font-black uppercase tracking-[0.3em] mb-4 shadow-[0_0_20px_rgba(168,85,247,0.15)]">
-            <SparklesIcon className="w-4 h-4" /> MultiTools Enterprise PRO ELITE
+            <SparklesIcon className="w-4 h-4" /> MultiTools Engine 3.0 PRO
           </div>
           <h1 className="text-7xl md:text-9xl font-black tracking-tighter text-white uppercase leading-none selection:bg-purple-600">
             Universal<span className="text-transparent bg-clip-text bg-gradient-to-br from-purple-400 via-pink-500 to-indigo-600">Engine</span>
@@ -85,7 +84,7 @@ const LandingPage: React.FC<{
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
             <SparklesIcon className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-            {currentUser ? 'Enter Workspace' : 'Get Enterprise Access'}
+            {currentUser ? 'Enter Workspace' : 'Get System Access'}
           </button>
           
           {!currentUser && (
@@ -102,7 +101,7 @@ const LandingPage: React.FC<{
       <div className="w-full max-w-7xl mb-24 animate-fadeIn" style={{animationDelay: '0.1s'}}>
           <div className="flex items-center justify-between mb-10 px-4">
               <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.4em] flex items-center gap-3">
-                  <BoltIcon className="w-4 h-4 text-yellow-500" /> Active Clusters
+                  <BoltIcon className="w-4 h-4 text-yellow-500" /> Operational Clusters
               </h3>
               <div className="h-[1px] flex-grow mx-8 bg-white/5"></div>
           </div>
@@ -139,15 +138,15 @@ const LandingPage: React.FC<{
                                 <TranscriberIcon className="w-8 h-8 text-purple-500" />
                              </div>
                         </div>
-                        <p className="text-gray-400 text-xl leading-relaxed max-w-lg mb-8">Convert Speech Audio, Video Streams, and Documents into verified text nodes with diarization.</p>
+                        <p className="text-gray-400 text-xl leading-relaxed max-w-lg mb-8">Convert Audio, Video, and Documents into verified text with global dialect auto-detection.</p>
                         <div className="flex gap-3">
-                            {['Audio', 'Video', 'PDF', 'Live'].map(tag => (
+                            {['Audio', 'Video', 'PDF', 'Diarization'].map(tag => (
                                 <span key={tag} className="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-black uppercase text-gray-500 tracking-widest">{tag}</span>
                             ))}
                         </div>
                     </div>
                     <div className="mt-12 flex items-center gap-2 text-purple-500 font-black text-[11px] uppercase tracking-widest group-hover:gap-4 transition-all">
-                        Launch Engine Core <ArrowPathIcon className="w-4 h-4" />
+                        Launch System Core <ArrowPathIcon className="w-4 h-4" />
                     </div>
                 </div>
             </div>
@@ -157,7 +156,7 @@ const LandingPage: React.FC<{
                 <div className="flex flex-col justify-between h-full">
                     <div>
                         <h2 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Chat PDF</h2>
-                        <p className="text-gray-500 text-sm leading-relaxed">Interrogate any document node using large-scale cognitive processing.</p>
+                        <p className="text-gray-500 text-sm leading-relaxed">Interrogate any document node using high-performance AI logic.</p>
                     </div>
                 </div>
             </div>
@@ -165,7 +164,7 @@ const LandingPage: React.FC<{
                 <div className="flex flex-col justify-between h-full">
                     <div>
                         <h2 className="text-2xl font-black text-pink-500 uppercase tracking-tighter mb-4">Plan Architect</h2>
-                        <p className="text-gray-500 text-sm leading-relaxed">Synthesize scattered data into professional strategy blueprints.</p>
+                        <p className="text-gray-500 text-sm leading-relaxed">Synthesize scattered data into professional reports and slide decks.</p>
                     </div>
                 </div>
             </div>
@@ -213,8 +212,8 @@ function App() {
       setCurrentTranscriptionId(newTranscription.id);
       handleToolSelect('AI Transcriber');
     } catch (error) {
-      console.error("Critical System Fault:", error);
-      alert("Terminal Processing Error. Check Console for details.");
+      console.error("System Core Fault:", error);
+      alert("Terminal Processing Error. Check node logs.");
     } finally {
       setIsProcessing(false);
     }
@@ -224,13 +223,13 @@ function App() {
       { key: 'AI Transcriber', label: 'AI Transcriber', icon: TranscriberIcon },
       { key: 'PDF Copilot', label: 'AI Copilot', icon: BoltIcon },
       { key: 'Chat PDF', label: 'Chat PDF', icon: ChatBubbleLeftRightIcon },
-      { key: 'Strategic Planner', label: 'Strategic Plan', icon: CubeIcon },
-      { key: 'AI PDF Editor', label: 'Text Editor', icon: PencilSquareIcon },
-      { key: 'AI Whiteboard', label: 'Whiteboard', icon: SwatchIcon },
-      { key: 'Smart Summarizer', label: 'Summarizer', icon: SummarizerIcon },
-      { key: 'AI Translator', label: 'Translator', icon: TranslatorIcon },
-      { key: 'PDF Manager', label: 'Architect', icon: DocumentDuplicateIcon },
-      { key: 'Export to Sheets', label: 'Sheet Node', icon: SheetIcon },
+      { key: 'Strategic Planner', label: 'Strategy Planner', icon: CubeIcon },
+      { key: 'AI PDF Editor', label: 'AI Text Editor', icon: PencilSquareIcon },
+      { key: 'AI Whiteboard', label: 'AI Whiteboard', icon: SwatchIcon },
+      { key: 'Smart Summarizer', label: 'Smart Summarizer', icon: SummarizerIcon },
+      { key: 'AI Translator', label: 'AI Translator', icon: TranslatorIcon },
+      { key: 'PDF Manager', label: 'PDF Architect', icon: DocumentDuplicateIcon },
+      { key: 'Export to Sheets', label: 'Data to Sheets', icon: SheetIcon },
   ], []);
 
   const mostUsedTools = useMemo(() => {
@@ -240,7 +239,6 @@ function App() {
       .map(([key]) => allToolsRegistry.find(tool => tool.key === key))
       .filter(Boolean) as Array<{key: string, label: string, icon: React.FC<React.SVGProps<SVGSVGElement>>}>;
     
-    // Fill with defaults if not enough usage
     if (sorted.length < 4) {
         const defaults = allToolsRegistry.slice(0, 6);
         const unique = new Map(sorted.map(s => [s.key, s]));
@@ -282,7 +280,7 @@ function App() {
       case 'Export to Sheets': return <ExportToSheets t={t} />;
       case 'History':
         return <div className="h-full flex flex-col animate-fadeIn">
-            <div className="mb-14 text-center md:text-left"><h2 className="text-5xl font-black text-white uppercase tracking-tighter selection:bg-pink-600">Global History Archive</h2></div>
+            <div className="mb-14 text-center md:text-left"><h2 className="text-5xl font-black text-white uppercase tracking-tighter">Global Archive</h2></div>
             <HistoryPanel items={transcriptions} onSelect={(i) => { handleToolSelect('AI Transcriber'); setCurrentTranscriptionId(i.id); }} onDelete={(id) => setTranscriptions(p => p.filter(i => i.id !== id))} t={t} renderItem={(item) => (
                <div className="flex-grow min-w-0"><p className="font-bold truncate text-gray-100 text-lg">{item.fileName}</p><p className="text-[10px] text-purple-400 font-black uppercase mt-1.5 tracking-[0.2em]">{item.date} • {item.detectedLanguage}</p></div>
             )} />
@@ -304,7 +302,6 @@ function App() {
   );
 }
 
-// Custom hook to manage usage stats without complex side effects
 function useUsageCounts(userId: string | undefined) {
     return useUserLocalStorage<Record<string, number>>(userId, 'toolUsageCounts', {
         'AI Transcriber': 1,
