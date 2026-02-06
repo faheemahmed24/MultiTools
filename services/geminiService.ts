@@ -2,6 +2,7 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { Transcription, SmartSummary } from '../types';
 
+// API key obtained exclusively from environment variable
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
 const MODELS = {
@@ -26,12 +27,26 @@ function getMimeType(file: File): string {
   if (file.type && !file.type.includes('octet-stream')) return file.type;
   const ext = file.name.split('.').pop()?.toLowerCase();
   const map: Record<string, string> = {
-    'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'm4a': 'audio/mp4', 'ogg': 'audio/ogg',
-    'mp4': 'video/mp4', 'webm': 'video/webm', 'mov': 'video/quicktime', 'pdf': 'application/pdf'
+    'mp3': 'audio/mpeg', 
+    'wav': 'audio/wav', 
+    'm4a': 'audio/mp4', 
+    'ogg': 'audio/ogg',
+    'mp4': 'video/mp4', 
+    'webm': 'video/webm', 
+    'mov': 'video/quicktime',
+    'pdf': 'application/pdf',
+    'png': 'image/png',
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'webp': 'image/webp'
   };
   return map[ext || ''] || 'application/octet-stream';
 }
 
+/**
+ * Universal Transcriber/Extractor Node
+ * Processes Audio, Video, and Documents (PDF/Images)
+ */
 export const transcribeAudio = async (file: File, languageHint: string = 'auto'): Promise<Omit<Transcription, 'id' | 'date'>> => {
   const base64Data = await fileToBase64(file);
   const mimeType = getMimeType(file);
@@ -39,17 +54,17 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
   const transcriptionSchema = {
     type: Type.OBJECT,
     properties: {
-      language: { type: Type.STRING },
-      languageCode: { type: Type.STRING },
+      language: { type: Type.STRING, description: "Full name of the primary detected language" },
+      languageCode: { type: Type.STRING, description: "BCP-47 language code" },
       segments: {
         type: Type.ARRAY,
         items: {
           type: Type.OBJECT,
           properties: {
-            startTime: { type: Type.STRING },
-            endTime: { type: Type.STRING },
-            speaker: { type: Type.STRING },
-            text: { type: Type.STRING },
+            startTime: { type: Type.STRING, description: "Timestamp (MM:SS) or Section Name" },
+            endTime: { type: Type.STRING, description: "Timestamp (MM:SS) or Page Reference" },
+            speaker: { type: Type.STRING, description: "Speaker ID or Content Category" },
+            text: { type: Type.STRING, description: "Verbatim content" },
           },
           required: ["startTime", "endTime", "speaker", "text"]
         }
@@ -63,22 +78,30 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
     contents: { 
         parts: [
             { inlineData: { mimeType, data: base64Data } },
-            { text: `Transcribe/Extract the provided media/document. Language Strategy: ${languageHint}. Use high-fidelity speaker diarization for audio/video.` }
+            { text: `System Protocol: 
+              1. If Audio/Video: Transcribe with 99.9% verbal accuracy. Identify distinct speakers. Detect ALL languages automatically including code-switching (e.g. Hinglish, Arabish).
+              2. If PDF/Image: Perform high-fidelity OCR. Preserve structure, headings, and lists as segments.
+              3. Context: ${languageHint === 'auto' ? 'Global Universal Detection' : 'Priority given to ' + languageHint}.
+              4. Respond ONLY with valid JSON.` 
+            }
         ] 
     },
-    config: { responseMimeType: 'application/json', responseSchema: transcriptionSchema }
+    config: {
+        responseMimeType: 'application/json',
+        responseSchema: transcriptionSchema,
+    }
   });
 
   const parsed = JSON.parse(response.text || '{}');
   return {
     fileName: file.name,
-    detectedLanguage: parsed.language || 'Unknown',
+    detectedLanguage: parsed.language || 'Detected Language',
     segments: parsed.segments || [],
   };
 };
 
 export const runAICommand = async (command: string, file?: File): Promise<string> => {
-    const parts: any[] = [{ text: `System: Act as an expert AI Copilot. Execute this command precisely: ${command}` }];
+    const parts: any[] = [{ text: `Act as a High-Level Intelligence Copilot. Command: ${command}. Context: Process any provided data with professional rigor.` }];
     if (file) {
         const data = await fileToBase64(file);
         parts.unshift({ inlineData: { mimeType: getMimeType(file), data } });
@@ -87,15 +110,15 @@ export const runAICommand = async (command: string, file?: File): Promise<string
         model: MODELS.primary,
         contents: { parts }
     });
-    return response.text || "Command execution returned empty result.";
+    return response.text || "Execution complete.";
 };
 
 export const processStructuredTask = async (text: string, taskType: string): Promise<any> => {
     const response = await ai.models.generateContent({
         model: MODELS.primary,
-        contents: `Task: ${taskType}\n\nInput Data:\n${text}`,
+        contents: `Architectural Task: ${taskType}\n\nDataset:\n${text}`,
         config: { 
-            systemInstruction: "You are a professional business architect. Provide a high-fidelity, actionable response based on the input text. If the task requires structured output, provide clear headings and bullets.",
+            systemInstruction: "You are a professional business strategy node. Return high-fidelity structured analysis.",
         }
     });
     return response.text || "";
@@ -107,7 +130,7 @@ export const generateWhiteboardImage = async (canvasBase64: string, prompt: stri
         contents: {
             parts: [
                 { inlineData: { data: canvasBase64.split(',')[1], mimeType: 'image/png' } },
-                { text: `Analyze this sketch and regenerate it as a high-fidelity professional digital asset. ${prompt}` }
+                { text: `Morphic Regeneration: ${prompt}. Convert this sketch into a professional enterprise-grade diagram or asset.` }
             ]
         },
         config: { imageConfig: { aspectRatio: "1:1" } }
@@ -116,14 +139,14 @@ export const generateWhiteboardImage = async (canvasBase64: string, prompt: stri
     for (const part of response.candidates?.[0]?.content?.parts || []) {
         if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
     }
-    throw new Error("Vision engine failed to generate image.");
+    throw new Error("Generative Vision Link Timeout.");
 };
 
 export const translateText = async (text: string, src: string, target: string) => {
     const res = await ai.models.generateContent({
         model: MODELS.primary,
         contents: text,
-        config: { systemInstruction: `Translate from ${src} to ${target}. Only return the translation.` },
+        config: { systemInstruction: `Translate from ${src} to ${target}. Return ONLY the translated string.` },
     });
     return res.text || "";
 };
@@ -132,7 +155,7 @@ export const summarizeText = async (text: string): Promise<string> => {
     const response = await ai.models.generateContent({
         model: MODELS.primary,
         contents: text,
-        config: { systemInstruction: "Summarize this text concisely." },
+        config: { systemInstruction: "Generate a high-density executive summary." },
     });
     return response.text || "";
 };
@@ -141,7 +164,7 @@ export const correctGrammar = async (text: string, language: string): Promise<st
     const response = await ai.models.generateContent({
         model: MODELS.primary,
         contents: text,
-        config: { systemInstruction: `Fix grammar/punctuation in ${language}. Only return the corrected text.` },
+        config: { systemInstruction: `Refine grammar/syntax for ${language}. Preserve the professional tone.` },
     });
     return response.text || "";
 };
@@ -154,7 +177,7 @@ export const analyzeImage = async (file: File): Promise<string> => {
     contents: { 
         parts: [
             { inlineData: { mimeType, data: base64Data } },
-            { text: "Perform high-accuracy OCR and extract all text from this image." }
+            { text: "Universal Vision Node: Extract text, identify objects, and analyze composition." }
         ] 
     },
   });
@@ -164,12 +187,10 @@ export const analyzeImage = async (file: File): Promise<string> => {
 export const extractTextFromUrl = async (url: string): Promise<string> => {
     const response = await ai.models.generateContent({
         model: MODELS.flash,
-        contents: `Fetch and extract the primary text content from this URL: ${url}. Return ONLY the extracted text in its original language.`,
-        config: {
-            tools: [{ googleSearch: {} }]
-        }
+        contents: `Scrape and extract intelligence from: ${url}`,
+        config: { tools: [{ googleSearch: {} }] }
     });
-    return response.text || "Failed to extract text content.";
+    return response.text || "Node Scrape Failed.";
 };
 
 export const smartSummarize = async (text: string): Promise<SmartSummary> => {
@@ -186,7 +207,7 @@ export const smartSummarize = async (text: string): Promise<SmartSummary> => {
     };
     const response = await ai.models.generateContent({
         model: MODELS.primary,
-        contents: `Categorize: ${text}`,
+        contents: `Deep Extract: ${text}`,
         config: { responseMimeType: "application/json", responseSchema: schema }
     });
     return JSON.parse(response.text || '{}');
@@ -203,7 +224,7 @@ export const pureOrganizeData = async (text: string): Promise<any> => {
     };
     const response = await ai.models.generateContent({
         model: MODELS.primary,
-        contents: `Organize verbatim: ${text}`,
+        contents: `Verbatim Clustering: ${text}`,
         config: { responseMimeType: "application/json", responseSchema: schema }
     });
     return JSON.parse(response.text || '{}');
@@ -225,7 +246,7 @@ export const runStrategicPlanning = async (text: string, images: {data: string, 
     };
     const response = await ai.models.generateContent({
         model: MODELS.primary,
-        contents: { parts: [...imageParts, { text: `Blueprint for: ${text}` }] },
+        contents: { parts: [...imageParts, { text: `Full Strategic Blueprint: ${text}` }] },
         config: { responseMimeType: "application/json", responseSchema: schema }
     });
     return JSON.parse(response.text || '{}');

@@ -85,21 +85,21 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
   };
 
   return (
-    <div className="bg-white/[0.02] border border-white/5 backdrop-blur-3xl rounded-[2.5rem] p-10 max-w-4xl mx-auto animate-fadeIn">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-        <div className="md:col-span-8 flex flex-col gap-6">
+    <div className="bg-white/[0.01] border border-white/5 backdrop-blur-3xl rounded-[3rem] p-12 max-w-5xl mx-auto animate-fadeIn shadow-2xl">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
+        <div className="md:col-span-8 flex flex-col gap-8">
             <div
-                className={`relative flex-grow flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-[2rem] transition-all duration-500 ${isProcessing ? 'border-gray-800' : (isDragging ? 'border-purple-500 bg-purple-500/10' : 'border-white/10 hover:border-purple-500/40')}`}
+                className={`relative flex-grow flex flex-col items-center justify-center p-16 border-2 border-dashed rounded-[3rem] transition-all duration-700 ${isProcessing ? 'border-gray-800' : (isDragging ? 'border-purple-500 bg-purple-500/10' : 'border-white/10 hover:border-purple-500/50')}`}
                 onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}
             >
-                <div className="p-5 bg-purple-500/10 rounded-full mb-6 border border-purple-500/20 group-hover:scale-110 transition-transform">
-                    <UploadIcon className="w-16 h-16 text-purple-400" />
+                <div className="p-8 bg-purple-500/10 rounded-full mb-8 border border-purple-500/20 group-hover:scale-110 transition-transform shadow-2xl">
+                    <UploadIcon className="w-20 h-20 text-purple-400" />
                 </div>
                 <input
                 type="file"
                 ref={fileInputRef}
                 onChange={handleFileChange}
-                accept="audio/*,video/*,application/pdf,.pdf,.ogg,.mp3,.wav,.m4a,.aac,.flac,.mp4,.mov,.webm,.opus"
+                accept="audio/*,video/*,application/pdf,image/*,.ogg,.mp3,.wav,.m4a,.aac,.flac,.mp4,.mov,.webm,.opus,.pdf,.png,.jpg,.jpeg"
                 className="hidden"
                 multiple
                 disabled={isProcessing}
@@ -107,48 +107,52 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing 
                 <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isProcessing}
-                className="px-10 py-4 bg-purple-600 text-white font-black uppercase tracking-[0.2em] text-xs rounded-2xl hover:bg-purple-700 transition-all transform active:scale-95 shadow-[0_0_30px_rgba(168,85,247,0.3)]"
+                className="px-14 py-5 bg-purple-600 text-white font-black uppercase tracking-[0.25em] text-xs rounded-2xl hover:bg-purple-700 transition-all transform active:scale-95 shadow-[0_0_40px_rgba(168,85,247,0.4)]"
                 >
-                {isProcessing ? 'Engine Active' : 'Browse Files'}
+                {isProcessing ? 'Engine Syncing...' : 'Browse Intelligence Assets'}
                 </button>
-                <p className="mt-6 text-sm text-gray-500 font-bold uppercase tracking-widest">{t.dropFile}</p>
-                <p className="mt-3 text-[10px] text-gray-600 font-black uppercase tracking-widest px-4 py-1.5 rounded-full border border-white/5">Multi-Format Node (Max 2GB)</p>
+                <p className="mt-8 text-sm text-gray-500 font-bold uppercase tracking-[0.2em]">{t.dropFile}</p>
+                <div className="mt-6 flex gap-3">
+                    {['AUDIO', 'VIDEO', 'PDF', 'IMAGE'].map(type => (
+                        <span key={type} className="text-[10px] text-gray-600 font-black tracking-widest border border-white/5 px-4 py-1.5 rounded-full bg-black/20">{type}</span>
+                    ))}
+                </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-4">
                 <div className="relative flex-grow">
-                    <div className="absolute inset-y-0 start-0 flex items-center ps-4 pointer-events-none">
-                        <LinkIcon className="w-5 h-5 text-gray-600" />
+                    <div className="absolute inset-y-0 start-0 flex items-center ps-5 pointer-events-none">
+                        <LinkIcon className="w-6 h-6 text-gray-600" />
                     </div>
-                    <input type="text" className="block w-full p-4 ps-12 text-sm text-gray-300 border border-white/5 rounded-2xl bg-black/40 focus:border-purple-500/50 transition-all outline-none" placeholder="Paste media or PDF URL..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLinkUpload()} disabled={isProcessing || isFetchingLink} />
+                    <input type="text" className="block w-full p-5 ps-14 text-sm text-gray-300 border border-white/5 rounded-2xl bg-black/40 focus:border-purple-500/50 transition-all outline-none shadow-inner placeholder:text-gray-700" placeholder="Source URL (Media or Documents)..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLinkUpload()} disabled={isProcessing || isFetchingLink} />
                 </div>
-                <button onClick={handleLinkUpload} disabled={isFetchingLink || !linkUrl || isProcessing} className="px-8 py-4 text-xs font-black uppercase tracking-widest text-white bg-white/5 border border-white/10 rounded-2xl hover:bg-purple-600 transition-all active:scale-95">
-                    {isFetchingLink ? '...' : 'Add'}
+                <button onClick={handleLinkUpload} disabled={isFetchingLink || !linkUrl || isProcessing} className="px-10 py-5 text-xs font-black uppercase tracking-widest text-white bg-white/5 border border-white/10 rounded-2xl hover:bg-purple-600 transition-all active:scale-95 shadow-xl">
+                    {isFetchingLink ? 'FETCHING' : 'CONNECT'}
                 </button>
             </div>
-            {linkError && <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest px-2">{linkError}</p>}
+            {linkError && <p className="text-[11px] font-bold text-red-500 uppercase tracking-widest px-2">{linkError}</p>}
         </div>
 
-        <div className="md:col-span-4 space-y-6">
-            <div className="p-6 bg-black/20 rounded-[2rem] border border-white/5">
-                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
-                    <GlobeIcon className="w-4 h-4" /> Language Node
+        <div className="md:col-span-4 space-y-8">
+            <div className="p-8 bg-black/20 rounded-[3rem] border border-white/5 shadow-2xl">
+                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.4em] mb-6 flex items-center gap-3">
+                    <GlobeIcon className="w-5 h-5 text-purple-500" /> Language Node
                 </label>
-                <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+                <div className="space-y-2.5 max-h-[340px] overflow-y-auto custom-scrollbar pr-3">
                     {LANGUAGES.map(lang => (
                         <button
                             key={lang.code}
                             onClick={() => setLanguageHint(lang.code === 'auto' ? 'auto' : lang.name)}
-                            className={`w-full text-left p-3 rounded-xl text-xs font-bold transition-all border ${languageHint === (lang.code === 'auto' ? 'auto' : lang.name) ? 'bg-purple-600/20 border-purple-500 text-purple-400 shadow-lg shadow-purple-900/10' : 'bg-white/5 border-white/5 text-gray-500 hover:bg-white/10'}`}
+                            className={`w-full text-left p-4 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all border ${languageHint === (lang.code === 'auto' ? 'auto' : lang.name) ? 'bg-purple-600/20 border-purple-500 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.1)]' : 'bg-white/5 border-white/5 text-gray-500 hover:bg-white/10'}`}
                         >
                             {lang.name}
                         </button>
                     ))}
                 </div>
             </div>
-            <div className="p-6 bg-purple-500/5 rounded-[2rem] border border-purple-500/10">
-                <p className="text-[9px] font-black text-purple-400/60 uppercase tracking-widest leading-relaxed">
-                    Gemini 3 Pro auto-detects code-switching (mixed languages) in audio, video, and PDF documents with extreme precision.
+            <div className="p-8 bg-purple-500/5 rounded-[2.5rem] border border-purple-500/10 shadow-inner">
+                <p className="text-[10px] font-bold text-purple-400/80 uppercase tracking-widest leading-loose">
+                    Gemini 3 Pro performs high-fidelity diarization & code-switching detection for all global dialects within the Engine Core.
                 </p>
             </div>
         </div>

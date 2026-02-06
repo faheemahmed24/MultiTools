@@ -16,6 +16,7 @@ import GrammarCorrector from './components/GrammarCorrector';
 import PdfToImage from './components/PdfToImage';
 import ImageToPdf from './components/ImageToPdf';
 import PdfToWord from './components/PdfToWord';
+import WordToPdf from './components/WordToPdf';
 import VideoToAudio from './components/VideoToAudio';
 import TextToSpeech from './components/TextToSpeech';
 import DataSummarizer from './components/DataSummarizer';
@@ -32,7 +33,6 @@ import AIWhiteboard from './components/AIWhiteboard';
 
 // Icons
 import { SparklesIcon } from './components/icons/SparklesIcon';
-import { ClockIcon } from './components/icons/ClockIcon';
 import { BoltIcon } from './components/icons/BoltIcon';
 import { TranscriberIcon } from './components/icons/TranscriberIcon';
 import { TranslatorIcon } from './components/icons/TranslatorIcon';
@@ -43,10 +43,7 @@ import { SummarizerIcon } from './components/icons/SummarizerIcon';
 import { DocumentDuplicateIcon } from './components/icons/DocumentDuplicateIcon';
 import { PdfToImageIcon } from './components/icons/PdfToImageIcon';
 import { ImageToPdfIcon } from './components/icons/ImageToPdfIcon';
-import { PdfToWordIcon } from './components/icons/PdfToWordIcon';
 import { SheetIcon } from './components/icons/SheetIcon';
-import { VideoToAudioIcon } from './components/icons/VideoToAudioIcon';
-import { SpeakerIcon } from './components/icons/SpeakerIcon';
 import { LockClosedIcon } from './components/icons/LockClosedIcon';
 import { ChatBubbleLeftRightIcon } from './components/icons/ChatBubbleLeftRightIcon';
 import { PencilSquareIcon } from './components/icons/PencilSquareIcon';
@@ -63,88 +60,113 @@ const LandingPage: React.FC<{
   onSelectTool: (tool: string) => void;
   onSelectItem: (item: Transcription) => void;
 }> = ({ onStart, onLogin, currentUser, recentItems, mostUsedTools, onSelectTool, onSelectItem }) => {
-  const cardStyle = "group relative overflow-hidden backdrop-blur-xl bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-10 transition-all duration-500 hover:-translate-y-2 hover:border-purple-500/30 shadow-2xl cursor-pointer flex flex-col justify-between h-full min-h-[320px]";
+  const cardStyle = "group relative overflow-hidden backdrop-blur-xl bg-white/[0.02] border border-white/5 rounded-[3rem] p-12 transition-all duration-700 hover:-translate-y-3 hover:border-purple-500/40 shadow-2xl cursor-pointer flex flex-col justify-between h-full min-h-[360px]";
 
   return (
-    <div className="min-h-full flex flex-col items-center justify-center relative animate-fadeIn py-12 px-6 text-center">
-      <div className="max-w-4xl w-full space-y-10 mb-24">
-        <div className="space-y-4">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">
-            <SparklesIcon className="w-3 h-3" /> MultiTools Enterprise PRO ELITE
+    <div className="min-h-full flex flex-col items-center justify-center relative animate-fadeIn py-16 px-6 text-center">
+      <div className="max-w-5xl w-full space-y-12 mb-28">
+        <div className="space-y-6">
+          <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[11px] font-black uppercase tracking-[0.3em] mb-4 shadow-[0_0_20px_rgba(168,85,247,0.15)]">
+            <SparklesIcon className="w-4 h-4" /> MultiTools Enterprise PRO ELITE
           </div>
-          <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white uppercase leading-none">
-            Universal<span className="text-transparent bg-clip-text bg-gradient-to-br from-purple-400 to-pink-600">Engine</span>
+          <h1 className="text-7xl md:text-9xl font-black tracking-tighter text-white uppercase leading-none selection:bg-purple-600">
+            Universal<span className="text-transparent bg-clip-text bg-gradient-to-br from-purple-400 via-pink-500 to-indigo-600">Engine</span>
           </h1>
-          <p className="text-2xl md:text-3xl text-gray-400 font-medium leading-tight max-w-2xl mx-auto">
-            All-in-One AI Workstation & <br/> 
-            <span className="text-white">Business Intelligence Suite.</span>
+          <p className="text-2xl md:text-4xl text-gray-400 font-medium leading-tight max-w-3xl mx-auto">
+            One Cognitive Hub for <br/> 
+            <span className="text-white font-black italic">Intelligence, Strategy & Vision.</span>
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-4">
+        <div className="flex flex-col sm:flex-row gap-8 justify-center items-center pt-8">
           <button 
             onClick={onStart}
-            className="group relative px-14 py-5 bg-purple-600 text-white font-black uppercase tracking-[0.2em] text-xs rounded-2xl transition-all shadow-[0_0_30px_rgba(168,85,247,0.4)] hover:shadow-[0_0_50px_rgba(168,85,247,0.6)] active:scale-95 flex items-center gap-3"
+            className="group relative px-16 py-6 bg-purple-600 text-white font-black uppercase tracking-[0.25em] text-sm rounded-2xl transition-all shadow-[0_0_40px_rgba(168,85,247,0.4)] hover:shadow-[0_0_60px_rgba(168,85,247,0.6)] active:scale-95 flex items-center gap-4 overflow-hidden"
           >
-            <SparklesIcon className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-            {currentUser ? 'Enter Workspace' : 'Get Full Access'}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+            <SparklesIcon className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+            {currentUser ? 'Enter Workspace' : 'Get Enterprise Access'}
           </button>
           
           {!currentUser && (
             <button 
               onClick={onLogin}
-              className="px-14 py-5 bg-transparent border border-white/10 hover:border-white/20 text-gray-400 font-black uppercase tracking-[0.2em] text-xs rounded-2xl transition-all active:scale-95"
+              className="px-16 py-6 bg-transparent border border-white/10 hover:border-white/30 text-gray-400 hover:text-white font-black uppercase tracking-[0.25em] text-sm rounded-2xl transition-all active:scale-95"
             >
-              Sign In
+              Operator Log In
             </button>
           )}
         </div>
       </div>
 
-      {mostUsedTools.length > 0 && (
-        <div className="w-full max-w-7xl mb-16 animate-fadeIn" style={{animationDelay: '0.1s'}}>
-            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-6 text-left ml-2 flex items-center gap-2">
-                <BoltIcon className="w-3 h-3 text-yellow-500" /> Selective Clusters
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {mostUsedTools.map(tool => (
-                    <button 
-                        key={tool.key}
-                        onClick={() => onSelectTool(tool.key)}
-                        className="flex flex-col items-center gap-4 p-6 bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 rounded-[2rem] transition-all hover:border-purple-500/40 group relative overflow-hidden"
-                    >
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-purple-600/5 blur-2xl group-hover:bg-purple-600/10 transition-all"></div>
-                        <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-all shadow-lg">
-                            <tool.icon className="w-6 h-6" />
-                        </div>
-                        <div className="text-center">
-                            <p className="text-[11px] font-black text-gray-200 uppercase tracking-widest leading-none">{tool.label}</p>
-                        </div>
-                    </button>
-                ))}
-            </div>
-        </div>
-      )}
+      <div className="w-full max-w-7xl mb-24 animate-fadeIn" style={{animationDelay: '0.1s'}}>
+          <div className="flex items-center justify-between mb-10 px-4">
+              <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.4em] flex items-center gap-3">
+                  <BoltIcon className="w-4 h-4 text-yellow-500" /> Active Clusters
+              </h3>
+              <div className="h-[1px] flex-grow mx-8 bg-white/5"></div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+              {mostUsedTools.map(tool => (
+                  <button 
+                      key={tool.key}
+                      onClick={() => onSelectTool(tool.key)}
+                      className="flex flex-col items-center gap-5 p-8 bg-white/[0.03] hover:bg-purple-600/10 border border-white/5 rounded-[2.5rem] transition-all hover:border-purple-500/50 group relative overflow-hidden shadow-xl"
+                  >
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/5 blur-3xl group-hover:bg-purple-600/20 transition-all"></div>
+                      <div className="w-14 h-14 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-all shadow-lg border border-purple-500/20">
+                          <tool.icon className="w-7 h-7" />
+                      </div>
+                      <div className="text-center">
+                          <p className="text-[12px] font-black text-gray-200 uppercase tracking-widest leading-none group-hover:text-white transition-colors">{tool.label}</p>
+                      </div>
+                  </button>
+              ))}
+          </div>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 w-full max-w-7xl text-left">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 w-full max-w-7xl text-left">
         <div className="md:col-span-8" onClick={() => onSelectTool('AI Transcriber')}>
             <div className={cardStyle}>
-                <div>
-                    <div className="flex items-center justify-between mb-6">
-                         <h2 className="text-3xl font-black text-white uppercase tracking-tighter">AI Transcriber</h2>
-                         <div className="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center border border-purple-500/20">
-                            <TranscriberIcon className="w-6 h-6 text-purple-500" />
-                         </div>
+                <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
+                    <TranscriberIcon className="w-64 h-64" />
+                </div>
+                <div className="relative z-10 h-full flex flex-col justify-between">
+                    <div>
+                        <div className="flex items-center justify-between mb-8">
+                             <h2 className="text-4xl font-black text-white uppercase tracking-tighter">AI Transcriber</h2>
+                             <div className="w-14 h-14 bg-purple-500/10 rounded-2xl flex items-center justify-center border border-purple-500/20 shadow-[0_0_20px_rgba(168,85,247,0.2)]">
+                                <TranscriberIcon className="w-8 h-8 text-purple-500" />
+                             </div>
+                        </div>
+                        <p className="text-gray-400 text-xl leading-relaxed max-w-lg mb-8">Convert Speech Audio, Video Streams, and Documents into verified text nodes with diarization.</p>
+                        <div className="flex gap-3">
+                            {['Audio', 'Video', 'PDF', 'Live'].map(tag => (
+                                <span key={tag} className="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-black uppercase text-gray-500 tracking-widest">{tag}</span>
+                            ))}
+                        </div>
                     </div>
-                    <p className="text-gray-400 text-lg leading-relaxed max-w-md">Transform Audio, Video & PDF into precise verbatim text with deep diarization.</p>
+                    <div className="mt-12 flex items-center gap-2 text-purple-500 font-black text-[11px] uppercase tracking-widest group-hover:gap-4 transition-all">
+                        Launch Engine Core <ArrowPathIcon className="w-4 h-4" />
+                    </div>
                 </div>
             </div>
         </div>
-        <div className="md:col-span-4" onClick={() => onSelectTool('Chat PDF')}>
-            <div className={cardStyle}>
-                <div>
-                    <h2 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Chat PDF</h2>
-                    <p className="text-gray-500 text-sm leading-relaxed">AI chatbot for instant summarizing, translating and querying any document node.</p>
+        <div className="md:col-span-4 space-y-8">
+            <div className={`${cardStyle} !min-h-[170px] !p-10`} onClick={() => onSelectTool('Chat PDF')}>
+                <div className="flex flex-col justify-between h-full">
+                    <div>
+                        <h2 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Chat PDF</h2>
+                        <p className="text-gray-500 text-sm leading-relaxed">Interrogate any document node using large-scale cognitive processing.</p>
+                    </div>
+                </div>
+            </div>
+            <div className={`${cardStyle} !min-h-[170px] !p-10 border-pink-500/10 hover:border-pink-500/40`} onClick={() => onSelectTool('Strategic Planner')}>
+                <div className="flex flex-col justify-between h-full">
+                    <div>
+                        <h2 className="text-2xl font-black text-pink-500 uppercase tracking-tighter mb-4">Plan Architect</h2>
+                        <p className="text-gray-500 text-sm leading-relaxed">Synthesize scattered data into professional strategy blueprints.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -161,7 +183,7 @@ function App() {
   const [activeImageCategory, setActiveImageCategory] = useUserLocalStorage<string>(currentUser?.id, 'activeImageCategory', 'All');
   const [activeSummaryCategory, setActiveSummaryCategory] = useUserLocalStorage<string>(currentUser?.id, 'activeSummaryCategory', 'All');
   const [historyTab, setHistoryTab] = useUserLocalStorage<string>(currentUser?.id, 'historyTab', 'transcriptions');
-  const [usageCounts, setUsageCounts] = useUserLocalStorage<Record<string, number>>(currentUser?.id, 'toolUsageCounts', {});
+  const [usageCounts, setUsageCounts] = useUsageCounts(currentUser?.id);
   
   const [transcriptions, setTranscriptions] = useUserLocalStorage<Transcription[]>(currentUser?.id, 'transcriptions', []);
   const [currentTranscriptionId, setCurrentTranscriptionId] = useUserLocalStorage<string | null>(currentUser?.id, 'currentTranscriptionId', null);
@@ -170,16 +192,10 @@ function App() {
   const t = useMemo(() => getTranslations('en'), []);
 
   const handleToolSelect = useCallback((toolKey: string) => {
-    if (toolKey === 'Home') {
-      setActiveTool(toolKey);
-      return;
-    }
-    
     setActiveTool(toolKey);
-    setUsageCounts(prev => ({
-      ...prev,
-      [toolKey]: (prev[toolKey] || 0) + 1
-    }));
+    if (toolKey !== 'Home' && toolKey !== 'History') {
+        setUsageCounts(prev => ({ ...prev, [toolKey]: (prev[toolKey] || 0) + 1 }));
+    }
   }, [setActiveTool, setUsageCounts]);
 
   const handleFilesSelect = useCallback(async (files: File[], languageHint: string) => {
@@ -197,43 +213,45 @@ function App() {
       setCurrentTranscriptionId(newTranscription.id);
       handleToolSelect('AI Transcriber');
     } catch (error) {
-      console.error("Transcription failure:", error);
-      alert("System node error. Check console for details.");
+      console.error("Critical System Fault:", error);
+      alert("Terminal Processing Error. Check Console for details.");
     } finally {
       setIsProcessing(false);
     }
   }, [handleToolSelect, setTranscriptions, setCurrentTranscriptionId]);
 
-  const allToolsRegistry = useMemo(() => {
-    return [
-        { key: 'AI Transcriber', label: 'AI Transcriber', icon: TranscriberIcon },
-        { key: 'PDF Copilot', label: 'AI Copilot', icon: BoltIcon },
-        { key: 'Chat PDF', label: 'Chat PDF', icon: ChatBubbleLeftRightIcon },
-        { key: 'AI PDF Editor', label: 'AI Text Editor', icon: PencilSquareIcon },
-        { key: 'AI Whiteboard', label: 'Whiteboards', icon: SwatchIcon },
-        { key: 'AI Translator', label: 'AI Translator', icon: TranslatorIcon },
-        { key: 'Pages & Spaces', label: 'Workspaces', icon: Squares2x2Icon },
-        { key: 'Strategic Planner', label: 'Plan Architect', icon: CubeIcon },
-        { key: 'Smart Summarizer', label: 'Auto Summarize', icon: SummarizerIcon },
-        { key: 'PDF Manager', label: 'Page Architect', icon: DocumentDuplicateIcon },
-        { key: 'Compress PDF', label: 'Compressor', icon: ArrowPathIcon },
-        { key: 'Security Vault', label: 'Unlock/Lock', icon: LockClosedIcon },
-        { key: 'PDF to Image', label: 'PDF to Image', icon: PdfToImageIcon },
-        { key: 'Image to PDF', label: 'Image to PDF', icon: ImageToPdfIcon },
-        { key: 'Export to Sheets', label: 'To Sheets', icon: SheetIcon },
-    ];
-  }, [t]);
+  const allToolsRegistry = useMemo(() => [
+      { key: 'AI Transcriber', label: 'AI Transcriber', icon: TranscriberIcon },
+      { key: 'PDF Copilot', label: 'AI Copilot', icon: BoltIcon },
+      { key: 'Chat PDF', label: 'Chat PDF', icon: ChatBubbleLeftRightIcon },
+      { key: 'Strategic Planner', label: 'Strategic Plan', icon: CubeIcon },
+      { key: 'AI PDF Editor', label: 'Text Editor', icon: PencilSquareIcon },
+      { key: 'AI Whiteboard', label: 'Whiteboard', icon: SwatchIcon },
+      { key: 'Smart Summarizer', label: 'Summarizer', icon: SummarizerIcon },
+      { key: 'AI Translator', label: 'Translator', icon: TranslatorIcon },
+      { key: 'PDF Manager', label: 'Architect', icon: DocumentDuplicateIcon },
+      { key: 'Export to Sheets', label: 'Sheet Node', icon: SheetIcon },
+  ], []);
 
   const mostUsedTools = useMemo(() => {
-    return Object.entries(usageCounts)
-      .sort(([, a], [, b]) => b - a)
+    const sorted = Object.entries(usageCounts)
+      .sort(([, a], [, b]) => (b as number) - (a as number))
       .slice(0, 6)
       .map(([key]) => allToolsRegistry.find(tool => tool.key === key))
       .filter(Boolean) as Array<{key: string, label: string, icon: React.FC<React.SVGProps<SVGSVGElement>>}>;
+    
+    // Fill with defaults if not enough usage
+    if (sorted.length < 4) {
+        const defaults = allToolsRegistry.slice(0, 6);
+        const unique = new Map(sorted.map(s => [s.key, s]));
+        defaults.forEach(d => { if (!unique.has(d.key)) unique.set(d.key, d); });
+        return Array.from(unique.values()).slice(0, 6);
+    }
+    return sorted;
   }, [usageCounts, allToolsRegistry]);
 
   const renderActiveTool = () => {
-    if (isProcessing) return <Loader t={t} />;
+    if (isProcessing) return <div className="min-h-[60vh] flex items-center justify-center"><Loader t={t} /></div>;
 
     switch (activeTool) {
       case 'Home':
@@ -257,15 +275,16 @@ function App() {
       case 'PDF to Image': return <PdfToImage t={t} onConversionComplete={() => {}} />;
       case 'Image to PDF': return <ImageToPdf t={t} onConversionComplete={() => {}} />;
       case 'PDF to Word': return <PdfToWord t={t} onConversionComplete={() => {}} />;
+      case 'Word to PDF': return <WordToPdf t={t} onConversionComplete={() => {}} />;
       case 'Video to Audio': return <VideoToAudio t={t} onConversionComplete={() => {}} />;
       case 'Text to Speech': return <TextToSpeech t={t} onComplete={() => {}} />;
       case 'Smart Summarizer': return <DataSummarizer t={t} onComplete={() => {}} externalCategory={activeSummaryCategory} />;
       case 'Export to Sheets': return <ExportToSheets t={t} />;
       case 'History':
         return <div className="h-full flex flex-col animate-fadeIn">
-            <div className="mb-10"><h2 className="text-4xl font-black text-white uppercase tracking-tighter">Global Terminal History</h2></div>
+            <div className="mb-14 text-center md:text-left"><h2 className="text-5xl font-black text-white uppercase tracking-tighter selection:bg-pink-600">Global History Archive</h2></div>
             <HistoryPanel items={transcriptions} onSelect={(i) => { handleToolSelect('AI Transcriber'); setCurrentTranscriptionId(i.id); }} onDelete={(id) => setTranscriptions(p => p.filter(i => i.id !== id))} t={t} renderItem={(item) => (
-               <div className="flex-grow min-w-0"><p className="font-bold truncate text-gray-100">{item.fileName}</p><p className="text-[10px] text-purple-400 font-black uppercase mt-1.5">{item.date}</p></div>
+               <div className="flex-grow min-w-0"><p className="font-bold truncate text-gray-100 text-lg">{item.fileName}</p><p className="text-[10px] text-purple-400 font-black uppercase mt-1.5 tracking-[0.2em]">{item.date} • {item.detectedLanguage}</p></div>
             )} />
         </div>;
       default: return <ComingSoon toolName={activeTool} />;
@@ -276,13 +295,23 @@ function App() {
     <div className={`bg-[#05050C] text-white min-h-screen font-sans flex overflow-x-hidden ${isAuthModalOpen ? 'modal-active' : ''}`}>
       <Header activeTool={activeTool} setActiveTool={handleToolSelect} activeImageCategory={activeImageCategory} setActiveImageCategory={setActiveImageCategory} activeSummaryCategory={activeSummaryCategory} setActiveSummaryCategory={setActiveSummaryCategory} activeHistoryTab={historyTab} setActiveHistoryTab={setHistoryTab} t={t} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} mostUsedTools={mostUsedTools} />
       <div className="flex-1 flex flex-col relative">
-        <main className="flex-grow p-8 md:p-16 pt-28 max-w-7xl mx-auto w-full min-h-screen">
+        <main className="flex-grow p-8 md:p-20 pt-32 max-w-7xl mx-auto w-full min-h-screen">
           {renderActiveTool()}
         </main>
       </div>
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onLoginSuccess={setCurrentUser} t={t} />
     </div>
   );
+}
+
+// Custom hook to manage usage stats without complex side effects
+function useUsageCounts(userId: string | undefined) {
+    return useUserLocalStorage<Record<string, number>>(userId, 'toolUsageCounts', {
+        'AI Transcriber': 1,
+        'PDF Copilot': 1,
+        'Chat PDF': 1,
+        'Strategic Planner': 1
+    });
 }
 
 export default App;

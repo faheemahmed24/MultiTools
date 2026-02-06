@@ -81,42 +81,42 @@ const Header: React.FC<HeaderProps> = ({
       ]
     },
     {
-        group: 'Collaboration',
-        icon: SwatchIcon,
+        group: 'Business',
+        icon: CubeIcon,
         items: [
           { key: 'AI Whiteboard', label: 'Whiteboards', icon: SwatchIcon },
-          { key: 'Pages & Spaces', label: 'Workspaces', icon: Squares2x2Icon },
           { key: 'Strategic Planner', label: 'Plan Architect', icon: CubeIcon, isCore: true },
           { key: 'Smart Summarizer', label: 'Auto Summarize', icon: SummarizerIcon },
+          { key: 'Pure Organizer', label: 'Verbatim Node', icon: Squares2x2Icon },
         ]
     },
     {
-        group: 'Documents',
+        group: 'Media & Docs',
         icon: DocumentDuplicateIcon,
         items: [
-            { key: 'PDF Manager', label: 'Page Architect', icon: DocumentDuplicateIcon, isCore: true },
-            { key: 'Compress PDF', label: 'Compressor', icon: ArrowPathIcon },
-            { key: 'Security Vault', label: 'Unlock/Lock', icon: LockClosedIcon },
+            { key: 'PDF Manager', label: 'Page Architect', icon: DocumentDuplicateIcon },
+            { key: 'AI Translator', label: 'Universal Translator', icon: TranslatorIcon },
+            { key: 'Grammar Corrector', label: 'Syntax Refiner', icon: GrammarIcon },
             { key: 'PDF to Image', label: 'PDF to Image', icon: PdfToImageIcon },
             { key: 'Image to PDF', label: 'Image to PDF', icon: ImageToPdfIcon },
-            { key: 'Export to Sheets', label: 'To Sheets', icon: SheetIcon },
+            { key: 'Export to Sheets', label: 'Data to Sheets', icon: SheetIcon },
         ]
     }
   ], []);
 
   return (
     <aside 
-        className={`bg-[#05050C] border-r border-white/5 flex flex-col transition-all duration-500 ease-in-out relative shrink-0 z-50 group/sidebar ${isSidebarOpen ? 'w-[260px]' : 'w-[72px]'}`}
+        className={`bg-[#05050C] border-r border-white/5 flex flex-col transition-all duration-500 ease-in-out relative shrink-0 z-50 group/sidebar ${isSidebarOpen ? 'w-[280px]' : 'w-[80px]'}`}
         onMouseEnter={() => setIsSidebarOpen(true)}
         onMouseLeave={() => {
             setIsSidebarOpen(false);
             setHoveredGroup(null);
         }}
     >
-      <div className="flex items-center h-24 px-4 mb-4 overflow-hidden select-none cursor-pointer" onClick={() => setActiveTool('Home')}>
-        <div className="flex items-center gap-4 min-w-[220px]">
+      <div className="flex items-center h-24 px-5 mb-4 overflow-hidden select-none cursor-pointer" onClick={() => setActiveTool('Home')}>
+        <div className="flex items-center gap-4 min-w-[240px]">
             <div className="bg-purple-600 p-2.5 rounded-2xl shadow-[0_0_30px_rgba(168,85,247,0.4)] flex-shrink-0">
-                {isSidebarOpen ? <Squares2x2Icon className="w-7 h-7 text-white" /> : <span className="text-2xl font-black text-white w-7 h-7 flex items-center justify-center">M</span>}
+                {isSidebarOpen ? <Squares2x2Icon className="w-8 h-8 text-white" /> : <span className="text-2xl font-black text-white w-8 h-8 flex items-center justify-center">M</span>}
             </div>
             <div className={`transition-all duration-500 ${isSidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
                 <span className="text-2xl font-black text-white tracking-tighter">MultiTools</span>
@@ -125,7 +125,7 @@ const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      <nav className="flex-grow overflow-y-auto px-3 space-y-2 no-scrollbar pb-10">
+      <nav className="flex-grow overflow-y-auto px-4 space-y-2 no-scrollbar pb-10">
         {mostUsedTools.length > 0 && (
           <div className="mb-6">
             <button 
@@ -161,29 +161,11 @@ const Header: React.FC<HeaderProps> = ({
 
             return (
                 <div key={group.group} className="relative">
-                    {!isSidebarOpen && hoveredGroup === group.group && (
-                        <div className="fixed left-[80px] bg-[#0A0A10] border border-white/10 rounded-2xl shadow-2xl p-4 min-w-[200px] z-[100] animate-pop-in">
-                            <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-3">{group.group}</p>
-                            <div className="space-y-1">
-                                {group.items?.map(item => (
-                                    <button 
-                                        key={item.key} 
-                                        onClick={() => setActiveTool(item.key)} 
-                                        className="w-full text-left px-4 py-2 text-xs font-bold text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"
-                                    >
-                                        {item.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
                     <button 
                       onClick={() => toggleMenu(group.group)} 
-                      onMouseEnter={() => setHoveredGroup(group.group)}
-                      className={`w-full flex items-center gap-4 p-3 rounded-2xl transition-all relative group ${isActive ? 'bg-purple-600/10 text-white' : 'text-gray-500 hover:bg-white/5'}`}
+                      className={`w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all relative group ${isActive ? 'bg-purple-600/10 text-white' : 'text-gray-500 hover:bg-white/5'}`}
                     >
-                        {isActive && <div className="absolute left-[-12px] top-1/2 -translate-y-1/2 w-1 h-8 bg-purple-500 rounded-full shadow-[0_0_15px_rgba(168,85,247,0.8)]" />}
+                        {isActive && <div className="absolute left-[-16px] top-1/2 -translate-y-1/2 w-1.5 h-10 bg-purple-500 rounded-full shadow-[0_0_20px_rgba(168,85,247,0.8)]" />}
                         <group.icon className={`w-6 h-6 shrink-0 ${isActive ? 'text-purple-400' : 'text-gray-600 group-hover:text-gray-400'}`} />
                         <span className={`text-sm font-bold truncate flex-grow text-left transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                             {group.group}
@@ -203,9 +185,9 @@ const Header: React.FC<HeaderProps> = ({
                                     >
                                         <span className="flex items-center gap-2">
                                             {item.label}
-                                            {(item as any).isCore && <div className="w-1 h-1 rounded-full bg-purple-500 shadow-[0_0_5px_purple]"></div>}
+                                            {(item as any).isCore && <div className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_8px_purple] animate-pulse"></div>}
                                         </span>
-                                        {(item as any).isCore && <SparklesIcon className="w-3 h-3 text-purple-500/40" />}
+                                        {(item as any).isCore && <SparklesIcon className="w-3.5 h-3.5 text-purple-500/50 group-hover/item:text-purple-400 transition-colors" />}
                                     </button>
                                 );
                             })}
@@ -216,8 +198,8 @@ const Header: React.FC<HeaderProps> = ({
         })}
 
         <div className="pt-6 mt-6 border-t border-white/5">
-             <button onClick={() => { setActiveTool('History'); setActiveHistoryTab('transcriptions'); }} className={`w-full flex items-center gap-4 p-3 rounded-2xl transition-all relative ${activeTool === 'History' ? 'bg-pink-600/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}>
-                {activeTool === 'History' && <div className="absolute left-[-12px] top-1/2 -translate-y-1/2 w-1 h-8 bg-pink-500 rounded-full" />}
+             <button onClick={() => { setActiveTool('History'); setActiveHistoryTab('transcriptions'); }} className={`w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all relative ${activeTool === 'History' ? 'bg-pink-600/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}>
+                {activeTool === 'History' && <div className="absolute left-[-16px] top-1/2 -translate-y-1/2 w-1.5 h-10 bg-pink-500 rounded-full" />}
                 <HistoryIcon className="w-6 h-6 shrink-0" />
                 <span className={`text-sm font-bold truncate ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>Global Archive</span>
              </button>
@@ -227,12 +209,12 @@ const Header: React.FC<HeaderProps> = ({
       <div className="mt-auto p-5 border-t border-white/5">
           <div className="flex items-center gap-4 group/status cursor-pointer" onClick={onStatusClick}>
               <div className="relative flex items-center justify-center w-6 h-6 flex-shrink-0">
-                  <div className="absolute w-4 h-4 bg-green-500/20 rounded-full animate-ping"></div>
-                  <div className="w-2.5 h-2.5 bg-green-500 rounded-full shadow-[0_0_15px_rgba(34,197,94,0.8)]"></div>
+                  <div className="absolute w-5 h-5 bg-green-500/20 rounded-full animate-ping"></div>
+                  <div className="w-3 h-3 bg-green-500 rounded-full shadow-[0_0_15px_rgba(34,197,94,0.8)]"></div>
               </div>
               <div className={`flex flex-col transition-all duration-500 overflow-hidden ${isSidebarOpen ? 'opacity-100 w-auto ml-2' : 'opacity-0 w-0'}`}>
                 <span className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 font-mono whitespace-nowrap group-hover:text-white transition-colors">Workspace Live</span>
-                <span className="text-[8px] font-mono text-gray-700 uppercase tracking-widest">MultiTools Node</span>
+                <span className="text-[8px] font-mono text-gray-700 uppercase tracking-widest">Engine Cluster 4.0</span>
               </div>
           </div>
       </div>
