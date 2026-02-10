@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { TranslationSet, DiffPart } from '../types';
 import { correctGrammar } from '../services/geminiService';
 import { CopyIcon } from './icons/CopyIcon';
@@ -13,6 +12,7 @@ import { sourceLanguages } from '../lib/languages';
 import type { LanguageOption } from '../lib/languages';
 import { XCircleIcon } from './icons/XCircleIcon';
 import { SkeletonLoader } from './Loader';
+import { ClockIcon } from './icons/ClockIcon';
 
 // Simple diffing function
 const createDiff = (original: string, corrected: string): DiffPart[] => {
@@ -76,6 +76,45 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
   const [error, setError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
+
+  // Auto-save key
+  const DRAFT_KEY = 'grammar_corrector_draft';
+
+  // Initial Load from LocalStorage
+  useEffect(() => {
+    const savedDraft = localStorage.getItem(DRAFT_KEY);
+    if (savedDraft) {
+      try {
+        const { text, langCode, time } = JSON.parse(savedDraft);
+        if (text) setInputText(text);
+        if (langCode) {
+          const found = sourceLanguages.find(l => l.code === langCode);
+          if (found) setLanguage(found);
+        }
+        if (time) setLastSaved(new Date(time).toLocaleTimeString());
+      } catch (e) {
+        console.error("Failed to load grammar draft", e);
+      }
+    }
+  }, []);
+
+  // 30-Second Auto-save Cycle
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (inputText.trim()) {
+        const timestamp = Date.now();
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({
+          text: inputText,
+          langCode: language.code,
+          time: timestamp
+        }));
+        setLastSaved(new Date(timestamp).toLocaleTimeString());
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [inputText, language]);
 
   const handleCorrectGrammar = async () => {
     if (!inputText.trim()) {
@@ -98,6 +137,9 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
         language: language.name,
         diff: newDiff
       });
+      
+      // Clear draft on successful explicit action if desired, 
+      // but keeping it for safety is often better for "autosave".
     } catch (err: any) {
       setError(err.message || 'An error occurred during grammar correction.');
     } finally {
@@ -145,10 +187,14 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
   };
 
   const handleClear = () => {
-    setInputText('');
-    setCorrectedText('');
-    setDiff([]);
-    setError(null);
+    if (window.confirm("Clear all text and reset draft?")) {
+        setInputText('');
+        setCorrectedText('');
+        setDiff([]);
+        setError(null);
+        localStorage.removeItem(DRAFT_KEY);
+        setLastSaved(null);
+    }
   };
 
   const characterCount = inputText.length;
@@ -156,7 +202,7 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
 
   return (
     <div className="bg-gray-800 rounded-2xl shadow-lg p-6">
-        <div className="mb-4">
+        <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
              <LanguageDropdown
                 languages={sourceLanguages}
                 selectedLang={language}
@@ -164,6 +210,12 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
                 title={t.language}
                 searchPlaceholder="Search language"
             />
+            {lastSaved && (
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-500/5 border border-purple-500/10 text-purple-400/60 text-[10px] font-black uppercase tracking-widest animate-fadeIn">
+                    <ClockIcon className="w-3.5 h-3.5" />
+                    <span>Autosaved: {lastSaved}</span>
+                </div>
+            )}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -178,7 +230,7 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
                 <div className="flex justify-end items-center gap-2 text-sm text-gray-400 mt-1 px-1">
                     <span>{characterCount} chars / {wordCount} words</span>
                      {inputText && (
-                        <button onClick={handleClear} title="Clear text" className="text-gray-500 hover:text-white transition-colors">
+                        <button onClick={handleClear} title="Clear text and draft" className="text-gray-500 hover:text-white transition-colors">
                             <XCircleIcon className="w-5 h-5"/>
                         </button>
                     )}
@@ -188,7 +240,10 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
                 <h3 className="font-semibold mb-2 text-gray-300">{t.grammarResult}</h3>
                 <div className={`w-full h-64 bg-gray-900/50 rounded-lg overflow-y-auto p-4 ${error ? 'text-red-400' : 'text-gray-200'}`}>
                     {isLoading ? (
-                        <SkeletonLoader lines={4} />
+                        <div className="space-y-3">
+                           <SkeletonLoader lines={1} className="w-1/2" />
+                           <SkeletonLoader lines={4} />
+                        </div>
                     ) : error ? (
                         <p>{error}</p>
                     ) : (
@@ -224,15 +279,16 @@ const GrammarCorrector: React.FC<GrammarCorrectorProps> = ({ t, onCorrectionComp
                 )}
             </div>
         </div>
-        <div className="mt-4 flex justify-center">
+        <div className="mt-8 flex flex-col items-center gap-4">
             <button
                 onClick={handleCorrectGrammar}
                 disabled={isLoading || !inputText.trim()}
-                className="px-8 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200 flex items-center gap-2"
+                className="px-10 py-4 bg-purple-600 text-white font-black uppercase tracking-[0.2em] text-xs rounded-2xl hover:bg-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3 shadow-2xl shadow-purple-900/20"
             >
                 <GrammarIcon className="w-5 h-5" />
-                {isLoading ? t.correctingGrammar : t.correctGrammar}
+                {isLoading ? 'Architecting Syntax...' : t.correctGrammar}
             </button>
+            <p className="text-[9px] font-black text-gray-500 uppercase tracking-[0.4em]">Neural Proofreading Protocol v3.1</p>
         </div>
     </div>
   );

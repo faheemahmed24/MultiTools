@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import type { TranslationSet } from '../types';
 import { TranscriberIcon } from './icons/TranscriberIcon';
@@ -55,8 +54,8 @@ const Header: React.FC<HeaderProps> = ({
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
     'Intelligence': true,
-    'Collaboration': false,
-    'Documents': true,
+    'Business': false,
+    'Media & Docs': false,
     'Favorites': true
   });
   
@@ -74,32 +73,32 @@ const Header: React.FC<HeaderProps> = ({
       group: 'Intelligence',
       icon: SparklesIcon,
       items: [
-        { key: 'AI Transcriber', label: 'AI Transcriber', icon: TranscriberIcon, isCore: true },
-        { key: 'PDF Copilot', label: 'AI Copilot', icon: BoltIcon, isCore: true },
-        { key: 'Chat PDF', label: 'Chat PDF', icon: ChatBubbleLeftRightIcon, isCore: true },
-        { key: 'AI PDF Editor', label: 'AI Text Editor', icon: PencilSquareIcon },
+        { key: 'AI Transcriber', label: 'AI Transcriber', description: 'Speech-to-Text Engine', icon: TranscriberIcon, isCore: true },
+        { key: 'PDF Copilot', label: 'AI Copilot', description: 'Command Terminal', icon: BoltIcon, isCore: true },
+        { key: 'Chat PDF', label: 'Chat PDF', description: 'Cognitive Dialogue', icon: ChatBubbleLeftRightIcon, isCore: true },
+        { key: 'AI PDF Editor', label: 'AI Text Editor', description: 'Neural Professionalizer', icon: PencilSquareIcon },
       ]
     },
     {
         group: 'Business',
         icon: CubeIcon,
         items: [
-          { key: 'AI Whiteboard', label: 'Whiteboards', icon: SwatchIcon },
-          { key: 'Strategic Planner', label: 'Plan Architect', icon: CubeIcon, isCore: true },
-          { key: 'Smart Summarizer', label: 'Auto Summarize', icon: SummarizerIcon },
-          { key: 'Pure Organizer', label: 'Verbatim Node', icon: Squares2x2Icon },
+          { key: 'AI Whiteboard', label: 'Whiteboards', description: 'Sketch-to-Diagram', icon: SwatchIcon },
+          { key: 'Strategic Planner', label: 'Plan Architect', description: 'Strategic Reporting', icon: CubeIcon, isCore: true },
+          { key: 'Smart Summarizer', label: 'Auto Summarize', description: 'Data Extraction', icon: SummarizerIcon },
+          { key: 'Pure Organizer', label: 'Verbatim Node', description: 'Zero-Alteration Logic', icon: Squares2x2Icon },
         ]
     },
     {
         group: 'Media & Docs',
         icon: DocumentDuplicateIcon,
         items: [
-            { key: 'PDF Manager', label: 'Page Architect', icon: DocumentDuplicateIcon },
-            { key: 'AI Translator', label: 'Universal Translator', icon: TranslatorIcon },
-            { key: 'Grammar Corrector', label: 'Syntax Refiner', icon: GrammarIcon },
-            { key: 'PDF to Image', label: 'PDF to Image', icon: PdfToImageIcon },
-            { key: 'Image to PDF', label: 'Image to PDF', icon: ImageToPdfIcon },
-            { key: 'Export to Sheets', label: 'Data to Sheets', icon: SheetIcon },
+            { key: 'PDF Manager', label: 'Page Architect', description: 'Reorder & Merge PDF', icon: DocumentDuplicateIcon },
+            { key: 'AI Translator', label: 'Universal Translator', description: 'Nuanced Dialect Flow', icon: TranslatorIcon },
+            { key: 'Grammar Corrector', label: 'Syntax Refiner', description: 'Stylistic Polishing', icon: GrammarIcon },
+            { key: 'PDF to Image', label: 'PDF to Image', description: 'High-Res Extraction', icon: PdfToImageIcon },
+            { key: 'Image to PDF', label: 'Image to PDF', description: 'Visual Document Assembly', icon: ImageToPdfIcon },
+            { key: 'Export to Sheets', label: 'Data to Sheets', description: 'CSV/Excel Synthesis', icon: SheetIcon },
         ]
     }
   ], []);
@@ -181,13 +180,18 @@ const Header: React.FC<HeaderProps> = ({
                                     <button 
                                       key={item.key} 
                                       onClick={() => setActiveTool(item.key)} 
-                                      className={`group/item w-full text-left px-5 py-2.5 text-xs font-bold rounded-xl transition-all flex items-center justify-between ${isSubActive ? 'text-purple-400 bg-purple-500/5' : 'text-gray-500 hover:text-gray-300'} ${(item as any).isCore ? 'relative' : ''}`}
+                                      className={`group/item w-full text-left px-5 py-2.5 rounded-xl transition-all flex flex-col items-start ${isSubActive ? 'text-purple-400 bg-purple-500/5' : 'text-gray-500 hover:text-gray-300'} ${(item as any).isCore ? 'relative' : ''}`}
                                     >
-                                        <span className="flex items-center gap-2">
-                                            {item.label}
-                                            {(item as any).isCore && <div className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_8px_purple] animate-pulse"></div>}
+                                        <div className="flex items-center justify-between w-full">
+                                            <span className="flex items-center gap-2 text-xs font-bold">
+                                                {item.label}
+                                                {(item as any).isCore && <div className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_8px_purple] animate-pulse"></div>}
+                                            </span>
+                                            {(item as any).isCore && <SparklesIcon className="w-3.5 h-3.5 text-purple-500/50 group-hover/item:text-purple-400 transition-colors" />}
+                                        </div>
+                                        <span className="text-[9px] opacity-40 group-hover/item:opacity-70 transition-opacity font-black uppercase tracking-tighter truncate w-full">
+                                            {item.description}
                                         </span>
-                                        {(item as any).isCore && <SparklesIcon className="w-3.5 h-3.5 text-purple-500/50 group-hover/item:text-purple-400 transition-colors" />}
                                     </button>
                                 );
                             })}
@@ -198,7 +202,7 @@ const Header: React.FC<HeaderProps> = ({
         })}
 
         <div className="pt-6 mt-6 border-t border-white/5">
-             <button onClick={() => { setActiveTool('History'); setActiveHistoryTab('transcriptions'); }} className={`w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all relative ${activeTool === 'History' ? 'bg-pink-600/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}>
+             <button onClick={() => { setActiveTool('History'); setActiveHistoryTab('transcriptions'); }} className={`w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all relative ${activeTool === 'History' ? 'bg-pink-600/10 text-white' : 'text-gray-500 hover:bg-white/5'}`}>
                 {activeTool === 'History' && <div className="absolute left-[-16px] top-1/2 -translate-y-1/2 w-1.5 h-10 bg-pink-500 rounded-full" />}
                 <HistoryIcon className="w-6 h-6 shrink-0" />
                 <span className={`text-sm font-bold truncate ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>Global Archive</span>

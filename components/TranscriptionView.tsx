@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import type { Transcription, TranslationSet, TranscriptionSegment } from '../types';
 import { CopyIcon } from './icons/CopyIcon';
@@ -28,7 +27,7 @@ const Switch: React.FC<{ checked: boolean; onChange: (checked: boolean) => void;
     </label>
 );
 
-const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, onSave, onUpdate, onClose, t }) => {
+const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, onUpdate, onClose, t }) => {
   const [showTimestamps, setShowTimestamps] = useState(true);
   const [showSpeaker, setShowSpeaker] = useState(true);
   const [isCopied, setIsCopied] = useState(false);
@@ -146,6 +145,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
                     onChange={e => { const n = [...editedSegments]; n[idx].text = e.target.value; setEditedSegments(n); }} 
                     className="w-full bg-transparent border-0 rounded p-0 text-sm md:text-base text-gray-200 focus:ring-0 resize-none min-h-[60px]"
                     placeholder="Edit segment text..."
+                    dir="auto"
                 />
               </div>
             ))}
@@ -161,7 +161,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
                     </div>
                  )}
                 <div className="flex-grow">
-                    <p className="text-gray-200 leading-relaxed text-sm lg:text-lg font-medium selection:bg-purple-500/30 selection:text-white">
+                    <p className="text-gray-200 leading-relaxed text-sm lg:text-lg font-medium selection:bg-purple-500/30 selection:text-white" dir="auto">
                         {seg.text}
                     </p>
                 </div>

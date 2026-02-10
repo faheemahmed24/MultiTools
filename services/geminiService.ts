@@ -43,8 +43,8 @@ function getMimeType(file: File): string {
 }
 
 /**
- * Universal Transcription Engine
- * Handles 100+ languages, auto-detection, and high-fidelity speaker diarization.
+ * Universal Transcription Engine v5.1
+ * Optimized for 100+ global languages, automatic dialect detection, and native script preservation.
  */
 export const transcribeAudio = async (file: File, languageHint: string = 'auto'): Promise<Omit<Transcription, 'id' | 'date'>> => {
   const base64Data = await fileToBase64(file);
@@ -63,7 +63,7 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
             startTime: { type: Type.STRING, description: "Timestamp in MM:SS format." },
             endTime: { type: Type.STRING, description: "Timestamp in MM:SS format." },
             speaker: { type: Type.STRING, description: "Identified speaker (e.g., Speaker 1, Speaker 2)." },
-            text: { type: Type.STRING, description: "The verbatim transcript for this specific segment." },
+            text: { type: Type.STRING, description: "Verbatim transcript for this segment. Use native script for the language detected." },
           },
           required: ["startTime", "endTime", "speaker", "text"]
         }
@@ -77,13 +77,13 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
     contents: { 
         parts: [
             { inlineData: { mimeType, data: base64Data } },
-            { text: `Universal Transcription Protocol v4.0:
-              1. ACTION: Transcribe the provided file with 99.9% verbal accuracy.
-              2. LANGUAGE: Automatically detect the primary language from all 100+ global dialects.
-              3. CODE-SWITCHING: If multiple languages are spoken, transcribe each segment accurately in its native script.
-              4. DIARIZATION: Perform high-fidelity speaker separation and identification.
-              5. STRUCTURE: Break the content into logical segments with precise timestamps.
-              6. HINT: User suggested "${languageHint}". If "auto", strictly rely on neural analysis for detection.
+            { text: `Universal Transcription Protocol v5.1:
+              1. ACTION: Transcribe with 99.9% verbal accuracy.
+              2. LANGUAGE: Automatically detect from any global dialect (Urdu, Arabic, Hindi, English, Spanish, Chinese, Japanese, etc.).
+              3. CODE-SWITCHING: If multiple languages are spoken, transcribe each segment correctly in its native script (e.g., mixing Urdu and English).
+              4. DIARIZATION: Perform high-fidelity speaker separation.
+              5. STRUCTURE: Break content into logical segments with MM:SS timestamps.
+              6. HINT: User suggested "${languageHint}". If "auto", strictly rely on neural audio analysis.
               7. OUTPUT: Return strictly valid JSON.` 
             }
         ] 
@@ -102,53 +102,11 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
   };
 };
 
-export const runAICommand = async (command: string, file?: File): Promise<string> => {
-    const parts: any[] = [{ text: `Act as a senior system architect. Execute this command: ${command}` }];
-    if (file) {
-        const data = await fileToBase64(file);
-        parts.unshift({ inlineData: { mimeType: getMimeType(file), data } });
-    }
-    const response = await ai.models.generateContent({
-        model: MODELS.primary,
-        contents: { parts }
-    });
-    return response.text || "Execution completed.";
-};
-
-export const processStructuredTask = async (text: string, taskType: string): Promise<any> => {
-    const response = await ai.models.generateContent({
-        model: MODELS.primary,
-        contents: `Task: ${taskType}\n\nInput Context:\n${text}`,
-        config: { 
-            systemInstruction: "You are a professional business strategist. Organize the input into a structured report.",
-        }
-    });
-    return response.text || "";
-};
-
-export const generateWhiteboardImage = async (canvasBase64: string, prompt: string): Promise<string> => {
-    const response = await ai.models.generateContent({
-        model: MODELS.image,
-        contents: {
-            parts: [
-                { inlineData: { data: canvasBase64.split(',')[1], mimeType: 'image/png' } },
-                { text: `Synthesize this sketch into a high-fidelity digital diagram: ${prompt}` }
-            ]
-        },
-        config: { imageConfig: { aspectRatio: "1:1" } }
-    });
-    
-    for (const part of response.candidates?.[0]?.content?.parts || []) {
-        if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
-    }
-    throw new Error("Vision Node Error.");
-};
-
 export const translateText = async (text: string, src: string, target: string) => {
     const res = await ai.models.generateContent({
         model: MODELS.primary,
         contents: text,
-        config: { systemInstruction: `Translate from ${src} to ${target}.` },
+        config: { systemInstruction: `Translate from ${src} to ${target}. Maintain nuances.` },
     });
     return res.text || "";
 };
@@ -173,12 +131,11 @@ export const correctGrammar = async (text: string, language: string): Promise<st
 
 export const analyzeImage = async (file: File): Promise<string> => {
   const base64Data = await fileToBase64(file);
-  const mimeType = getMimeType(file);
   const response = await ai.models.generateContent({
     model: MODELS.vision,
     contents: { 
         parts: [
-            { inlineData: { mimeType, data: base64Data } },
+            { inlineData: { mimeType: getMimeType(file), data: base64Data } },
             { text: "Universal Vision Node: Perform high-accuracy OCR." }
         ] 
     },
@@ -215,43 +172,57 @@ export const smartSummarize = async (text: string): Promise<SmartSummary> => {
     return JSON.parse(response.text || '{}');
 };
 
+export const runAICommand = async (command: string, file?: File): Promise<string> => {
+    const parts: any[] = [{ text: `Execute: ${command}` }];
+    if (file) {
+        const data = await fileToBase64(file);
+        parts.unshift({ inlineData: { mimeType: getMimeType(file), data } });
+    }
+    const response = await ai.models.generateContent({ model: MODELS.primary, contents: { parts } });
+    return response.text || "";
+};
+
 export const pureOrganizeData = async (text: string): Promise<any> => {
-    const schema = {
-        type: Type.OBJECT,
-        properties: {
-            categories: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { heading: { type: Type.STRING }, items: { type: Type.ARRAY, items: { type: Type.STRING } } }, required: ["heading", "items"] } },
-            structuredTable: { type: Type.ARRAY, items: { type: Type.OBJECT, additionalProperties: { type: Type.STRING } } }
-        },
-        required: ["categories", "structuredTable"]
-    };
     const response = await ai.models.generateContent({
         model: MODELS.primary,
-        contents: `Categorize Verbatim: ${text}`,
-        config: { responseMimeType: "application/json", responseSchema: schema }
+        contents: `Organize: ${text}`,
+        config: { responseMimeType: "application/json" }
     });
     return JSON.parse(response.text || '{}');
 };
 
+export const generateWhiteboardImage = async (canvasBase64: string, prompt: string): Promise<string> => {
+    const response = await ai.models.generateContent({
+        model: MODELS.image,
+        contents: {
+            parts: [
+                { inlineData: { data: canvasBase64.split(',')[1], mimeType: 'image/png' } },
+                { text: `Synthesize sketch: ${prompt}` }
+            ]
+        }
+    });
+    for (const part of response.candidates?.[0]?.content?.parts || []) {
+        if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
+    }
+    return "";
+};
+
 export const runStrategicPlanning = async (text: string, images: {data: string, mime: string}[] = []): Promise<any> => {
     const imageParts = images.map(img => ({ inlineData: { mimeType: img.mime, data: img.data } }));
-    const schema = {
-        type: Type.OBJECT,
-        properties: {
-            mirror: { type: Type.STRING },
-            executiveSummary: { type: Type.STRING },
-            strategicAnalysis: { type: Type.STRING },
-            missingWorkflows: { type: Type.ARRAY, items: { type: Type.STRING } },
-            slides: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { title: { type: Type.STRING }, content: { type: Type.ARRAY, items: { type: Type.STRING } }, visualSuggestion: { type: Type.STRING }, criticalDetail: { type: Type.STRING } }, required: ["title", "content", "visualSuggestion"] } },
-            tableData: { type: Type.ARRAY, items: { type: Type.OBJECT, additionalProperties: { type: Type.STRING } } }
-        },
-        required: ["mirror", "executiveSummary", "strategicAnalysis", "missingWorkflows", "slides", "tableData"]
-    };
     const response = await ai.models.generateContent({
         model: MODELS.primary,
-        contents: { parts: [...imageParts, { text: `Synthesize Strategic Blueprint for: ${text}` }] },
-        config: { responseMimeType: "application/json", responseSchema: schema }
+        contents: { parts: [...imageParts, { text: `Plan: ${text}` }] },
+        config: { responseMimeType: "application/json" }
     });
     return JSON.parse(response.text || '{}');
+};
+
+export const processStructuredTask = async (text: string, taskType: string): Promise<any> => {
+    const response = await ai.models.generateContent({
+        model: MODELS.primary,
+        contents: `Task: ${taskType}\n\nInput Context:\n${text}`
+    });
+    return response.text || "";
 };
 
 export function decode(base64: string): Uint8Array {
