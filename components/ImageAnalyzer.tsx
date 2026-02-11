@@ -1,5 +1,3 @@
-
-// Fix: Import useCallback from React to resolve 'Cannot find name' errors.
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import type { LanguageOption } from '../lib/languages';
@@ -242,7 +240,8 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
                 status: 'pending'
             }));
         
-        // If adding new files, reset previous results
+        // When adding new files, if results were already present, clear them or keep depending on preference
+        // We clear here to ensure freshness
         setAnalysisResult('');
         setEditedAnalysisResult('');
         setTranslatedText('');
@@ -256,8 +255,8 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
   };
   
   const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); }, []);
-  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); }, []);
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); }, []);
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragging(false); }, []);
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'copy'; }, []);
   
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -393,7 +392,13 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
   };
 
   return (
-    <div className="bg-gray-800 rounded-2xl shadow-lg p-6 min-h-[60vh] lg:h-full flex flex-col">
+    <div 
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className="bg-gray-800 rounded-2xl shadow-lg p-6 min-h-[60vh] lg:h-full flex flex-col relative overflow-hidden"
+    >
        <input
           type="file"
           ref={fileInputRef}
@@ -415,11 +420,7 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
       {images.length === 0 ? (
          <div className="flex-grow flex flex-col">
             <div
-              className={`flex flex-grow flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 mb-4 min-h-[300px] ${isDragging ? 'border-purple-500 bg-gray-700/50' : 'border-gray-600'}`}
-              onDragEnter={handleDragEnter}
-              onDragLeave={handleDragLeave}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
+              className={`flex flex-grow flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 mb-4 min-h-[300px] border-gray-600`}
             >
               <UploadIcon className="w-16 h-16 text-gray-500 mb-6" />
               <h3 className="text-xl font-semibold text-gray-300 mb-2">{t.uploadImages}</h3>
@@ -562,6 +563,17 @@ const ImageConverterOcr: React.FC<ImageConverterOcrProps> = ({ t, onAnalysisComp
                     )}
                 </div>
             )}
+        </div>
+      )}
+
+      {/* Neural Drop Zone Overlay */}
+      {isDragging && (
+        <div className="absolute inset-0 z-[100] bg-gray-900/80 backdrop-blur-md border-4 border-dashed border-purple-500 rounded-2xl flex flex-col items-center justify-center animate-fadeIn m-2">
+            <div className="p-8 bg-purple-600/10 rounded-full mb-6 border border-purple-500/20 shadow-2xl animate-bounce">
+                <UploadIcon className="w-20 h-20 text-purple-400" />
+            </div>
+            <h3 className="text-4xl font-black text-white uppercase tracking-tighter mb-2">Neural Upload</h3>
+            <p className="text-purple-300 text-lg font-bold uppercase tracking-widest animate-pulse">Release to add assets</p>
         </div>
       )}
     </div>
