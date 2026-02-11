@@ -1,3 +1,7 @@
+
+// Supported UI languages for the application
+export type Language = 'en' | 'hi' | 'ur' | 'ar';
+
 export interface User {
   id: string;
   email: string;

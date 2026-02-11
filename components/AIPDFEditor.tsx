@@ -1,11 +1,12 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import FileUpload from './FileUpload';
 import { transcribeAudio } from '../services/geminiService';
 import { GoogleGenAI } from "@google/genai";
 import { PencilSquareIcon } from './icons/PencilSquareIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
+import { UndoIcon } from './icons/UndoIcon';
+import { RedoIcon } from './icons/RedoIcon';
 import Loader from './Loader';
 
 const AIPDFEditor: React.FC<{ t: TranslationSet }> = ({ t }) => {
@@ -14,11 +15,55 @@ const AIPDFEditor: React.FC<{ t: TranslationSet }> = ({ t }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [prompt, setPrompt] = useState('');
 
+  // History State
+  const [undoStack, setUndoStack] = useState<string[]>([]);
+  const [redoStack, setRedoStack] = useState<string[]>([]);
+  const [lastSavedContent, setLastSavedContent] = useState<string>('');
+
+  // Track manual edits with a debounce
+  useEffect(() => {
+    if (!content) return;
+    const timer = setTimeout(() => {
+      if (content !== lastSavedContent) {
+        setUndoStack(prev => {
+          // Limit history size to 50 for performance
+          const newStack = [...prev, lastSavedContent];
+          return newStack.slice(-50);
+        });
+        setRedoStack([]);
+        setLastSavedContent(content);
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [content, lastSavedContent]);
+
+  const handleUndo = useCallback(() => {
+    if (undoStack.length === 0) return;
+    const prev = undoStack[undoStack.length - 1];
+    setRedoStack(prevRedo => [...prevRedo, content]);
+    setUndoStack(prevUndo => prevUndo.slice(0, -1));
+    setLastSavedContent(prev);
+    setContent(prev);
+  }, [undoStack, content]);
+
+  const handleRedo = useCallback(() => {
+    if (redoStack.length === 0) return;
+    const next = redoStack[redoStack.length - 1];
+    setUndoStack(prevUndo => [...prevUndo, content]);
+    setRedoStack(prevRedo => prevRedo.slice(0, -1));
+    setLastSavedContent(next);
+    setContent(next);
+  }, [redoStack, content]);
+
   const handleFile = async (files: File[]) => {
     setIsProcessing(true);
     try {
       const result = await transcribeAudio(files[0], 'auto');
-      setContent(result.segments.map(s => s.text).join('\n\n'));
+      const newText = result.segments.map(s => s.text).join('\n\n');
+      setUndoStack([]);
+      setRedoStack([]);
+      setLastSavedContent(newText);
+      setContent(newText);
     } catch (err) {
       alert("Error parsing document.");
     } finally {
@@ -29,13 +74,19 @@ const AIPDFEditor: React.FC<{ t: TranslationSet }> = ({ t }) => {
   const handleAIAction = async (action: string) => {
     if (!content) return;
     setIsEditing(true);
+    // Push to history immediately before AI change
+    setUndoStack(prev => [...prev, content]);
+    setRedoStack([]);
+
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Task: ${action}\n\nTarget Text:\n${content}`,
       });
-      setContent(response.text || content);
+      const result = response.text || content;
+      setLastSavedContent(result);
+      setContent(result);
     } catch (err) {
       alert("AI Node failure.");
     } finally {
@@ -65,7 +116,34 @@ const AIPDFEditor: React.FC<{ t: TranslationSet }> = ({ t }) => {
             <button onClick={() => handleAIAction("Rewrite this in a more professional tone")} disabled={isEditing} className="px-4 py-2 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 rounded-xl text-[10px] font-black uppercase tracking-widest border border-purple-500/20 transition-all">Professionalize</button>
             <button onClick={() => handleAIAction("Fix all grammar and expand on the key points")} disabled={isEditing} className="px-4 py-2 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 rounded-xl text-[10px] font-black uppercase tracking-widest border border-purple-500/20 transition-all">Refine & Expand</button>
         </div>
-        <button onClick={() => setContent('')} className="text-[10px] font-black uppercase text-gray-500 hover:text-white">Clear</button>
+        
+        <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1 border-r border-white/10 pr-4">
+                <button 
+                  onClick={handleUndo} 
+                  disabled={undoStack.length === 0} 
+                  title="Undo"
+                  className="p-2 text-gray-500 hover:text-white disabled:opacity-30 transition-colors"
+                >
+                    <UndoIcon className="w-5 h-5" />
+                </button>
+                <button 
+                  onClick={handleRedo} 
+                  disabled={redoStack.length === 0} 
+                  title="Redo"
+                  className="p-2 text-gray-500 hover:text-white disabled:opacity-30 transition-colors"
+                >
+                    <RedoIcon className="w-5 h-5" />
+                </button>
+            </div>
+            <button onClick={() => {
+                if(confirm("Are you sure you want to clear the editor?")) {
+                  setContent('');
+                  setUndoStack([]);
+                  setRedoStack([]);
+                }
+            }} className="text-[10px] font-black uppercase text-gray-500 hover:text-white transition-colors px-2">Clear</button>
+        </div>
       </div>
 
       <div className="flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0">
@@ -103,7 +181,7 @@ const AIPDFEditor: React.FC<{ t: TranslationSet }> = ({ t }) => {
                 </button>
             </div>
             <div className="bg-purple-600/5 border border-purple-500/10 rounded-3xl p-6">
-                <p className="text-[9px] font-black text-purple-400 uppercase tracking-widest leading-relaxed">Changes are applied in-place. Use the 'Summarize' or 'Refine' presets for faster document processing.</p>
+                <p className="text-[9px] font-black text-purple-400 uppercase tracking-widest leading-relaxed">Changes are applied in-place. Use the 'Summarize' or 'Refine' presets for faster document processing. Every change is tracked for undo/redo.</p>
             </div>
         </div>
       </div>
