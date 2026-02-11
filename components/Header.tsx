@@ -17,6 +17,11 @@ import { Squares2x2Icon } from './icons/Squares2x2Icon';
 import { PdfToImageIcon } from './icons/PdfToImageIcon';
 import { ImageToPdfIcon } from './icons/ImageToPdfIcon';
 import { PdfToWordIcon } from './icons/PdfToWordIcon';
+import { LockClosedIcon } from './icons/LockClosedIcon';
+import { ChatBubbleLeftRightIcon } from './icons/ChatBubbleLeftRightIcon';
+import { PencilSquareIcon } from './icons/PencilSquareIcon';
+import { SwatchIcon } from './icons/SwatchIcon';
+import { SparklesIcon } from './icons/SparklesIcon';
 
 interface HeaderProps {
   activeTool: string;
@@ -31,6 +36,7 @@ interface HeaderProps {
   isSidebarOpen: boolean;
   setIsSidebarOpen: (isOpen: boolean) => void;
   onStatusClick?: () => void;
+  mostUsedTools: Array<{key: string, label: string, icon: React.FC<React.SVGProps<SVGSVGElement>>}>;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -42,13 +48,15 @@ const Header: React.FC<HeaderProps> = ({
     isSidebarOpen, 
     setIsSidebarOpen,
     setActiveHistoryTab,
-    onStatusClick
+    onStatusClick,
+    mostUsedTools
 }) => {
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
-    'Transcription': true,
-    'Visual Lab': false,
-    'Strategy': true
+    'Intelligence': true,
+    'Business': false,
+    'Media & Docs': false,
+    'Favorites': true
   });
   
   const toggleMenu = (key: string) => {
@@ -62,99 +70,101 @@ const Header: React.FC<HeaderProps> = ({
 
   const toolStructure = useMemo(() => [
     {
-      group: 'Transcription',
-      icon: TranscriberIcon,
+      group: 'Intelligence',
+      icon: SparklesIcon,
       items: [
-        { key: 'AI Transcriber', label: t.aiTranscriber, icon: TranscriberIcon },
-        { key: 'AI Translator', label: t.aiTranslatorTitle, icon: TranslatorIcon },
-        { key: 'Grammar Corrector', label: t.grammarCorrector, icon: GrammarIcon },
+        { key: 'AI Transcriber', label: 'AI Transcriber', description: 'Speech-to-Text Engine', icon: TranscriberIcon, isCore: true },
+        { key: 'PDF Copilot', label: 'AI Copilot', description: 'Command Terminal', icon: BoltIcon, isCore: true },
+        { key: 'Chat PDF', label: 'Chat PDF', description: 'Cognitive Dialogue', icon: ChatBubbleLeftRightIcon, isCore: true },
+        { key: 'AI PDF Editor', label: 'AI Text Editor', description: 'Neural Professionalizer', icon: PencilSquareIcon },
       ]
     },
     {
-        group: 'Strategy',
+        group: 'Business',
         icon: CubeIcon,
         items: [
-          { key: 'Pure Organizer', label: 'Pure Organizer', icon: Squares2x2Icon },
-          { key: 'Strategic Planner', label: 'Plan Architect', icon: CubeIcon },
-          { key: 'Smart Summarizer', label: 'Auto Summarize', icon: SummarizerIcon },
+          { key: 'AI Whiteboard', label: 'Whiteboards', description: 'Sketch-to-Diagram', icon: SwatchIcon },
+          { key: 'Strategic Planner', label: 'Plan Architect', description: 'Strategic Reporting', icon: CubeIcon, isCore: true },
+          { key: 'Smart Summarizer', label: 'Auto Summarize', description: 'Data Extraction', icon: SummarizerIcon },
+          { key: 'Pure Organizer', label: 'Verbatim Node', description: 'Zero-Alteration Logic', icon: Squares2x2Icon },
         ]
     },
     {
-        group: 'Visual Lab',
-        icon: ImageIcon,
-        isHub: true,
-        items: [
-            { key: 'All', label: 'Full Studio', icon: BoltIcon },
-            { key: 'Conversion & OCR', label: 'OCR Scan', icon: ArrowPathIcon },
-            { key: 'Basic Editing & Retouch', label: 'Photo Edit', icon: ScissorsIcon },
-        ],
-        setSubKey: setActiveImageCategory,
-        activeSubKey: activeImageCategory,
-        hubKey: 'Image Related Tools'
-    },
-    {
-        group: 'Documents',
+        group: 'Media & Docs',
         icon: DocumentDuplicateIcon,
         items: [
-            { key: 'PDF to Image', label: 'PDF to Image', icon: PdfToImageIcon },
-            { key: 'Image to PDF', label: 'Image to PDF', icon: ImageToPdfIcon },
-            { key: 'PDF to Word', label: 'PDF to Word', icon: PdfToWordIcon },
-            { key: 'Export to Sheets', label: 'To Sheets', icon: SheetIcon },
+            { key: 'PDF Manager', label: 'Page Architect', description: 'Reorder & Merge PDF', icon: DocumentDuplicateIcon },
+            { key: 'AI Translator', label: 'Universal Translator', description: 'Nuanced Dialect Flow', icon: TranslatorIcon },
+            { key: 'Grammar Corrector', label: 'Syntax Refiner', description: 'Stylistic Polishing', icon: GrammarIcon },
+            { key: 'PDF to Image', label: 'PDF to Image', description: 'High-Res Extraction', icon: PdfToImageIcon },
+            { key: 'Image to PDF', label: 'Image to PDF', description: 'Visual Document Assembly', icon: ImageToPdfIcon },
+            { key: 'Export to Sheets', label: 'Data to Sheets', description: 'CSV/Excel Synthesis', icon: SheetIcon },
         ]
     }
-  ], [t, activeImageCategory, setActiveImageCategory]);
+  ], []);
 
   return (
     <aside 
-        className={`bg-[#05050C] border-r border-white/5 flex flex-col transition-all duration-500 ease-in-out relative shrink-0 z-50 group/sidebar ${isSidebarOpen ? 'w-[260px]' : 'w-[72px]'}`}
+        className={`bg-[#05050C] border-r border-white/5 flex flex-col transition-all duration-500 ease-in-out relative shrink-0 z-50 group/sidebar ${isSidebarOpen ? 'w-[280px]' : 'w-[80px]'}`}
         onMouseEnter={() => setIsSidebarOpen(true)}
         onMouseLeave={() => {
             setIsSidebarOpen(false);
             setHoveredGroup(null);
         }}
     >
-      <div className="flex items-center h-24 px-4 mb-4 overflow-hidden select-none cursor-pointer" onClick={() => setActiveTool('Home')}>
-        <div className="flex items-center gap-4 min-w-[220px]">
+      <div className="flex items-center h-24 px-5 mb-4 overflow-hidden select-none cursor-pointer" onClick={() => setActiveTool('Home')}>
+        <div className="flex items-center gap-4 min-w-[240px]">
             <div className="bg-purple-600 p-2.5 rounded-2xl shadow-[0_0_30px_rgba(168,85,247,0.4)] flex-shrink-0">
-                {isSidebarOpen ? <Squares2x2Icon className="w-7 h-7 text-white" /> : <span className="text-2xl font-black text-white w-7 h-7 flex items-center justify-center">M</span>}
+                {isSidebarOpen ? <Squares2x2Icon className="w-8 h-8 text-white" /> : <span className="text-2xl font-black text-white w-8 h-8 flex items-center justify-center">M</span>}
             </div>
             <div className={`transition-all duration-500 ${isSidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
                 <span className="text-2xl font-black text-white tracking-tighter">MultiTools</span>
-                <p className="text-[9px] font-black text-purple-500 uppercase tracking-[0.35em] mt-1">v3.0 Click</p>
+                <p className="text-[9px] font-black text-purple-500 uppercase tracking-[0.35em] mt-1">PRO ELITE</p>
             </div>
         </div>
       </div>
 
-      <nav className="flex-grow overflow-y-auto px-3 space-y-2 no-scrollbar">
+      <nav className="flex-grow overflow-y-auto px-4 space-y-2 no-scrollbar pb-10">
+        {mostUsedTools.length > 0 && (
+          <div className="mb-6">
+            <button 
+              onClick={() => toggleMenu('Favorites')}
+              className={`w-full flex items-center gap-4 p-3 rounded-2xl transition-all relative ${isSidebarOpen ? 'text-yellow-500/80' : 'text-yellow-500'}`}
+            >
+              <BoltIcon className="w-6 h-6 shrink-0" />
+              <span className={`text-[10px] font-black uppercase tracking-[0.2em] transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                  Quick Access
+              </span>
+            </button>
+            {expandedMenus['Favorites'] && isSidebarOpen && (
+              <div className="mt-1 ml-4 border-l border-yellow-500/20 space-y-1">
+                {mostUsedTools.map(tool => (
+                  <button 
+                    key={tool.key} 
+                    onClick={() => setActiveTool(tool.key)}
+                    className={`w-full text-left px-5 py-2 text-xs font-bold rounded-xl transition-all ${activeTool === tool.key ? 'text-yellow-400 bg-yellow-500/5' : 'text-gray-500 hover:text-gray-300'}`}
+                  >
+                    {tool.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="h-[1px] bg-white/5 mx-2 my-4"></div>
+
         {toolStructure.map((group) => {
-            const isActive = group.isHub ? activeTool === group.hubKey : group.items?.some(i => i.key === activeTool);
+            const isActive = group.items?.some(i => i.key === activeTool);
             const isOpen = expandedMenus[group.group];
 
             return (
                 <div key={group.group} className="relative">
-                    {!isSidebarOpen && hoveredGroup === group.group && (
-                        <div className="fixed left-[80px] bg-[#0A0A10] border border-white/10 rounded-2xl shadow-2xl p-4 min-w-[200px] z-[100] animate-pop-in">
-                            <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-3">{group.group}</p>
-                            <div className="space-y-1">
-                                {group.items?.map(item => (
-                                    <button 
-                                        key={item.key} 
-                                        onClick={() => { if(group.isHub) { setActiveTool(group.hubKey!); group.setSubKey?.(item.key); } else { setActiveTool(item.key); } }} 
-                                        className="w-full text-left px-4 py-2 text-xs font-bold text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"
-                                    >
-                                        {item.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
                     <button 
                       onClick={() => toggleMenu(group.group)} 
-                      onMouseEnter={() => setHoveredGroup(group.group)}
-                      className={`w-full flex items-center gap-4 p-3 rounded-2xl transition-all relative group ${isActive ? 'bg-purple-600/10 text-white' : 'text-gray-500 hover:bg-white/5'}`}
+                      className={`w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all relative group ${isActive ? 'bg-purple-600/10 text-white' : 'text-gray-500 hover:bg-white/5'}`}
                     >
-                        {isActive && <div className="absolute left-[-12px] top-1/2 -translate-y-1/2 w-1 h-8 bg-purple-500 rounded-full shadow-[0_0_15px_rgba(168,85,247,0.8)]" />}
+                        {isActive && <div className="absolute left-[-16px] top-1/2 -translate-y-1/2 w-1.5 h-10 bg-purple-500 rounded-full shadow-[0_0_20px_rgba(168,85,247,0.8)]" />}
                         <group.icon className={`w-6 h-6 shrink-0 ${isActive ? 'text-purple-400' : 'text-gray-600 group-hover:text-gray-400'}`} />
                         <span className={`text-sm font-bold truncate flex-grow text-left transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                             {group.group}
@@ -165,14 +175,23 @@ const Header: React.FC<HeaderProps> = ({
                     {isOpen && isSidebarOpen && (
                         <div className="mt-1 ml-4 border-l border-white/5 space-y-1">
                             {group.items?.map(item => {
-                                const isSubActive = group.isHub ? (activeTool === group.hubKey && group.activeSubKey === item.key) : (activeTool === item.key);
+                                const isSubActive = activeTool === item.key;
                                 return (
                                     <button 
                                       key={item.key} 
-                                      onClick={() => { if(group.isHub) { setActiveTool(group.hubKey!); group.setSubKey?.(item.key); } else { setActiveTool(item.key); } }} 
-                                      className={`w-full text-left px-5 py-2.5 text-xs font-bold rounded-xl transition-all ${isSubActive ? 'text-purple-400 bg-purple-500/5' : 'text-gray-500 hover:text-gray-300'}`}
+                                      onClick={() => setActiveTool(item.key)} 
+                                      className={`group/item w-full text-left px-5 py-2.5 rounded-xl transition-all flex flex-col items-start ${isSubActive ? 'text-purple-400 bg-purple-500/5' : 'text-gray-500 hover:text-gray-300'} ${(item as any).isCore ? 'relative' : ''}`}
                                     >
-                                        {item.label}
+                                        <div className="flex items-center justify-between w-full">
+                                            <span className="flex items-center gap-2 text-xs font-bold">
+                                                {item.label}
+                                                {(item as any).isCore && <div className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_8px_purple] animate-pulse"></div>}
+                                            </span>
+                                            {(item as any).isCore && <SparklesIcon className="w-3.5 h-3.5 text-purple-500/50 group-hover/item:text-purple-400 transition-colors" />}
+                                        </div>
+                                        <span className="text-[9px] opacity-40 group-hover/item:opacity-70 transition-opacity font-black uppercase tracking-tighter truncate w-full">
+                                            {item.description}
+                                        </span>
                                     </button>
                                 );
                             })}
@@ -183,10 +202,10 @@ const Header: React.FC<HeaderProps> = ({
         })}
 
         <div className="pt-6 mt-6 border-t border-white/5">
-             <button onClick={() => { setActiveTool('History'); setActiveHistoryTab('transcriptions'); }} className={`w-full flex items-center gap-4 p-3 rounded-2xl transition-all relative ${activeTool === 'History' ? 'bg-pink-600/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}>
-                {activeTool === 'History' && <div className="absolute left-[-12px] top-1/2 -translate-y-1/2 w-1 h-8 bg-pink-500 rounded-full" />}
+             <button onClick={() => { setActiveTool('History'); setActiveHistoryTab('transcriptions'); }} className={`w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all relative ${activeTool === 'History' ? 'bg-pink-600/10 text-white' : 'text-gray-500 hover:bg-white/5'}`}>
+                {activeTool === 'History' && <div className="absolute left-[-16px] top-1/2 -translate-y-1/2 w-1.5 h-10 bg-pink-500 rounded-full" />}
                 <HistoryIcon className="w-6 h-6 shrink-0" />
-                <span className={`text-sm font-bold truncate ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>Archive Hub</span>
+                <span className={`text-sm font-bold truncate ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>Global Archive</span>
              </button>
         </div>
       </nav>
@@ -194,12 +213,12 @@ const Header: React.FC<HeaderProps> = ({
       <div className="mt-auto p-5 border-t border-white/5">
           <div className="flex items-center gap-4 group/status cursor-pointer" onClick={onStatusClick}>
               <div className="relative flex items-center justify-center w-6 h-6 flex-shrink-0">
-                  <div className="absolute w-4 h-4 bg-green-500/20 rounded-full animate-ping"></div>
-                  <div className="w-2.5 h-2.5 bg-green-500 rounded-full shadow-[0_0_15px_rgba(34,197,94,0.8)]"></div>
+                  <div className="absolute w-5 h-5 bg-green-500/20 rounded-full animate-ping"></div>
+                  <div className="w-3 h-3 bg-green-500 rounded-full shadow-[0_0_15px_rgba(34,197,94,0.8)]"></div>
               </div>
               <div className={`flex flex-col transition-all duration-500 overflow-hidden ${isSidebarOpen ? 'opacity-100 w-auto ml-2' : 'opacity-0 w-0'}`}>
-                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 font-mono whitespace-nowrap group-hover:text-white transition-colors">Engine Operational</span>
-                <span className="text-[8px] font-mono text-gray-700 uppercase tracking-widest">Master Node Live</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 font-mono whitespace-nowrap group-hover:text-white transition-colors">Workspace Live</span>
+                <span className="text-[8px] font-mono text-gray-700 uppercase tracking-widest">Engine Cluster 4.0</span>
               </div>
           </div>
       </div>

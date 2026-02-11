@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { TranslationSet } from '../types';
 import { ImageIcon } from './icons/ImageIcon';
 import { SearchIcon } from './icons/SearchIcon';
@@ -13,6 +12,7 @@ import { ShareIcon } from './icons/ShareIcon';
 import { ArrowPathIcon } from './icons/ArrowPathIcon';
 import { Squares2x2Icon } from './icons/Squares2x2Icon';
 import { ChevronDownIcon } from './icons/ChevronDownIcon';
+import { UploadIcon } from './icons/UploadIcon';
 import UniversalImageEditor from './UniversalImageEditor';
 import ImageConverterOcr from './ImageAnalyzer';
 import PdfToImage from './PdfToImage';
@@ -43,6 +43,7 @@ const ImageToolsHub: React.FC<ImageToolsHubProps> = ({ t, externalCategory = 'Al
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState(externalCategory);
   const [activeToolId, setActiveToolId] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     setActiveCategory(externalCategory);
@@ -123,6 +124,47 @@ const ImageToolsHub: React.FC<ImageToolsHubProps> = ({ t, externalCategory = 'Al
     onCategoryChange?.(cat);
   };
 
+  const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Use relatedTarget to prevent flickering when hovering child elements
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+        setIsDragging(false);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'copy';
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        const file = e.dataTransfer.files[0];
+        const ext = file.name.split('.').pop()?.toLowerCase();
+        
+        // Intelligent Routing logic
+        if (ext === 'pdf') {
+            setActiveToolId('pdf-to-img');
+        } else if (['jpg', 'jpeg', 'png', 'webp', 'heic'].includes(ext || '')) {
+            setActiveToolId('ocr-tool');
+        } else {
+            setActiveToolId('reduce-kb');
+        }
+    }
+  }, []);
+
   const allTools = categories.flatMap(c => c.tools);
   const currentTool = allTools.find(t => t.id === activeToolId);
 
@@ -173,7 +215,13 @@ const ImageToolsHub: React.FC<ImageToolsHubProps> = ({ t, externalCategory = 'Al
   }
 
   return (
-    <div className="flex flex-col h-full animate-fadeIn max-w-7xl mx-auto w-full">
+    <div 
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className="flex flex-col h-full animate-fadeIn max-w-7xl mx-auto w-full relative"
+    >
       {/* Search Header */}
       <div className="mb-8">
         <h2 className="text-3xl font-black text-white tracking-tight mb-6 flex items-center gap-3">
@@ -263,6 +311,23 @@ const ImageToolsHub: React.FC<ImageToolsHubProps> = ({ t, externalCategory = 'Al
             </div>
         )}
       </div>
+
+      {/* Global Neural Drop Zone Overlay */}
+      {isDragging && (
+        <div className="absolute inset-0 z-[60] bg-[#05050C]/80 backdrop-blur-md border-4 border-dashed border-purple-500 rounded-[3rem] flex flex-col items-center justify-center animate-fadeIn m-4 shadow-[0_0_80px_rgba(168,85,247,0.2)]">
+            <div className="p-10 bg-purple-600/10 rounded-full mb-8 border border-purple-500/20 shadow-2xl animate-bounce">
+                <UploadIcon className="w-24 h-24 text-purple-400" />
+            </div>
+            <h3 className="text-5xl font-black text-white uppercase tracking-tighter mb-4">Neural Drop Zone</h3>
+            <p className="text-purple-300 text-xl font-bold uppercase tracking-[0.25em] animate-pulse">Release to auto-select optimal tool</p>
+            
+            <div className="mt-12 flex gap-4">
+                {['JPG', 'PNG', 'PDF', 'WEBP'].map(ext => (
+                    <span key={ext} className="px-6 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black text-gray-400 tracking-widest">{ext}</span>
+                ))}
+            </div>
+        </div>
+      )}
     </div>
   );
 };
