@@ -22,6 +22,7 @@ import { ChatBubbleLeftRightIcon } from './icons/ChatBubbleLeftRightIcon';
 import { PencilSquareIcon } from './icons/PencilSquareIcon';
 import { SwatchIcon } from './icons/SwatchIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
+import { SearchIcon } from './icons/SearchIcon';
 
 interface HeaderProps {
   activeTool: string;
@@ -51,7 +52,7 @@ const Header: React.FC<HeaderProps> = ({
     onStatusClick,
     mostUsedTools
 }) => {
-  const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
+  const [sidebarSearch, setSidebarSearch] = useState('');
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
     'Intelligence': true,
     'Business': false,
@@ -73,35 +74,57 @@ const Header: React.FC<HeaderProps> = ({
       group: 'Intelligence',
       icon: SparklesIcon,
       items: [
-        { key: 'AI Transcriber', label: 'AI Transcriber', description: 'Speech-to-Text Engine', icon: TranscriberIcon, isCore: true },
-        { key: 'PDF Copilot', label: 'AI Copilot', description: 'Command Terminal', icon: BoltIcon, isCore: true },
-        { key: 'Chat PDF', label: 'Chat PDF', description: 'Cognitive Dialogue', icon: ChatBubbleLeftRightIcon, isCore: true },
-        { key: 'AI PDF Editor', label: 'AI Text Editor', description: 'Neural Professionalizer', icon: PencilSquareIcon },
+        { key: 'AI Transcriber', label: 'AI Transcriber', description: 'Convert audio/video into readable text automatically.', icon: TranscriberIcon, isCore: true },
+        { key: 'PDF Copilot', label: 'AI Copilot', description: 'Manage documents using simple text commands.', icon: BoltIcon, isCore: true },
+        { key: 'Chat PDF', label: 'Chat PDF', description: 'Ask questions and get answers from your PDF files.', icon: ChatBubbleLeftRightIcon, isCore: true },
+        { key: 'AI PDF Editor', label: 'AI Text Editor', description: 'Automatically rewrite and refine your document text.', icon: PencilSquareIcon },
       ]
     },
     {
         group: 'Business',
         icon: CubeIcon,
         items: [
-          { key: 'AI Whiteboard', label: 'Whiteboards', description: 'Sketch-to-Diagram', icon: SwatchIcon },
-          { key: 'Strategic Planner', label: 'Plan Architect', description: 'Strategic Reporting', icon: CubeIcon, isCore: true },
-          { key: 'Smart Summarizer', label: 'Auto Summarize', description: 'Data Extraction', icon: SummarizerIcon },
-          { key: 'Pure Organizer', label: 'Verbatim Node', description: 'Zero-Alteration Logic', icon: Squares2x2Icon },
+          { key: 'AI Whiteboard', label: 'Whiteboards', description: 'Transform sketches into clean, professional diagrams.', icon: SwatchIcon },
+          { key: 'Strategic Planner', label: 'Plan Architect', description: 'Create strategy reports from notes and raw data.', icon: CubeIcon, isCore: true },
+          { key: 'Smart Summarizer', label: 'Auto Summarize', description: 'Instantly extract key insights and main points.', icon: SummarizerIcon },
+          { key: 'Pure Organizer', label: 'Verbatim Node', description: 'Organize data without changing a single word.', icon: Squares2x2Icon },
         ]
     },
     {
         group: 'Media & Docs',
         icon: DocumentDuplicateIcon,
         items: [
-            { key: 'PDF Manager', label: 'Page Architect', description: 'Reorder & Merge PDF', icon: DocumentDuplicateIcon },
-            { key: 'AI Translator', label: 'Universal Translator', description: 'Nuanced Dialect Flow', icon: TranslatorIcon },
-            { key: 'Grammar Corrector', label: 'Syntax Refiner', description: 'Stylistic Polishing', icon: GrammarIcon },
-            { key: 'PDF to Image', label: 'PDF to Image', description: 'High-Res Extraction', icon: PdfToImageIcon },
-            { key: 'Image to PDF', label: 'Image to PDF', description: 'Visual Document Assembly', icon: ImageToPdfIcon },
-            { key: 'Export to Sheets', label: 'Data to Sheets', description: 'CSV/Excel Synthesis', icon: SheetIcon },
+            { key: 'PDF Manager', label: 'Page Architect', description: 'Merge, reorder, or delete pages in your PDF.', icon: DocumentDuplicateIcon },
+            { key: 'AI Translator', label: 'Universal Translator', description: 'Translate text while keeping the original meaning.', icon: TranslatorIcon },
+            { key: 'Grammar Corrector', label: 'Syntax Refiner', description: 'Fix grammar, spelling, and improve writing style.', icon: GrammarIcon },
+            { key: 'PDF to Image', label: 'PDF to Image', description: 'Save PDF pages as high-quality image files.', icon: PdfToImageIcon },
+            { key: 'Image to PDF', label: 'Image to PDF', description: 'Assemble images into a professional PDF file.', icon: ImageToPdfIcon },
+            { key: 'Export to Sheets', label: 'Data to Sheets', description: 'Turn raw text into an organized spreadsheet.', icon: SheetIcon },
         ]
     }
   ], []);
+
+  const filteredStructure = useMemo(() => {
+    if (!sidebarSearch.trim()) return toolStructure;
+    const lower = sidebarSearch.toLowerCase();
+    return toolStructure.map(group => {
+      // Match by group name (Section)
+      const groupMatches = group.group.toLowerCase().includes(lower);
+      
+      const filteredItems = group.items.filter(item => 
+        groupMatches || 
+        item.label.toLowerCase().includes(lower) || 
+        item.description.toLowerCase().includes(lower)
+      );
+
+      return {
+        ...group,
+        items: filteredItems
+      };
+    }).filter(group => group.items.length > 0);
+  }, [toolStructure, sidebarSearch]);
+
+  const isSearching = sidebarSearch.trim().length > 0;
 
   return (
     <aside 
@@ -109,10 +132,9 @@ const Header: React.FC<HeaderProps> = ({
         onMouseEnter={() => setIsSidebarOpen(true)}
         onMouseLeave={() => {
             setIsSidebarOpen(false);
-            setHoveredGroup(null);
         }}
     >
-      <div className="flex items-center h-24 px-5 mb-4 overflow-hidden select-none cursor-pointer" onClick={() => setActiveTool('Home')}>
+      <div className="flex items-center h-24 px-5 mb-2 overflow-hidden select-none cursor-pointer" onClick={() => setActiveTool('Home')}>
         <div className="flex items-center gap-4 min-w-[240px]">
             <div className="bg-purple-600 p-2.5 rounded-2xl shadow-[0_0_30px_rgba(168,85,247,0.4)] flex-shrink-0">
                 {isSidebarOpen ? <Squares2x2Icon className="w-8 h-8 text-white" /> : <span className="text-2xl font-black text-white w-8 h-8 flex items-center justify-center">M</span>}
@@ -124,8 +146,24 @@ const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
+      {/* Sidebar Search Bar */}
+      <div className={`px-4 mb-6 transition-all duration-500 ${isSidebarOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}`}>
+          <div className="relative group">
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                  <SearchIcon className="w-3.5 h-3.5 text-gray-600 group-focus-within:text-purple-500 transition-colors" />
+              </div>
+              <input 
+                type="text" 
+                value={sidebarSearch}
+                onChange={(e) => setSidebarSearch(e.target.value)}
+                placeholder="Search by tool or section..."
+                className="w-full bg-white/[0.03] border border-white/5 rounded-xl py-2 pl-9 pr-4 text-[10px] font-bold text-white outline-none focus:border-purple-500/50 focus:bg-white/[0.05] transition-all placeholder:text-gray-700"
+              />
+          </div>
+      </div>
+
       <nav className="flex-grow overflow-y-auto px-4 space-y-2 no-scrollbar pb-10">
-        {mostUsedTools.length > 0 && (
+        {!isSearching && mostUsedTools.length > 0 && (
           <div className="mb-6">
             <button 
               onClick={() => toggleMenu('Favorites')}
@@ -152,11 +190,11 @@ const Header: React.FC<HeaderProps> = ({
           </div>
         )}
 
-        <div className="h-[1px] bg-white/5 mx-2 my-4"></div>
+        {!isSearching && <div className="h-[1px] bg-white/5 mx-2 my-4"></div>}
 
-        {toolStructure.map((group) => {
+        {filteredStructure.map((group) => {
             const isActive = group.items?.some(i => i.key === activeTool);
-            const isOpen = expandedMenus[group.group];
+            const isOpen = isSearching || expandedMenus[group.group];
 
             return (
                 <div key={group.group} className="relative">
@@ -169,11 +207,11 @@ const Header: React.FC<HeaderProps> = ({
                         <span className={`text-sm font-bold truncate flex-grow text-left transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                             {group.group}
                         </span>
-                        {isSidebarOpen && <ChevronDownIcon className={`w-3.5 h-3.5 transition-transform duration-500 ${isOpen ? 'rotate-180' : 'opacity-40'}`} />}
+                        {isSidebarOpen && !isSearching && <ChevronDownIcon className={`w-3.5 h-3.5 transition-transform duration-500 ${isOpen ? 'rotate-180' : 'opacity-40'}`} />}
                     </button>
                     
                     {isOpen && isSidebarOpen && (
-                        <div className="mt-1 ml-4 border-l border-white/5 space-y-1">
+                        <div className={`mt-1 ml-4 border-l border-white/5 space-y-1 ${isSearching ? 'border-purple-500/20' : ''}`}>
                             {group.items?.map(item => {
                                 const isSubActive = activeTool === item.key;
                                 return (
@@ -189,7 +227,7 @@ const Header: React.FC<HeaderProps> = ({
                                             </span>
                                             {(item as any).isCore && <SparklesIcon className="w-3.5 h-3.5 text-purple-500/50 group-hover/item:text-purple-400 transition-colors" />}
                                         </div>
-                                        <span className="text-[9px] opacity-40 group-hover/item:opacity-70 transition-opacity font-black uppercase tracking-tighter truncate w-full">
+                                        <span className="text-[9px] opacity-50 group-hover/item:opacity-80 transition-opacity font-bold uppercase tracking-tight leading-tight mt-0.5">
                                             {item.description}
                                         </span>
                                     </button>
@@ -201,13 +239,15 @@ const Header: React.FC<HeaderProps> = ({
             )
         })}
 
-        <div className="pt-6 mt-6 border-t border-white/5">
-             <button onClick={() => { setActiveTool('History'); setActiveHistoryTab('transcriptions'); }} className={`w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all relative ${activeTool === 'History' ? 'bg-pink-600/10 text-white' : 'text-gray-500 hover:bg-white/5'}`}>
-                {activeTool === 'History' && <div className="absolute left-[-16px] top-1/2 -translate-y-1/2 w-1.5 h-10 bg-pink-500 rounded-full" />}
-                <HistoryIcon className="w-6 h-6 shrink-0" />
-                <span className={`text-sm font-bold truncate ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>Global Archive</span>
-             </button>
-        </div>
+        {!isSearching && (
+          <div className="pt-6 mt-6 border-t border-white/5">
+               <button onClick={() => { setActiveTool('History'); setActiveHistoryTab('transcriptions'); }} className={`w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all relative ${activeTool === 'History' ? 'bg-pink-600/10 text-white' : 'text-gray-500 hover:bg-white/5'}`}>
+                  {activeTool === 'History' && <div className="absolute left-[-16px] top-1/2 -translate-y-1/2 w-1.5 h-10 bg-pink-500 rounded-full" />}
+                  <HistoryIcon className="w-6 h-6 shrink-0" />
+                  <span className={`text-sm font-bold truncate ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>Global Archive</span>
+               </button>
+          </div>
+        )}
       </nav>
       
       <div className="mt-auto p-5 border-t border-white/5">
