@@ -1,11 +1,14 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { Transcription } from '../types';
 
-// Lazy initialization function for defensive programming
+/**
+ * Lazy AI Client Initialization
+ * Ensures the app doesn't crash if API_KEY is missing from environment.
+ */
 const getAIClient = () => {
   const apiKey = process.env.API_KEY;
   if (!apiKey || apiKey === 'your_gemini_api_key_here') {
-    throw new Error("Gemini API Key is missing. Please configure API_KEY in your environment variables.");
+    throw new Error("Gemini API Key is missing. Please configure your environment variables.");
   }
   return new GoogleGenAI({ apiKey });
 };
@@ -22,8 +25,13 @@ const fileToBase64 = (file: File): Promise<string> => {
 function getMimeType(file: File): string {
   const ext = file.name.split('.').pop()?.toLowerCase();
   const map: Record<string, string> = {
-    'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'm4a': 'audio/mp4', 'ogg': 'audio/ogg',
-    'mp4': 'video/mp4', 'webm': 'video/webm', 'mov': 'video/quicktime'
+    'mp3': 'audio/mpeg', 
+    'wav': 'audio/wav', 
+    'm4a': 'audio/mp4', 
+    'ogg': 'audio/ogg',
+    'mp4': 'video/mp4', 
+    'webm': 'video/webm', 
+    'mov': 'video/quicktime'
   };
   return map[ext || ''] || 'application/octet-stream';
 }
@@ -43,10 +51,10 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
         items: {
           type: Type.OBJECT,
           properties: {
-            startTime: { type: Type.STRING },
-            endTime: { type: Type.STRING },
-            speaker: { type: Type.STRING },
-            text: { type: Type.STRING },
+            startTime: { type: Type.STRING, description: "Format MM:SS" },
+            endTime: { type: Type.STRING, description: "Format MM:SS" },
+            speaker: { type: Type.STRING, description: "Speaker identifier" },
+            text: { type: Type.STRING, description: "Verbatim transcript segment" },
           },
           required: ["startTime", "endTime", "speaker", "text"]
         }
@@ -60,12 +68,12 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
     contents: { 
         parts: [
             { inlineData: { mimeType, data: base64Data } },
-            { text: `System Command: Transcribe this file. 
-              1. AUTO-DETECT: Global language Identification.
-              2. DIARIZATION: Distinct speaker identification.
-              3. CODE-SWITCHING: Native script preservation.
+            { text: `System Directive: High-Fidelity Universal Transcription. 
+              1. DETECTION: Automatically identify primary language and dialects.
+              2. DIARIZATION: Distinguish between different speakers.
+              3. CODE-SWITCHING: Preserve original script for non-English segments.
               4. HINT: User suggested ${languageHint}.
-              Output valid JSON.` 
+              Output valid JSON following the provided schema.` 
             }
         ] 
     },
