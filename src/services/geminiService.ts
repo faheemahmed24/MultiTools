@@ -1,16 +1,63 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import type { Transcription } from '../types';
+import { GoogleGenAI, Type, Modality } from "@google/genai";
+import type { Transcription, SmartSummary } from '../types';
+
+// API key obtained from environment variables (Vite prefix VITE_ is required for client-side)
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY;
+const ai = new GoogleGenAI({ apiKey: API_KEY as string });
 
 /**
- * Lazy AI Client Initialization
- * Ensures the app doesn't crash if API_KEY is missing from environment.
+ * Production-ready Gemini API response generator (Fetch API version)
+ * Requested by user for specific compatibility.
  */
-const getAIClient = () => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey || apiKey === 'your_gemini_api_key_here') {
-    throw new Error("Gemini API Key is missing. Please configure your environment variables.");
+export async function generateGeminiResponse(prompt: string): Promise<string> {
+  try {
+    if (!API_KEY) {
+      throw new Error("Gemini API key not found");
+    }
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: prompt }],
+            },
+          ],
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch Gemini response");
+    }
+
+    const data = await response.json();
+
+    return (
+      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "No response generated."
+    );
+  } catch (error) {
+    console.error("Gemini Service Error:", error);
+    return "Error generating response.";
   }
-  return new GoogleGenAI({ apiKey });
+}
+
+// Alias for user request
+export const callGemini = generateGeminiResponse;
+
+const MODELS = {
+    primary: 'gemini-3-pro-preview', // High-fidelity for complex transcription and reasoning
+    vision: 'gemini-3-flash-preview',
+    lite: 'gemini-flash-lite-latest',
+    speech: 'gemini-2.5-flash-preview-tts',
+    flash: 'gemini-3-flash-preview',
+    image: 'gemini-2.5-flash-image'
 };
 
 const fileToBase64 = (file: File): Promise<string> => {
@@ -23,6 +70,7 @@ const fileToBase64 = (file: File): Promise<string> => {
 };
 
 function getMimeType(file: File): string {
+  if (file.type && !file.type.includes('octet-stream')) return file.type;
   const ext = file.name.split('.').pop()?.toLowerCase();
   const map: Record<string, string> = {
     'mp3': 'audio/mpeg', 
@@ -31,30 +79,38 @@ function getMimeType(file: File): string {
     'ogg': 'audio/ogg',
     'mp4': 'video/mp4', 
     'webm': 'video/webm', 
-    'mov': 'video/quicktime'
+    'mov': 'video/quicktime',
+    'pdf': 'application/pdf',
+    'png': 'image/png',
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'webp': 'image/webp'
   };
   return map[ext || ''] || 'application/octet-stream';
 }
 
+/**
+ * Universal Transcription Engine v5.2
+ * Optimized for 100+ global languages, automatic dialect detection, and native script preservation.
+ */
 export const transcribeAudio = async (file: File, languageHint: string = 'auto'): Promise<Omit<Transcription, 'id' | 'date'>> => {
-  const ai = getAIClient();
   const base64Data = await fileToBase64(file);
   const mimeType = getMimeType(file);
 
   const transcriptionSchema = {
     type: Type.OBJECT,
     properties: {
-      language: { type: Type.STRING, description: "Detected language name." },
-      languageCode: { type: Type.STRING, description: "BCP-47 code." },
+      language: { type: Type.STRING, description: "Full name of the detected primary language." },
+      languageCode: { type: Type.STRING, description: "BCP-47 language code." },
       segments: {
         type: Type.ARRAY,
         items: {
           type: Type.OBJECT,
           properties: {
-            startTime: { type: Type.STRING, description: "Format MM:SS" },
-            endTime: { type: Type.STRING, description: "Format MM:SS" },
-            speaker: { type: Type.STRING, description: "Speaker identifier" },
-            text: { type: Type.STRING, description: "Verbatim transcript segment" },
+            startTime: { type: Type.STRING, description: "Timestamp in MM:SS format." },
+            endTime: { type: Type.STRING, description: "Timestamp in MM:SS format." },
+            speaker: { type: Type.STRING, description: "Identified speaker (e.g., Speaker 1, Speaker 2)." },
+            text: { type: Type.STRING, description: "Verbatim transcript for this segment. Use native script for the language detected." },
           },
           required: ["startTime", "endTime", "speaker", "text"]
         }
@@ -64,16 +120,18 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
   };
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-pro-preview',
+    model: MODELS.primary,
     contents: { 
         parts: [
             { inlineData: { mimeType, data: base64Data } },
-            { text: `System Directive: High-Fidelity Universal Transcription. 
-              1. DETECTION: Automatically identify primary language and dialects.
-              2. DIARIZATION: Distinguish between different speakers.
-              3. CODE-SWITCHING: Preserve original script for non-English segments.
-              4. HINT: User suggested ${languageHint}.
-              Output valid JSON following the provided schema.` 
+            { text: `Universal Transcription Protocol v5.2:
+              1. ACTION: Transcribe with 99.9% verbal accuracy.
+              2. LANGUAGE: Automatically detect from any global dialect (Urdu, Arabic, Hindi, English, Spanish, Chinese, Japanese, etc.).
+              3. CODE-SWITCHING: If multiple languages are spoken, transcribe each segment correctly in its native script.
+              4. DIARIZATION: Perform high-fidelity speaker separation.
+              5. STRUCTURE: Break content into logical segments with MM:SS timestamps.
+              6. HINT: User suggested "${languageHint}". If "auto", strictly rely on neural analysis.
+              7. OUTPUT: Return strictly valid JSON.` 
             }
         ] 
     },
@@ -91,13 +149,157 @@ export const transcribeAudio = async (file: File, languageHint: string = 'auto')
   };
 };
 
+export const translateText = async (text: string, src: string, target: string) => {
+    const res = await ai.models.generateContent({
+        model: MODELS.primary,
+        contents: text,
+        config: { systemInstruction: `Translate from ${src} to ${target}. Maintain nuances and formatting.` },
+    });
+    return res.text || "";
+};
+
+export const summarizeText = async (text: string): Promise<string> => {
+    const response = await ai.models.generateContent({
+        model: MODELS.primary,
+        contents: text,
+        config: { systemInstruction: "Provide a high-density executive summary." },
+    });
+    return response.text || "";
+};
+
+export const correctGrammar = async (text: string, language: string): Promise<string> => {
+    const response = await ai.models.generateContent({
+        model: MODELS.primary,
+        contents: text,
+        config: { systemInstruction: `Correct grammar, punctuation, and style for ${language}. Maintain the original meaning.` },
+    });
+    return response.text || "";
+};
+
+export const analyzeImage = async (file: File): Promise<string> => {
+  const base64Data = await fileToBase64(file);
+  const response = await ai.models.generateContent({
+    model: MODELS.vision,
+    contents: { 
+        parts: [
+            { inlineData: { mimeType: getMimeType(file), data: base64Data } },
+            { text: "Universal Vision Node: Perform high-accuracy OCR and layout analysis." }
+        ] 
+    },
+  });
+  return response.text || "";
+};
+
+export const extractTextFromUrl = async (url: string): Promise<string> => {
+    const response = await ai.models.generateContent({
+        model: MODELS.flash,
+        contents: `Extract the main text content and critical intel from the following URL: ${url}`,
+        config: { tools: [{ googleSearch: {} }] }
+    });
+    return response.text || "Extraction failed.";
+};
+
+export const smartSummarize = async (text: string): Promise<SmartSummary> => {
+    const schema = {
+        type: Type.OBJECT,
+        properties: {
+            summary: { type: Type.STRING },
+            contacts: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { name: { type: Type.STRING }, info: { type: Type.STRING }, type: { type: Type.STRING } }, required: ["name", "info", "type"] } },
+            languages: { type: Type.ARRAY, items: { type: Type.STRING } },
+            keyInsights: { type: Type.ARRAY, items: { type: Type.STRING } },
+            numbers: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { label: { type: Type.STRING }, value: { type: Type.STRING } }, required: ["label", "value"] } }
+        },
+        required: ["summary", "contacts", "languages", "keyInsights", "numbers"]
+    };
+    const response = await ai.models.generateContent({
+        model: MODELS.primary,
+        contents: `Analyze and extract data categories: ${text}`,
+        config: { responseMimeType: "application/json", responseSchema: schema }
+    });
+    return JSON.parse(response.text || '{}');
+};
+
 export const runAICommand = async (command: string, file?: File): Promise<string> => {
-    const ai = getAIClient();
-    const parts: any[] = [{ text: `Execute: ${command}` }];
+    const parts: any[] = [{ text: `Execute Command: ${command}` }];
     if (file) {
         const data = await fileToBase64(file);
         parts.unshift({ inlineData: { mimeType: getMimeType(file), data } });
     }
-    const response = await ai.models.generateContent({ model: 'gemini-3-pro-preview', contents: { parts } });
+    const response = await ai.models.generateContent({ model: MODELS.primary, contents: { parts } });
     return response.text || "";
 };
+
+export const pureOrganizeData = async (text: string): Promise<any> => {
+    const response = await ai.models.generateContent({
+        model: MODELS.primary,
+        contents: `Organize the following raw data into logical categories without changing any words (verbatim): ${text}`,
+        config: { responseMimeType: "application/json" }
+    });
+    return JSON.parse(response.text || '{}');
+};
+
+export const generateWhiteboardImage = async (canvasBase64: string, prompt: string): Promise<string> => {
+    const response = await ai.models.generateContent({
+        model: MODELS.image,
+        contents: {
+            parts: [
+                { inlineData: { data: canvasBase64.split(',')[1], mimeType: 'image/png' } },
+                { text: `Synthesize and enhance the provided sketch based on this prompt: ${prompt}` }
+            ]
+        }
+    });
+    for (const part of response.candidates?.[0]?.content?.parts || []) {
+        if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
+    }
+    return "";
+};
+
+export const runStrategicPlanning = async (text: string, images: {data: string, mime: string}[] = []): Promise<any> => {
+    const imageParts = images.map(img => ({ inlineData: { mimeType: img.mime, data: img.data } }));
+    const response = await ai.models.generateContent({
+        model: MODELS.primary,
+        contents: { parts: [...imageParts, { text: `Generate a full strategic report based on this input: ${text}` }] },
+        config: { responseMimeType: "application/json" }
+    });
+    return JSON.parse(response.text || '{}');
+};
+
+export const processStructuredTask = async (text: string, taskType: string): Promise<any> => {
+    const response = await ai.models.generateContent({
+        model: MODELS.primary,
+        contents: `Task: ${taskType}\n\nInput Context:\n${text}`
+    });
+    return response.text || "";
+};
+
+export function decode(base64: string): Uint8Array {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+  return bytes;
+}
+
+export async function decodeAudioData(data: Uint8Array, ctx: AudioContext, sampleRate: number, numChannels: number): Promise<AudioBuffer> {
+  const dataInt16 = new Int16Array(data.buffer);
+  const frameCount = dataInt16.length / numChannels;
+  const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
+  for (let channel = 0; channel < numChannels; channel++) {
+    const channelData = buffer.getChannelData(channel);
+    for (let i = 0; i < frameCount; i++) {
+      channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+    }
+  }
+  return buffer;
+}
+
+export const generateSpeech = async (text: string, voiceName: string): Promise<string> => {
+    const response = await ai.models.generateContent({
+        model: MODELS.speech,
+        contents: [{ parts: [{ text }] }],
+        config: {
+            responseModalities: [Modality.AUDIO],
+            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName } } },
+        },
+    });
+    return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data || "";
+}

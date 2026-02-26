@@ -88,7 +88,7 @@ const PdfToWord: React.FC<PdfToWordProps> = ({ t, onConversionComplete }) => {
           const textContent = await page.getTextContent();
           
           if (textContent.items.length > 0) {
-            const lines = textContent.items.reduce((acc, item: any) => {
+            const lines = textContent.items.reduce((acc: Record<number, {x: number, text: string}[]>, item: any) => {
               const y = Math.round(item.transform[5]);
               if (!acc[y]) acc[y] = [];
               acc[y].push({ x: Math.round(item.transform[4]), text: item.str });
@@ -96,9 +96,9 @@ const PdfToWord: React.FC<PdfToWordProps> = ({ t, onConversionComplete }) => {
             }, {} as Record<number, {x: number, text: string}[]>);
 
             Object.keys(lines)
-              .sort((a, b) => Number(b) - Number(a))
+              .sort((a: string, b: string) => Number(b) - Number(a))
               .forEach(y => {
-                const lineText = lines[Number(y)].sort((a, b) => a.x - b.x).map(item => item.text).join(' ');
+                const lineText = lines[Number(y)].sort((a: {x: number}, b: {x: number}) => a.x - b.x).map(item => item.text).join(' ');
                 if (lineText.trim()) {
                   paragraphs.push(new docx.Paragraph(lineText));
                   allTextLines.push(lineText);
