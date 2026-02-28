@@ -38,7 +38,7 @@ interface HeaderProps {
   isSidebarOpen: boolean;
   setIsSidebarOpen: (isOpen: boolean) => void;
   onStatusClick?: () => void;
-  mostUsedTools: Array<{key: string, label: string, icon: React.FC<React.SVGProps<SVGSVGElement>>}>;
+  mostUsedTools: Array<{key: string, label: string, description: string, icon: React.FC<React.SVGProps<SVGSVGElement>>}>;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -118,6 +118,22 @@ const Header: React.FC<HeaderProps> = ({
 
   const isSearching = sidebarSearch.trim().length > 0;
 
+  const highlightText = (text: string, highlight: string) => {
+    if (!highlight.trim()) return text;
+    const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
+    return (
+      <span>
+        {parts.map((part, i) => 
+          part.toLowerCase() === highlight.toLowerCase() ? (
+            <span key={i} className="text-purple-400 bg-purple-400/10 px-0.5 rounded-sm">{part}</span>
+          ) : (
+            <span key={i}>{part}</span>
+          )
+        )}
+      </span>
+    );
+  };
+
   return (
     <>
       {/* Mobile Overlay */}
@@ -173,6 +189,20 @@ const Header: React.FC<HeaderProps> = ({
                     Quick Access
                 </span>
               </button>
+              {expandedMenus['Favorites'] && isSidebarOpen && (
+                <div className="mt-1 ml-4 border-l border-white/5 space-y-1">
+                  {mostUsedTools.map(item => (
+                    <button 
+                      key={item.key} 
+                      onClick={() => { setActiveTool(item.key); if (window.innerWidth < 768) setIsSidebarOpen(false); }} 
+                      className={`w-full text-left px-5 py-2.5 rounded-xl transition-all flex flex-col items-start ${activeTool === item.key ? 'text-purple-400 bg-purple-500/5' : 'text-gray-500 hover:text-gray-300'}`}
+                    >
+                        <span className="text-xs font-bold truncate w-full" title={item.label}>{item.label}</span>
+                        <span className="text-[10px] opacity-60 font-medium leading-tight mt-0.5 truncate w-full" title={item.description}>{item.description}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -190,7 +220,7 @@ const Header: React.FC<HeaderProps> = ({
                           {isActive && <div className="absolute left-[-16px] top-1/2 -translate-y-1/2 w-1.5 h-10 bg-purple-500 rounded-full shadow-[0_0_20px_rgba(168,85,247,0.8)]" />}
                           <group.icon className={`w-6 h-6 shrink-0 ${isActive ? 'text-yellow-500' : 'text-gray-600 group-hover:text-gray-400'}`} />
                           <span className={`text-sm font-bold truncate flex-grow text-left transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                              {group.group}
+                              {highlightText(group.group, sidebarSearch)}
                           </span>
                       </button>
                       
@@ -202,8 +232,8 @@ const Header: React.FC<HeaderProps> = ({
                                     onClick={() => { setActiveTool(item.key); if (window.innerWidth < 768) setIsSidebarOpen(false); }} 
                                     className={`w-full text-left px-5 py-2.5 rounded-xl transition-all flex flex-col items-start ${activeTool === item.key ? 'text-purple-400 bg-purple-500/5' : 'text-gray-500 hover:text-gray-300'}`}
                                   >
-                                      <span className="text-xs font-bold">{item.label}</span>
-                                      <span className="text-[10px] opacity-50 font-medium leading-tight mt-0.5">{item.description}</span>
+                                      <span className="text-xs font-bold truncate w-full" title={item.label}>{highlightText(item.label, sidebarSearch)}</span>
+                                      <span className="text-[10px] opacity-60 font-medium leading-tight mt-0.5 truncate w-full" title={item.description}>{highlightText(item.description, sidebarSearch)}</span>
                                   </button>
                               ))}
                           </div>
