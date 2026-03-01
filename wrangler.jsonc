@@ -1,0 +1,1 @@
+{\n  "$schema": "node_modules/wrangler/config-schema.json",\n  "name": "multitools03",\n  "compatibility_date": "2025-09-27",\n  "observability": { "enabled": true },\n  "assets": { "not_found_handling": "single-page-application" },\n  "compatibility_flags": ["nodejs_compat"]\n}
