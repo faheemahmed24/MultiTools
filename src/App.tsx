@@ -4,6 +4,7 @@ import useUserLocalStorage from './hooks/useUserLocalStorage';
 import i18n, { getTranslations } from './lib/i18n';
 import type { Language, User, Transcription } from './types';
 import { transcribeAudio } from './services/geminiService';
+import { TOOL_STRUCTURE, ALL_TOOLS } from './constants';
 
 import Header from './components/Header';
 import FileUpload from './components/FileUpload';
@@ -11,6 +12,7 @@ import TranscriptionView from './components/TranscriptionView';
 import HistoryPanel from './components/HistoryPanel';
 import AuthModal from './components/AuthModal';
 import Loader from './components/Loader';
+import Toast, { ToastType } from './components/Toast';
 
 // Tool Components
 import AICopilot from './components/AICopilot';
@@ -50,23 +52,9 @@ interface ToolEntry {
   label: string;
   description: string;
   icon: React.FC<React.SVGProps<SVGSVGElement>>;
-  category: string;
   tags: string[];
+  isCore?: boolean;
 }
-
-const TOOLS_DATABASE: ToolEntry[] = [
-  { key: 'AI Transcriber', label: 'Universal Transcriber', description: 'Neural Speech-to-Text Engine', icon: TranscriberIcon, category: 'Intelligence', tags: ['audio', 'video', 'speech', 'text', 'transcribe'] },
-  { key: 'PDF Copilot', label: 'AI Copilot', description: 'Command terminal for documents', icon: BoltIcon, category: 'Intelligence', tags: ['pdf', 'ai', 'automate', 'commands'] },
-  { key: 'Chat PDF', label: 'Chat PDF', description: 'Cognitive dialogue with documents', icon: SparklesIcon, category: 'Intelligence', tags: ['pdf', 'chat', 'analyze', 'qa'] },
-  { key: 'AI PDF Editor', label: 'AI Text Editor', description: 'Neural syntax refiner', icon: Squares2x2Icon, category: 'Intelligence', tags: ['edit', 'text', 'rewrite', 'refine'] },
-  { key: 'Strategic Planner', label: 'Plan Architect', description: 'Synthesize data into reporting', icon: CubeIcon, category: 'Business', tags: ['strategy', 'report', 'planning', 'pptx'] },
-  { key: 'AI Whiteboard', label: 'Whiteboards', description: 'Sketch-to-diagram synthesis', icon: SwatchIcon, category: 'Business', tags: ['drawing', 'diagram', 'canvas', 'sketch'] },
-  { key: 'Smart Summarizer', label: 'Auto Summarize', description: 'Concise data briefing', icon: SummarizerIcon, category: 'Business', tags: ['summary', 'brief', 'extraction', 'contacts'] },
-  { key: 'Pure Organizer', label: 'Verbatim Node', description: 'Zero-alteration data structuring', icon: ArrowPathIcon, category: 'Business', tags: ['organize', 'data', 'verbatim', 'structure'] },
-  { key: 'AI Translator', label: 'Universal Translator', description: 'Nuanced dialect and script flow', icon: TranslatorIcon, category: 'Media', tags: ['translate', 'language', 'speech', 'global'] },
-  { key: 'Grammar Corrector', label: 'Syntax Refiner', description: 'Stylistic proofreading', icon: GrammarIcon, category: 'Media', tags: ['grammar', 'proofread', 'spellcheck', 'syntax'] },
-  { key: 'PDF Manager', label: 'Page Architect', description: 'Merge and slice PDF assets', icon: DocumentDuplicateIcon, category: 'Media', tags: ['pdf', 'merge', 'split', 'pages'] },
-];
 
 function useUsageCounts(userId: string | undefined) {
     return useUserLocalStorage<Record<string, number>>('toolUsageCounts_v4', {});
@@ -79,11 +67,10 @@ const CommandPalette: React.FC<{
 }> = ({ isOpen, onClose, onSelect }) => {
   const [query, setQuery] = useState('');
   const filtered = useMemo(() => {
-    if (!query.trim()) return TOOLS_DATABASE;
+    if (!query.trim()) return ALL_TOOLS;
     const lower = query.toLowerCase();
-    return TOOLS_DATABASE.filter(t => 
+    return ALL_TOOLS.filter(t => 
       t.label.toLowerCase().includes(lower) || 
-      t.category.toLowerCase().includes(lower) ||
       t.tags.some(tag => tag.includes(lower))
     );
   }, [query]);
@@ -97,18 +84,18 @@ const CommandPalette: React.FC<{
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-start justify-center pt-[15vh] px-4 animate-fadeIn">
-      <div className="w-full max-w-2xl bg-[#0D0D1A] border border-white/10 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col transform animate-pop-in">
-        <div className="flex items-center gap-4 p-6 border-b border-white/5">
-          <SearchIcon className="w-6 h-6 text-purple-500" />
-          <input autoFocus type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by tool, section..." className="flex-grow bg-transparent text-xl text-white outline-none" />
-          <button onClick={onClose} className="text-gray-500 hover:text-white"><XCircleIcon className="w-6 h-6" /></button>
+    <div className="fixed inset-0 z-[200] bg-zinc-950/40 backdrop-blur-sm flex items-start justify-center pt-[15vh] px-4 animate-fadeIn">
+      <div className="w-full max-w-2xl bg-white dark:bg-zinc-900 border border-[var(--border-app)] rounded-lg shadow-2xl overflow-hidden flex flex-col transform animate-pop-in">
+        <div className="flex items-center gap-4 p-5 border-b border-[var(--border-app)]">
+          <SearchIcon className="w-5 h-5 text-zinc-400" />
+          <input autoFocus type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search tools..." className="flex-grow bg-transparent text-lg text-[var(--text-primary)] outline-none placeholder:text-zinc-400" />
+          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"><XCircleIcon className="w-5 h-5" /></button>
         </div>
-        <div className="max-h-[50vh] overflow-y-auto p-4 custom-scrollbar space-y-2">
+        <div className="max-h-[50vh] overflow-y-auto p-2 custom-scrollbar space-y-1">
           {filtered.map(tool => (
-            <button key={tool.key} onClick={() => { onSelect(tool.key); onClose(); }} className="w-full flex items-center gap-4 p-4 hover:bg-purple-600/10 rounded-2xl transition-all text-left group">
-              <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-400 group-hover:bg-purple-500 group-hover:text-white"><tool.icon className="w-5 h-5" /></div>
-              <div className="flex-grow"><h4 className="font-bold text-white text-sm uppercase">{tool.label}</h4><p className="text-[10px] text-gray-500 uppercase">{tool.category}</p></div>
+            <button key={tool.key} onClick={() => { onSelect(tool.key); onClose(); }} className="w-full flex items-center gap-4 p-3 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-all text-left group">
+              <div className="w-8 h-8 bg-zinc-100 dark:bg-zinc-800 rounded flex items-center justify-center text-zinc-500 group-hover:text-zinc-900 dark:group-hover:text-zinc-100"><tool.icon className="w-4 h-4" /></div>
+              <div className="flex-grow"><h4 className="font-bold text-[var(--text-primary)] text-sm">{tool.label}</h4><p className="text-[10px] text-zinc-500 uppercase tracking-wider">{tool.category}</p></div>
             </button>
           ))}
         </div>
@@ -125,44 +112,39 @@ const LandingPage: React.FC<{
   openSearch: () => void;
 }> = ({ onStart, onLogin, currentUser }) => {
   return (
-    <div className="min-h-full flex flex-col items-center justify-center py-12 md:py-16 px-4 md:px-6 animate-fadeIn relative">
-      <div className="absolute right-0 top-1/4 w-[40%] h-[300px] bg-gradient-to-r from-purple-500/40 via-pink-500/40 to-transparent blur-[120px] pointer-events-none rounded-l-full"></div>
-      
-      <div className="max-w-6xl w-full text-center relative z-10">
-        <div className="space-y-4">
-          <div className="inline-flex items-center gap-2 px-5 py-1.5 rounded-full bg-white/5 border border-white/10 text-purple-400 text-[10px] font-black uppercase tracking-[0.3em] mb-4 md:mb-8">
-            <SparklesIcon className="w-3.5 h-3.5" /> MultiTools Workstation 3.0
+    <div className="min-h-full flex flex-col items-center justify-center py-12 md:py-24 px-4 md:px-6 animate-fadeIn relative">
+      <div className="max-w-4xl w-full text-center relative z-10">
+        <div className="space-y-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-zinc-100 dark:bg-zinc-900 border border-[var(--border-app)] text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-4">
+            <SparklesIcon className="w-3 h-3" /> MultiTools Industrial v4.0
           </div>
           
-          <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-[11rem] font-black tracking-tighter text-white uppercase leading-[0.85] selection:bg-purple-600 mb-6 text-gray-300">
-            UNIVERSAL
+          <h1 className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tighter text-[var(--text-primary)] uppercase leading-[0.85] mb-6">
+            Universal<br/>Workstation
           </h1>
           
-          <div className="space-y-2">
-            <p className="text-xl sm:text-2xl md:text-3xl lg:text-5xl text-gray-600 font-bold tracking-tight">
-              Neural Architecture for
-            </p>
-            <p className="text-xl sm:text-2xl md:text-3xl lg:text-5xl text-white font-black italic tracking-tight">
-              Speech, Strategy & Universal Data.
+          <div className="space-y-2 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-zinc-500 font-medium leading-relaxed">
+              A high-precision neural architecture for speech intelligence, strategic planning, and universal data processing.
             </p>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center items-center mt-12 md:mt-16">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-12">
           <button 
             onClick={onStart}
-            className="w-full sm:w-auto px-8 md:px-12 py-4 md:py-5 bg-purple-600 text-white font-black uppercase tracking-[0.2em] text-[10px] md:text-xs rounded-xl transition-all shadow-[0_0_40px_rgba(168,85,247,0.3)] hover:bg-purple-500 active:scale-95 flex items-center justify-center gap-3"
+            className="w-full sm:w-auto px-10 py-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold uppercase tracking-widest text-[10px] rounded-md transition-all hover:bg-zinc-800 dark:hover:bg-white active:scale-95 flex items-center justify-center gap-3"
           >
-            <TranscriberIcon className="w-5 h-5" />
-            {currentUser ? 'Open Universal Core' : 'INITIALIZE SESSION'}
+            <TranscriberIcon className="w-4 h-4" />
+            {currentUser ? 'Open Workstation' : 'Initialize Session'}
           </button>
           
           {!currentUser && (
             <button 
               onClick={onLogin}
-              className="w-full sm:w-auto px-8 md:px-12 py-4 md:py-5 bg-transparent border border-white/5 hover:border-white/10 text-gray-500 hover:text-white font-black uppercase tracking-[0.2em] text-[10px] md:text-xs rounded-xl transition-all active:scale-95"
+              className="w-full sm:w-auto px-10 py-4 bg-transparent border border-[var(--border-app)] text-zinc-500 hover:text-[var(--text-primary)] font-bold uppercase tracking-widest text-[10px] rounded-md transition-all active:scale-95"
             >
-              OPERATOR LOG IN
+              Operator Login
             </button>
           )}
         </div>
@@ -183,8 +165,24 @@ function App() {
   const [currentTranscriptionId, setCurrentTranscriptionId] = useUserLocalStorage<string | null>('currentTranscriptionId', null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentProcessingFile, setCurrentProcessingFile] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
   const t = useMemo(() => getTranslations('en'), []);
+
+  const showToast = useCallback((message: string, type: ToastType = 'info') => {
+    setToast({ message, type });
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleToolSelect = useCallback((toolKey: string) => {
     setActiveTool(toolKey);
@@ -212,10 +210,11 @@ function App() {
       if (lastId) {
         setCurrentTranscriptionId(lastId);
         handleToolSelect('AI Transcriber');
+        showToast('Transcription completed successfully', 'success');
       }
     } catch (error) {
       console.error(error);
-      alert("Terminal Processing Error. Check node logs.");
+      showToast('Terminal Processing Error. Check node logs.', 'error');
     } finally {
       setIsProcessing(false);
       setCurrentProcessingFile(null);
@@ -226,7 +225,7 @@ function App() {
     return Object.entries(usageCounts)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
-      .map(([key]) => TOOLS_DATABASE.find(t => t.key === key))
+      .map(([key]) => ALL_TOOLS.find(t => t.key === key))
       .filter(Boolean) as ToolEntry[];
   }, [usageCounts]);
 
@@ -288,7 +287,7 @@ function App() {
   };
 
   return (
-    <div className="bg-[#05050C] text-white min-h-screen font-sans flex flex-col md:flex-row overflow-x-hidden">
+    <div className="bg-[var(--bg-app)] text-[var(--text-primary)] min-h-screen font-sans flex flex-col md:flex-row overflow-x-hidden">
       <Header 
         activeTool={activeTool} 
         setActiveTool={handleToolSelect} 
@@ -301,25 +300,28 @@ function App() {
       
       <div className="flex-1 flex flex-col relative min-w-0">
         {/* Mobile Top Bar */}
-        <div className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-[#05050C]/80 backdrop-blur-md sticky top-0 z-40">
+        <div className="md:hidden flex items-center justify-between p-4 border-b border-[var(--border-app)] bg-[var(--bg-app)] sticky top-0 z-40">
           <div className="flex items-center gap-3" onClick={() => handleToolSelect('Home')}>
-            <div className="bg-purple-600 w-8 h-8 rounded-lg flex items-center justify-center">
-              <span className="text-sm font-black text-white">M</span>
+            <div className="bg-zinc-900 dark:bg-zinc-100 w-8 h-8 rounded flex items-center justify-center">
+              <span className="text-sm font-black text-white dark:text-zinc-900">M</span>
             </div>
-            <span className="text-sm font-black text-white tracking-tighter uppercase">MultiTools</span>
+            <span className="text-sm font-bold text-[var(--text-primary)] tracking-tight uppercase">MultiTools</span>
           </div>
-          <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-gray-400 hover:text-white">
+          <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-zinc-500 hover:text-[var(--text-primary)]">
             <Menu className="w-6 h-6" />
           </button>
         </div>
 
         <main className="flex-grow p-4 sm:p-8 md:p-12 overflow-y-auto no-scrollbar">
-          {renderActiveTool()}
+          <div className="max-w-6xl mx-auto">
+            {renderActiveTool()}
+          </div>
         </main>
       </div>
       
       <CommandPalette isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onSelect={handleToolSelect} />
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onLoginSuccess={(user) => { setCurrentUser(user); setIsAuthModalOpen(false); }} t={t} />
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onLoginSuccess={(user) => { setCurrentUser(user); setIsAuthModalOpen(false); showToast(`Welcome back, ${user.email}`, 'success'); }} t={t} />
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }

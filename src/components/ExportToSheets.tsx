@@ -8,16 +8,16 @@ interface ExportToSheetsProps {
 
 const ExportToSheets: React.FC<ExportToSheetsProps> = ({ t }) => {
   return (
-    <div className="min-h-[60vh] flex flex-col items-center justify-center text-center animate-fadeIn">
-      <div className="bg-purple-600/10 p-8 rounded-[3rem] border border-purple-500/20 mb-8 shadow-2xl">
-        <SheetIcon className="w-20 h-20 text-purple-500 animate-pulse" />
+    <div className="min-h-[60vh] flex flex-col items-center justify-center text-center animate-fadeIn px-6">
+      <div className="bg-zinc-50 dark:bg-zinc-900 p-10 rounded-lg border border-[var(--border-app)] mb-10 shadow-elevation-1">
+        <SheetIcon className="w-16 h-16 text-zinc-900 dark:text-zinc-100" />
       </div>
-      <h2 className="text-4xl font-black text-white uppercase tracking-tighter mb-4">Export to Sheets</h2>
-      <p className="text-gray-500 text-lg max-w-xl leading-relaxed">
+      <h2 className="text-3xl font-bold text-[var(--text-primary)] uppercase tracking-tight mb-4">Export to Sheets</h2>
+      <p className="text-zinc-500 text-base max-w-lg leading-relaxed font-medium">
         Unstructured text to CSV/Excel. Extract data from your documents and export it into structured spreadsheets.
       </p>
       <div className="mt-12 flex flex-col items-center gap-4">
-        <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-purple-400">
+        <div className="px-5 py-2 bg-zinc-100 dark:bg-zinc-900 border border-[var(--border-app)] rounded-md text-[10px] font-bold uppercase tracking-widest text-zinc-500">
           Module Optimization in Progress
         </div>
       </div>

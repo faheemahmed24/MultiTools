@@ -20,10 +20,10 @@ const Switch: React.FC<{ checked: boolean; onChange: (checked: boolean) => void;
     <label className="flex items-center cursor-pointer group">
         <div className="relative">
             <input type="checkbox" className="sr-only" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-            <div className={`block w-10 h-6 rounded-full transition-colors ${checked ? 'bg-purple-600' : 'bg-gray-600'}`}></div>
-            <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 ${checked ? 'translate-x-full' : ''}`}></div>
+            <div className={`block w-9 h-5 rounded-full transition-colors ${checked ? 'bg-zinc-900 dark:bg-zinc-100' : 'bg-zinc-200 dark:bg-zinc-800'}`}></div>
+            <div className={`dot absolute left-0.5 top-0.5 bg-white dark:bg-zinc-900 w-4 h-4 rounded-full transition-transform duration-200 ${checked ? 'translate-x-4' : ''}`}></div>
         </div>
-        <div className="ms-3 text-[10px] font-black uppercase tracking-widest text-gray-500 group-hover:text-gray-300 transition-colors">{label}</div>
+        <div className="ms-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 group-hover:text-[var(--text-primary)] transition-colors">{label}</div>
     </label>
 );
 
@@ -84,7 +84,7 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
     } else if (format === 'docx') {
       const paragraphs = transcription.segments.map(s => new docx.Paragraph({ 
           children: [
-              new docx.TextRun({ text: `[${s.startTime}] `, bold: true, color: "8b5cf6" }),
+              new docx.TextRun({ text: `[${s.startTime}] `, bold: true, color: "09090b" }),
               new docx.TextRun({ text: `${s.speaker}: `, bold: true }), 
               new docx.TextRun(s.text)
           ], 
@@ -109,41 +109,41 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-800/40 backdrop-blur-md border border-gray-700/50 rounded-3xl shadow-2xl overflow-hidden animate-fadeIn">
+    <div className="flex flex-col h-full bg-white dark:bg-zinc-950 border border-[var(--border-app)] rounded-lg shadow-elevation-1 overflow-hidden animate-fadeIn">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 md:p-6 border-b border-gray-700/50 bg-gray-800/50 gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 border-b border-[var(--border-app)] bg-zinc-50 dark:bg-zinc-900/50 gap-4">
         <div className="flex items-center gap-4">
-             <button onClick={onClose} className="p-2 md:p-2.5 hover:bg-gray-700/50 rounded-xl text-gray-400 hover:text-white transition-all transform hover:-translate-x-1">
-                <ArrowLeftIcon className="w-5 h-5" />
+             <button onClick={onClose} className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-md text-zinc-500 hover:text-[var(--text-primary)] transition-all">
+                <ArrowLeftIcon className="w-4 h-4" />
              </button>
              <div>
-                <h2 className="text-lg md:text-xl font-extrabold text-white tracking-tight">{t.transcription}</h2>
+                <h2 className="text-base font-bold text-[var(--text-primary)] tracking-tight">{t.transcription}</h2>
                 <div className="flex items-center gap-2 mt-0.5">
-                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                    <p className="text-[10px] text-purple-400 font-black uppercase tracking-[0.2em]">{transcription.detectedLanguage} detected</p>
+                    <span className="w-1.5 h-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100"></span>
+                    <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">{transcription.detectedLanguage} detected</p>
                 </div>
              </div>
         </div>
-        <div className="flex items-center gap-6 md:gap-8 w-full sm:w-auto justify-between sm:justify-end">
+        <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
           <Switch checked={showTimestamps} onChange={setShowTimestamps} label="Timestamps" />
           <Switch checked={showSpeaker} onChange={setShowSpeaker} label="Speakers" />
         </div>
       </div>
 
       {/* Main Viewport */}
-      <div ref={containerRef} className="flex-grow p-4 md:p-8 overflow-y-auto custom-scrollbar">
+      <div ref={containerRef} className="flex-grow p-5 md:p-10 overflow-y-auto custom-scrollbar">
         {isEditing ? (
-          <div className="max-w-4xl mx-auto space-y-4">
+          <div className="max-w-4xl mx-auto space-y-3">
             {editedSegments.map((seg, idx) => (
-              <div key={idx} className="flex flex-col gap-2 p-4 bg-gray-900/40 rounded-2xl border border-gray-700/30 focus-within:border-purple-500/50 transition-colors">
-                <div className="flex gap-4 text-[10px] font-black uppercase tracking-widest mb-1">
-                    <span className="text-purple-400 bg-purple-400/10 px-2 py-0.5 rounded">{seg.startTime}</span>
-                    <span className="text-pink-400 bg-pink-400/10 px-2 py-0.5 rounded">{seg.speaker}</span>
+              <div key={idx} className="flex flex-col gap-2 p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-md border border-[var(--border-app)] focus-within:border-zinc-400 dark:focus-within:border-zinc-600 transition-colors">
+                <div className="flex gap-3 text-[9px] font-bold uppercase tracking-widest mb-1">
+                    <span className="text-zinc-500 bg-zinc-200 dark:bg-zinc-800 px-2 py-0.5 rounded">{seg.startTime}</span>
+                    <span className="text-zinc-900 dark:text-zinc-100 bg-zinc-200 dark:bg-zinc-800 px-2 py-0.5 rounded">{seg.speaker}</span>
                 </div>
                 <textarea 
                     value={seg.text} 
                     onChange={e => { const n = [...editedSegments]; n[idx].text = e.target.value; setEditedSegments(n); }} 
-                    className="w-full bg-transparent border-0 rounded p-0 text-sm md:text-base text-gray-200 focus:ring-0 resize-none min-h-[60px]"
+                    className="w-full bg-transparent border-0 rounded p-0 text-sm text-[var(--text-primary)] focus:ring-0 resize-none min-h-[60px]"
                     placeholder="Edit segment text..."
                     dir="auto"
                 />
@@ -151,17 +151,17 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
             ))}
           </div>
         ) : (
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-4xl mx-auto">
             {transcription.segments.map((seg, idx) => (
-              <div key={idx} className="flex flex-col md:flex-row gap-4 md:gap-6 p-3 md:p-4 rounded-2xl transition-all hover:bg-gray-700/20 group">
+              <div key={idx} className="flex flex-col md:flex-row gap-4 md:gap-8 p-3 rounded-md transition-all hover:bg-zinc-50 dark:hover:bg-zinc-900 group">
                  {(showTimestamps || showSpeaker) && (
-                    <div className="md:w-32 flex-shrink-0 flex flex-row md:flex-col items-center md:items-start gap-3 md:gap-1 text-[10px] font-black uppercase tracking-tighter pt-0 md:pt-1.5 opacity-60 md:opacity-40 group-hover:opacity-100 transition-opacity">
-                        {showSpeaker && <span className="text-pink-500 truncate bg-pink-500/10 px-2 py-0.5 rounded">{seg.speaker}</span>}
-                        {showTimestamps && <span className="text-purple-400 font-mono tracking-widest">{seg.startTime}</span>}
+                    <div className="md:w-28 flex-shrink-0 flex flex-row md:flex-col items-center md:items-start gap-3 md:gap-1 text-[9px] font-bold uppercase tracking-widest pt-0 md:pt-1 opacity-40 group-hover:opacity-100 transition-opacity">
+                        {showSpeaker && <span className="text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded truncate max-w-full">{seg.speaker}</span>}
+                        {showTimestamps && <span className="text-zinc-400 font-mono">{seg.startTime}</span>}
                     </div>
                  )}
                 <div className="flex-grow">
-                    <p className="text-gray-200 leading-relaxed text-sm lg:text-lg font-medium selection:bg-purple-500/30 selection:text-white" dir="auto">
+                    <p className="text-[var(--text-primary)] leading-relaxed text-sm md:text-base font-medium selection:bg-zinc-900/10 dark:selection:bg-zinc-100/10" dir="auto">
                         {seg.text}
                     </p>
                 </div>
@@ -172,34 +172,34 @@ const TranscriptionView: React.FC<TranscriptionViewProps> = ({ transcription, on
       </div>
 
       {/* Action Footer */}
-      <div className="p-4 md:p-6 border-t border-gray-700/50 bg-gray-800/80 flex flex-col sm:flex-row gap-4 items-center justify-between">
-        <div className="flex gap-3 w-full sm:w-auto">
-           <button onClick={handleCopy} className="flex-1 sm:flex-none flex items-center justify-center px-5 py-2.5 bg-gray-700/50 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-gray-700 transition-all transform active:scale-95">
-            {isCopied ? <CheckIcon className="w-4 h-4 me-2 text-green-400"/> : <CopyIcon className="w-4 h-4 me-2" />}
+      <div className="p-4 md:p-6 border-t border-[var(--border-app)] bg-zinc-50 dark:bg-zinc-900/80 flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="flex gap-2 w-full sm:w-auto">
+           <button onClick={handleCopy} className="flex-1 sm:flex-none flex items-center justify-center px-5 py-2.5 bg-white dark:bg-zinc-900 border border-[var(--border-app)] text-[var(--text-primary)] text-[10px] font-bold uppercase tracking-widest rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all active:scale-95">
+            {isCopied ? <CheckIcon className="w-3.5 h-3.5 me-2 text-zinc-900 dark:text-zinc-100"/> : <CopyIcon className="w-3.5 h-3.5 me-2" />}
             {isCopied ? 'COPIED' : 'COPY'}
           </button>
           <div className="relative flex-1 sm:flex-none">
-            <button onClick={() => setShowExportMenu(!showExportMenu)} className="w-full flex items-center justify-center px-5 py-2.5 bg-gray-700/50 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-gray-700 transition-all transform active:scale-95">
-              <DownloadIcon className="w-4 h-4 me-2" /> EXPORT
+            <button onClick={() => setShowExportMenu(!showExportMenu)} className="w-full flex items-center justify-center px-5 py-2.5 bg-white dark:bg-zinc-900 border border-[var(--border-app)] text-[var(--text-primary)] text-[10px] font-bold uppercase tracking-widest rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all active:scale-95">
+              <DownloadIcon className="w-3.5 h-3.5 me-2" /> EXPORT
             </button>
             {showExportMenu && (
-              <div onMouseLeave={() => setShowExportMenu(false)} className="absolute bottom-full mb-3 left-0 w-full sm:w-36 bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl py-2 z-50 animate-pop-in">
+              <div onMouseLeave={() => setShowExportMenu(false)} className="absolute bottom-full mb-2 left-0 w-full sm:w-32 bg-white dark:bg-zinc-900 border border-[var(--border-app)] rounded-md shadow-elevation-2 py-1 z-50 animate-pop-in">
                 {['txt', 'json', 'srt', 'docx', 'pdf', 'csv'].map(f => (
-                  <button key={f} onClick={() => handleExport(f as any)} className="w-full text-start px-5 py-2.5 text-[10px] font-black text-gray-400 hover:text-white hover:bg-purple-600 transition-colors uppercase tracking-widest">{f}</button>
+                  <button key={f} onClick={() => handleExport(f as any)} className="w-full text-start px-4 py-2 text-[10px] font-bold text-zinc-500 hover:text-[var(--text-primary)] hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors uppercase tracking-widest">{f}</button>
                 ))}
               </div>
             )}
           </div>
         </div>
-        <div className="flex gap-3 w-full sm:w-auto">
+        <div className="flex gap-2 w-full sm:w-auto">
             {isEditing ? (
               <>
-                <button onClick={() => { onUpdate(transcription.id, editedSegments); setIsEditing(false); }} className="flex-1 sm:flex-none px-6 py-2.5 bg-green-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-green-700 shadow-lg shadow-green-900/20 transition-all">SAVE</button>
-                <button onClick={() => setIsEditing(false)} className="flex-1 sm:flex-none px-6 py-2.5 bg-gray-700 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-gray-650 transition-all">CANCEL</button>
+                <button onClick={() => { onUpdate(transcription.id, editedSegments); setIsEditing(false); }} className="flex-1 sm:flex-none px-6 py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] font-bold uppercase tracking-widest rounded-md hover:bg-zinc-800 dark:hover:bg-white transition-all">SAVE</button>
+                <button onClick={() => setIsEditing(false)} className="flex-1 sm:flex-none px-6 py-2.5 bg-zinc-100 dark:bg-zinc-900 border border-[var(--border-app)] text-zinc-500 text-[10px] font-bold uppercase tracking-widest rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all">CANCEL</button>
               </>
             ) : (
-              <button onClick={handleEditToggle} className="w-full flex items-center justify-center px-6 py-2.5 bg-purple-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-purple-700 shadow-lg shadow-purple-900/20 transition-all transform hover:scale-105 active:scale-95">
-                <EditIcon className="w-4 h-4 me-2"/> EDIT TEXT
+              <button onClick={handleEditToggle} className="w-full flex items-center justify-center px-6 py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] font-bold uppercase tracking-widest rounded-md hover:bg-zinc-800 dark:hover:bg-white transition-all active:scale-95">
+                <EditIcon className="w-3.5 h-3.5 me-2"/> EDIT TEXT
               </button>
             )}
         </div>

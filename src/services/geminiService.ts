@@ -6,45 +6,26 @@ const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KE
 const ai = new GoogleGenAI({ apiKey: API_KEY as string });
 
 /**
- * Production-ready Gemini API response generator (Fetch API version)
- * Requested by user for specific compatibility.
+ * Production-ready Gemini API response generator using the official SDK.
  */
 export async function generateGeminiResponse(prompt: string): Promise<string> {
   try {
     if (!API_KEY) {
-      throw new Error("Gemini API key not found");
+      throw new Error("Gemini API key not found. Please configure VITE_GEMINI_API_KEY.");
     }
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: prompt }],
-            },
-          ],
-        }),
-      }
-    );
+    const response = await ai.models.generateContent({
+      model: MODELS.flash,
+      contents: [{ parts: [{ text: prompt }] }],
+    });
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch Gemini response");
-    }
-
-    const data = await response.json();
-
-    return (
-      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "No response generated."
-    );
+    return response.text || "No response generated.";
   } catch (error) {
     console.error("Gemini Service Error:", error);
-    return "Error generating response.";
+    if (error instanceof Error) {
+      return `Error: ${error.message}`;
+    }
+    return "An unexpected error occurred while generating the response.";
   }
 }
 
@@ -52,7 +33,7 @@ export async function generateGeminiResponse(prompt: string): Promise<string> {
 export const callGemini = generateGeminiResponse;
 
 const MODELS = {
-    primary: 'gemini-3-pro-preview', // High-fidelity for complex transcription and reasoning
+    primary: 'gemini-3.1-pro-preview', // High-fidelity for complex transcription and reasoning
     vision: 'gemini-3-flash-preview',
     lite: 'gemini-flash-lite-latest',
     speech: 'gemini-2.5-flash-preview-tts',

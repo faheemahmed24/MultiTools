@@ -109,15 +109,15 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing,
   };
 
   return (
-    <div className="bg-white/[0.01] border border-white/5 backdrop-blur-3xl rounded-[2rem] md:rounded-[3rem] p-6 md:p-12 max-w-5xl mx-auto animate-fadeIn shadow-2xl">
+    <div className="bg-white dark:bg-zinc-950 border border-[var(--border-app)] rounded-lg p-6 md:p-10 max-w-5xl mx-auto animate-fadeIn shadow-elevation-1">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10">
         <div className="md:col-span-8 flex flex-col gap-6 md:gap-8">
             <div
-                className={`relative flex flex-col items-center justify-center transition-all duration-700 ${fileQueue.length > 0 ? 'p-6 md:p-8 border-1' : 'p-10 md:p-16 border-2'} border-dashed rounded-[2rem] md:rounded-[3rem] ${isProcessing ? 'border-gray-800' : (isDragging ? 'border-purple-500 bg-purple-500/10' : 'border-white/10 hover:border-purple-500/50')}`}
+                className={`relative flex flex-col items-center justify-center transition-all duration-300 ${fileQueue.length > 0 ? 'p-6 md:p-8' : 'p-10 md:p-16'} border border-dashed rounded-md ${isProcessing ? 'border-zinc-200 dark:border-zinc-800' : (isDragging ? 'border-zinc-900 dark:border-zinc-100 bg-zinc-50 dark:bg-zinc-900' : 'border-[var(--border-app)] hover:border-zinc-400 dark:hover:border-zinc-600')}`}
                 onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}
             >
-                <div className={`${fileQueue.length > 0 ? 'p-3 md:p-4 mb-3 md:mb-4' : 'p-6 md:p-8 mb-6 md:mb-8'} bg-purple-500/10 rounded-full border border-purple-500/20 transition-all shadow-2xl`}>
-                    <UploadIcon className={`${fileQueue.length > 0 ? 'w-8 h-8 md:w-10 md:h-10' : 'w-16 h-16 md:w-20 md:h-20'} text-purple-400`} />
+                <div className={`${fileQueue.length > 0 ? 'mb-3' : 'mb-6'} text-zinc-400`}>
+                    <UploadIcon className={`${fileQueue.length > 0 ? 'w-8 h-8' : 'w-12 h-12'}`} />
                 </div>
                 <input
                     type="file"
@@ -131,56 +131,56 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing,
                 <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isProcessing}
-                    className="px-6 md:px-10 py-3 md:py-4 bg-white/5 border border-white/10 text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl hover:bg-white/10 transition-all active:scale-95"
+                    className="px-6 py-2.5 bg-zinc-100 dark:bg-zinc-900 border border-[var(--border-app)] text-[var(--text-primary)] font-bold uppercase tracking-widest text-[10px] rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all active:scale-95"
                 >
                     {isProcessing ? 'System Locked' : 'Add Local Assets'}
                 </button>
             </div>
 
             {fileQueue.length > 0 && (
-                <div className="bg-black/20 rounded-[2rem] border border-white/5 overflow-hidden flex flex-col animate-fadeIn">
-                    <div className="px-6 py-4 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Selected Node Cluster ({fileQueue.length})</span>
+                <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-md border border-[var(--border-app)] overflow-hidden flex flex-col animate-fadeIn">
+                    <div className="px-5 py-3 border-b border-[var(--border-app)] flex justify-between items-center bg-zinc-100/50 dark:bg-zinc-900">
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Node Cluster ({fileQueue.length})</span>
                         {!isProcessing && (
-                            <button onClick={() => setFileQueue([])} className="text-[9px] font-black text-red-500/70 hover:text-red-400 uppercase tracking-widest transition-colors">Clear Batch</button>
+                            <button onClick={() => setFileQueue([])} className="text-[9px] font-bold text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 uppercase tracking-widest transition-colors">Clear All</button>
                         )}
                     </div>
-                    <div className="max-h-[300px] overflow-y-auto custom-scrollbar p-4 space-y-2">
+                    <div className="max-h-[300px] overflow-y-auto custom-scrollbar p-3 space-y-1">
                         {fileQueue.map((file, idx) => {
                             const isCurrentlyProcessing = processingFiles.includes(file.name);
                             return (
-                                <div key={`${file.name}-${idx}`} className={`group flex items-center gap-4 p-3 bg-white/[0.03] rounded-2xl border transition-all ${isCurrentlyProcessing ? 'border-purple-500/50 bg-purple-500/5' : 'border-transparent hover:border-white/10'}`}>
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-purple-400 flex-shrink-0 ${isCurrentlyProcessing ? 'animate-pulse' : ''}`}>
-                                        {isCurrentlyProcessing ? <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" /> : <UploadIcon className="w-5 h-5" />}
+                                <div key={`${file.name}-${idx}`} className={`group flex items-center gap-4 p-3 bg-white dark:bg-zinc-900 rounded border transition-all ${isCurrentlyProcessing ? 'border-zinc-900 dark:border-zinc-100' : 'border-transparent hover:border-[var(--border-app)]'}`}>
+                                    <div className={`w-8 h-8 rounded flex items-center justify-center text-zinc-400 flex-shrink-0 ${isCurrentlyProcessing ? 'animate-pulse' : ''}`}>
+                                        {isCurrentlyProcessing ? <div className="w-4 h-4 border-2 border-zinc-900 dark:border-zinc-100 border-t-transparent rounded-full animate-spin" /> : <UploadIcon className="w-4 h-4" />}
                                     </div>
                                     <div className="flex-grow min-w-0">
-                                        <p className="text-xs font-bold text-gray-200 truncate">{file.name}</p>
-                                        <p className="text-[9px] text-gray-600 font-black uppercase">{(file.size / 1024 / 1024).toFixed(2)} MB • {file.type.split('/')[1] || 'binary'}</p>
+                                        <p className="text-xs font-bold text-[var(--text-primary)] truncate">{file.name}</p>
+                                        <p className="text-[9px] text-zinc-500 font-bold uppercase">{(file.size / 1024 / 1024).toFixed(2)} MB • {file.type.split('/')[1] || 'binary'}</p>
                                     </div>
                                     {!isProcessing && (
-                                        <button onClick={() => removeFile(idx)} className="p-2 text-gray-600 hover:text-red-400 transition-colors">
-                                            <XCircleIcon className="w-5 h-5" />
+                                        <button onClick={() => removeFile(idx)} className="p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
+                                            <XCircleIcon className="w-4 h-4" />
                                         </button>
                                     )}
                                 </div>
                             );
                         })}
                     </div>
-                    <div className="p-4 bg-purple-600/5">
+                    <div className="p-3 border-t border-[var(--border-app)]">
                          <button 
                             onClick={handleExecuteBatch}
                             disabled={isProcessing}
-                            className={`w-full py-4 md:py-5 rounded-2xl flex items-center justify-center gap-4 transition-all shadow-2xl ${isProcessing ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-purple-600 text-white hover:bg-purple-500 shadow-purple-900/20 active:scale-[0.98]'}`}
+                            className={`w-full py-3 rounded-md flex items-center justify-center gap-3 transition-all ${isProcessing ? 'bg-zinc-100 dark:bg-zinc-900 text-zinc-400 cursor-not-allowed' : 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-white active:scale-[0.98]'}`}
                          >
                             {isProcessing ? (
                                 <>
-                                    <div className="w-5 h-5 border-3 border-white/20 border-t-white rounded-full animate-spin" />
-                                    <span className="text-xs font-black uppercase tracking-[0.2em]">Neural Synchronization...</span>
+                                    <div className="w-4 h-4 border-2 border-zinc-400 border-t-zinc-900 rounded-full animate-spin" />
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">Neural Sync...</span>
                                 </>
                             ) : (
                                 <>
-                                    <BoltIcon className="w-5 h-5" />
-                                    <span className="text-xs font-black uppercase tracking-[0.2em]">Initialize Batch Processing</span>
+                                    <BoltIcon className="w-4 h-4" />
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">Initialize Processing</span>
                                 </>
                             )}
                          </button>
@@ -188,39 +188,39 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, t, isProcessing,
                 </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-grow">
-                    <div className="absolute inset-y-0 start-0 flex items-center ps-5 pointer-events-none">
-                        <LinkIcon className="w-6 h-6 text-gray-600" />
+                    <div className="absolute inset-y-0 start-0 flex items-center ps-4 pointer-events-none">
+                        <LinkIcon className="w-4 h-4 text-zinc-400" />
                     </div>
-                    <input type="text" className="block w-full p-4 md:p-5 ps-14 text-sm text-gray-300 border border-white/5 rounded-2xl bg-black/40 focus:border-purple-500/50 transition-all outline-none shadow-inner placeholder:text-gray-700" placeholder="Stage from remote link..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLinkUpload()} disabled={isProcessing || isFetchingLink} />
+                    <input type="text" className="block w-full p-3 ps-11 text-xs text-[var(--text-primary)] border border-[var(--border-app)] rounded-md bg-white dark:bg-zinc-950 focus:border-zinc-900 dark:focus:border-zinc-100 transition-all outline-none placeholder:text-zinc-400" placeholder="Stage from remote link..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLinkUpload()} disabled={isProcessing || isFetchingLink} />
                 </div>
-                <button onClick={handleLinkUpload} disabled={isFetchingLink || !linkUrl || isProcessing} className="w-full sm:w-auto px-10 py-4 md:py-5 text-xs font-black uppercase tracking-widest text-white bg-white/5 border border-white/10 rounded-2xl hover:bg-purple-600 transition-all active:scale-95 shadow-xl">
+                <button onClick={handleLinkUpload} disabled={isFetchingLink || !linkUrl || isProcessing} className="w-full sm:w-auto px-8 py-3 text-[10px] font-bold uppercase tracking-widest text-[var(--text-primary)] bg-zinc-100 dark:bg-zinc-900 border border-[var(--border-app)] rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all active:scale-95">
                     {isFetchingLink ? 'FETCH' : 'STAGE'}
                 </button>
             </div>
-            {linkError && <p className="text-[11px] font-bold text-red-500 uppercase tracking-widest px-2">{linkError}</p>}
+            {linkError && <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">{linkError}</p>}
         </div>
 
-        <div className="md:col-span-4 space-y-6 md:space-y-8">
-            <div className="p-6 md:p-8 bg-black/20 rounded-[2rem] md:rounded-[3rem] border border-white/5 shadow-2xl">
-                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.4em] mb-4 md:mb-6 flex items-center gap-3">
-                    <GlobeIcon className="w-5 h-5 text-purple-500" /> Dialect Engine
+        <div className="md:col-span-4 space-y-6">
+            <div className="p-6 bg-zinc-50 dark:bg-zinc-900/50 rounded-md border border-[var(--border-app)]">
+                <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <GlobeIcon className="w-4 h-4" /> Dialect Engine
                 </label>
-                <div className="space-y-2.5 max-h-[240px] md:max-h-[340px] overflow-y-auto custom-scrollbar pr-3">
+                <div className="space-y-1 max-h-[240px] md:max-h-[340px] overflow-y-auto custom-scrollbar pr-2">
                     {LANGUAGES.map(lang => (
                         <button
                             key={lang.code}
                             onClick={() => setLanguageHint(lang.code === 'auto' ? 'auto' : lang.name)}
-                            className={`w-full text-left p-3 md:p-4 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all border ${languageHint === (lang.code === 'auto' ? 'auto' : lang.name) ? 'bg-purple-600/20 border-purple-500 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.1)]' : 'bg-white/5 border-white/5 text-gray-500 hover:bg-white/10'}`}
+                            className={`w-full text-left px-3 py-2 rounded text-[10px] font-bold uppercase tracking-widest transition-all border ${languageHint === (lang.code === 'auto' ? 'auto' : lang.name) ? 'bg-zinc-900 dark:bg-zinc-100 border-zinc-900 dark:border-zinc-100 text-white dark:text-zinc-900' : 'bg-white dark:bg-zinc-950 border-[var(--border-app)] text-zinc-500 hover:border-zinc-400 dark:hover:border-zinc-600'}`}
                         >
                             {lang.name}
                         </button>
                     ))}
                 </div>
             </div>
-            <div className="p-6 md:p-8 bg-purple-500/5 rounded-[2rem] md:rounded-[2.5rem] border border-purple-500/10 shadow-inner">
-                <p className="text-[10px] font-bold text-purple-400/80 uppercase tracking-widest leading-loose">
+            <div className="p-5 bg-zinc-100 dark:bg-zinc-900 rounded-md border border-[var(--border-app)]">
+                <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest leading-relaxed">
                     MultiTools Core supports high-density code-switching and batch ingestion targets for 100+ languages.
                 </p>
             </div>

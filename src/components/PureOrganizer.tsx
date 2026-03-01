@@ -127,65 +127,64 @@ const PureOrganizer: React.FC<{ t: TranslationSet }> = ({ t }) => {
   return (
     <div className="flex flex-col h-full animate-fadeIn max-w-7xl mx-auto w-full gap-8">
       {/* Header & Controls */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-6 border-b border-white/5 pb-8">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-6 border-b border-[var(--border-app)] pb-8">
         <div>
           <div className="flex items-center gap-4 mb-2">
-            <div className="w-12 h-12 bg-purple-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(168,85,247,0.4)]">
-                <Squares2x2Icon className="w-7 h-7 text-white" />
+            <div className="w-10 h-10 bg-zinc-900 dark:bg-zinc-100 rounded flex items-center justify-center">
+                <Squares2x2Icon className="w-6 h-6 text-white dark:text-zinc-900" />
             </div>
-            <h2 className="text-4xl font-black text-white tracking-tighter uppercase leading-none">
-              Pure <span className="text-transparent bg-clip-text bg-gradient-to-br from-purple-400 to-pink-600">Organizer</span>
+            <h2 className="text-3xl font-bold text-[var(--text-primary)] tracking-tight uppercase leading-none">
+              Pure <span className="text-zinc-500">Organizer</span>
             </h2>
           </div>
-          <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.4em] ml-16">Zero Word Alteration Architecture</p>
+          <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-14">Zero Word Alteration Architecture</p>
         </div>
         
         {result && (
-          <div className="flex gap-3 animate-pop-in">
-            <button onClick={exportPPTX} className="group flex items-center gap-3 bg-white/5 hover:bg-purple-600/20 text-gray-300 hover:text-purple-400 px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest border border-white/10 hover:border-purple-500/30 transition-all">
-               <DownloadIcon className="w-4 h-4" /> PPTX
+          <div className="flex gap-2 animate-pop-in">
+            <button onClick={exportPPTX} className="group flex items-center gap-2 bg-zinc-100 dark:bg-zinc-900 text-zinc-500 hover:text-[var(--text-primary)] px-5 py-2.5 rounded-md text-[10px] font-bold uppercase tracking-widest border border-[var(--border-app)] hover:border-zinc-400 dark:hover:border-zinc-600 transition-all">
+               <DownloadIcon className="w-3.5 h-3.5" /> PPTX
             </button>
-            <button onClick={exportXLSX} className="group flex items-center gap-3 bg-white/5 hover:bg-green-600/20 text-gray-300 hover:text-green-400 px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest border border-white/10 hover:border-green-500/30 transition-all">
-               <SheetIcon className="w-4 h-4" /> EXCEL
+            <button onClick={exportXLSX} className="group flex items-center gap-2 bg-zinc-100 dark:bg-zinc-900 text-zinc-500 hover:text-[var(--text-primary)] px-5 py-2.5 rounded-md text-[10px] font-bold uppercase tracking-widest border border-[var(--border-app)] hover:border-zinc-400 dark:hover:border-zinc-600 transition-all">
+               <SheetIcon className="w-3.5 h-3.5" /> EXCEL
             </button>
-            <button onClick={exportDOCX} className="group flex items-center gap-3 bg-purple-600 text-white px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-purple-900/20 hover:scale-105 active:scale-95 transition-all">
-               <DocxIcon className="w-4 h-4" /> Word Report
+            <button onClick={exportDOCX} className="group flex items-center gap-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 px-5 py-2.5 rounded-md text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 dark:hover:bg-white active:scale-95 transition-all">
+               <DocxIcon className="w-3.5 h-3.5" /> Word Report
             </button>
           </div>
         )}
       </div>
 
       {/* Main Workspace */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 flex-grow min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-grow min-h-0">
         {/* Left: Input */}
         <div className="flex flex-col gap-6 h-full">
-           <div className="flex-grow bg-[#0A0A15] border border-white/5 rounded-[2.5rem] p-8 flex flex-col relative overflow-hidden group focus-within:border-purple-500/30 transition-all">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/5 blur-[80px] -z-10 group-focus-within:bg-purple-600/10 transition-all"></div>
+           <div className="flex-grow bg-white dark:bg-zinc-950 border border-[var(--border-app)] rounded-lg p-6 flex flex-col relative overflow-hidden group focus-within:border-zinc-400 dark:focus-within:border-zinc-600 transition-all shadow-elevation-1">
                 <textarea 
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     placeholder="Paste messy meeting notes, list items, or raw data fragments here. This engine will preserve every word exactly while grouping them into logical blocks..."
-                    className="w-full h-full bg-transparent text-gray-300 text-lg leading-relaxed resize-none outline-none font-medium placeholder:text-gray-700 custom-scrollbar"
+                    className="w-full h-full bg-transparent text-[var(--text-primary)] text-base leading-relaxed resize-none outline-none font-medium placeholder:text-zinc-400 custom-scrollbar"
                     dir="auto"
                 />
                 {inputText && (
-                    <button onClick={() => {setInputText(''); setResult(null);}} className="absolute top-6 right-6 p-2 bg-white/5 hover:bg-red-500/20 text-gray-500 hover:text-red-400 rounded-xl transition-all"><XCircleIcon className="w-6 h-6"/></button>
+                    <button onClick={() => {setInputText(''); setResult(null);}} className="absolute top-6 right-6 p-2 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 rounded transition-all"><XCircleIcon className="w-5 h-5"/></button>
                 )}
            </div>
            
            <button 
                 onClick={handleOrganize}
                 disabled={isProcessing || !inputText.trim()}
-                className="w-full py-6 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-black uppercase tracking-[0.3em] text-xs rounded-3xl transition-all shadow-2xl shadow-purple-900/40 active:scale-[0.98] flex items-center justify-center gap-4 disabled:opacity-30 disabled:grayscale"
+                className="w-full py-5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold uppercase tracking-widest text-[10px] rounded-md transition-all active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-30 disabled:grayscale"
             >
                 {isProcessing ? (
                     <>
-                        <div className="w-5 h-5 border-3 border-white/20 border-t-white rounded-full animate-spin" /> 
+                        <div className="w-4 h-4 border-2 border-zinc-400 border-t-zinc-900 rounded-full animate-spin" /> 
                         Analyzing Patterns...
                     </>
                 ) : (
                     <>
-                        <BoltIcon className="w-5 h-5 group-hover:rotate-12 transition-transform" /> 
+                        <BoltIcon className="w-4 h-4" /> 
                         Structure Verbatim Data
                     </>
                 )}
@@ -193,50 +192,50 @@ const PureOrganizer: React.FC<{ t: TranslationSet }> = ({ t }) => {
         </div>
 
         {/* Right: Structured Result */}
-        <div className="bg-[#0A0A10]/60 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-10 overflow-y-auto custom-scrollbar shadow-2xl relative">
+        <div className="bg-zinc-50 dark:bg-zinc-900/30 border border-[var(--border-app)] rounded-lg p-8 overflow-y-auto custom-scrollbar shadow-elevation-1 relative">
             {!result && !isProcessing && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center opacity-20 px-10">
-                    <div className="w-32 h-32 bg-purple-500/10 rounded-full flex items-center justify-center mb-8 border border-purple-500/20">
-                        <Squares2x2Icon className="w-12 h-12 text-purple-400" />
+                    <div className="w-24 h-24 bg-zinc-200 dark:bg-zinc-800 rounded flex items-center justify-center mb-6 border border-[var(--border-app)]">
+                        <Squares2x2Icon className="w-10 h-10 text-zinc-400" />
                     </div>
-                    <h4 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Structure Preview</h4>
-                    <p className="text-sm font-medium text-gray-400 leading-relaxed">Your data will appear here organized into distinct, verbatim categories with perfect typography.</p>
+                    <h4 className="text-xl font-bold text-[var(--text-primary)] uppercase tracking-tight mb-2">Structure Preview</h4>
+                    <p className="text-xs font-medium text-zinc-500 leading-relaxed">Your data will appear here organized into distinct, verbatim categories with perfect typography.</p>
                 </div>
             )}
 
             {isProcessing ? (
-                <div className="space-y-10 py-4">
-                    <div className="space-y-4">
-                        <div className="h-4 w-32 bg-purple-500/10 rounded-full animate-pulse"></div>
+                <div className="space-y-8 py-4">
+                    <div className="space-y-3">
+                        <div className="h-3 w-24 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
                         <SkeletonLoader lines={6} />
                     </div>
-                    <div className="space-y-4">
-                        <div className="h-4 w-40 bg-purple-500/10 rounded-full animate-pulse"></div>
+                    <div className="space-y-3">
+                        <div className="h-3 w-32 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
                         <SkeletonLoader lines={4} />
                     </div>
                 </div>
             ) : result ? (
-                <div className="space-y-12 animate-fadeIn py-4">
+                <div className="space-y-10 animate-fadeIn py-4">
                     {result.categories.map((cat: any, i: number) => {
                         const isCatRTL = isRTL(cat.heading);
                         return (
                             <div key={i} className={`group ${isCatRTL ? 'text-right' : 'text-left'}`}>
-                                <div className={`inline-flex items-center gap-3 mb-6 border-b-2 border-purple-500/30 pb-2 ${isCatRTL ? 'flex-row-reverse' : ''}`}>
-                                    <div className="w-1.5 h-6 bg-purple-500 rounded-full"></div>
-                                    <h3 className={`text-purple-400 text-sm font-black uppercase tracking-[0.25em] ${isCatRTL ? 'font-arabic' : ''}`}>
+                                <div className={`inline-flex items-center gap-2 mb-4 border-b border-zinc-900 dark:border-zinc-100 pb-1 ${isCatRTL ? 'flex-row-reverse' : ''}`}>
+                                    <div className="w-1 h-4 bg-zinc-900 dark:bg-zinc-100"></div>
+                                    <h3 className={`text-zinc-900 dark:text-zinc-100 text-[10px] font-bold uppercase tracking-widest ${isCatRTL ? 'font-arabic' : ''}`}>
                                         {cat.heading}
                                     </h3>
                                 </div>
-                                <div className="space-y-3">
+                                <div className="space-y-2">
                                     {cat.items.map((item: string, idx: number) => {
                                         const isItemRTL = isRTL(item);
                                         return (
                                             <div 
                                                 key={idx} 
                                                 dir={isItemRTL ? 'rtl' : 'ltr'}
-                                                className={`p-5 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-purple-500/20 transition-all group-hover:bg-white/[0.03] ${isItemRTL ? (item.length < 50 ? 'font-urdu text-3xl' : 'font-arabic text-xl') : 'text-base font-medium'}`}
+                                                className={`p-4 rounded bg-white dark:bg-zinc-950 border border-[var(--border-app)] hover:border-zinc-400 dark:hover:border-zinc-600 transition-all ${isItemRTL ? (item.length < 50 ? 'font-urdu text-2xl' : 'font-arabic text-lg') : 'text-sm font-medium'}`}
                                             >
-                                                <p className="text-gray-200 leading-relaxed tracking-wide">{item}</p>
+                                                <p className="text-[var(--text-primary)] leading-relaxed tracking-wide">{item}</p>
                                             </div>
                                         );
                                     })}
@@ -246,8 +245,8 @@ const PureOrganizer: React.FC<{ t: TranslationSet }> = ({ t }) => {
                     })}
                     
                     {/* Visual Footnote */}
-                    <div className="pt-10 flex items-center justify-center">
-                        <div className="px-6 py-2 rounded-full border border-white/5 bg-white/[0.01] text-[10px] font-black uppercase tracking-[0.4em] text-gray-600">
+                    <div className="pt-8 flex items-center justify-center">
+                        <div className="px-5 py-1.5 rounded border border-[var(--border-app)] bg-zinc-100 dark:bg-zinc-900 text-[9px] font-bold uppercase tracking-widest text-zinc-400">
                            End of Structured Data
                         </div>
                     </div>
@@ -257,12 +256,12 @@ const PureOrganizer: React.FC<{ t: TranslationSet }> = ({ t }) => {
       </div>
       
       {error && (
-        <div className="p-6 bg-red-500/10 border border-red-500/20 text-red-400 rounded-3xl text-sm font-bold text-center animate-shake">
-            <div className="flex items-center justify-center gap-3 mb-1">
-                <XCircleIcon className="w-5 h-5" />
-                <span>HEAVY PROCESSING FAULT</span>
+        <div className="p-5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 rounded-md text-xs font-bold text-center animate-shake">
+            <div className="flex items-center justify-center gap-2 mb-1">
+                <XCircleIcon className="w-4 h-4" />
+                <span>PROCESSING FAULT</span>
             </div>
-            <p className="opacity-60">{error}</p>
+            <p className="opacity-70">{error}</p>
         </div>
       )}
     </div>

@@ -165,36 +165,36 @@ const PdfToWord: React.FC<PdfToWordProps> = ({ t, onConversionComplete }) => {
   };
 
   return (
-    <div className="bg-gray-800 rounded-2xl shadow-lg p-6 min-h-[60vh] lg:h-full flex flex-col">
+    <div className="bg-white dark:bg-zinc-950 border border-[var(--border-app)] rounded-lg shadow-elevation-1 p-8 min-h-[60vh] lg:h-full flex flex-col animate-fadeIn">
       {!pdfFile ? (
         <div
-          className={`flex flex-col flex-grow items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 ${isDragging ? 'border-purple-500 bg-gray-700' : 'border-gray-600 hover:border-purple-500'}`}
+          className={`flex flex-col flex-grow items-center justify-center p-12 border-2 border-dashed rounded-lg transition-all duration-300 ${isDragging ? 'border-zinc-900 dark:border-zinc-100 bg-zinc-50 dark:bg-zinc-900' : 'border-[var(--border-app)] hover:border-zinc-400 dark:hover:border-zinc-600'}`}
           onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}
         >
-          <UploadIcon className="w-12 h-12 text-gray-500 mb-4" />
+          <UploadIcon className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mb-6" />
           <input type="file" ref={fileInputRef} onChange={onFileChange} accept="application/pdf" className="hidden" />
-          <button onClick={() => fileInputRef.current?.click()} className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors duration-200">
+          <button onClick={() => fileInputRef.current?.click()} className="px-8 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold uppercase tracking-widest text-[10px] rounded hover:bg-zinc-800 dark:hover:bg-white transition-all active:scale-95">
             {t.uploadPdf}
           </button>
-          <p className="mt-2 text-sm text-gray-400">{t.dropPdf}</p>
-          <p className="mt-4 text-center text-gray-500 max-w-sm">{t.pdfToWordDescription}</p>
+          <p className="mt-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{t.dropPdf}</p>
+          <p className="mt-6 text-center text-zinc-500 max-w-sm text-xs font-medium leading-relaxed">{t.pdfToWordDescription}</p>
         </div>
       ) : (
         <div className="flex flex-col flex-grow items-center justify-center">
           <div className="w-full max-w-lg">
-            <div className="mb-6 bg-gray-700/50 p-4 rounded-lg flex items-center justify-between">
+            <div className="mb-8 bg-zinc-50 dark:bg-zinc-900 border border-[var(--border-app)] p-5 rounded-lg flex items-center justify-between">
               <div>
-                <p className="font-semibold text-gray-200 truncate" title={pdfFile.name}>{pdfFile.name}</p>
-                <p className="text-sm text-gray-400">{(pdfFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                <p className="font-bold text-[var(--text-primary)] truncate text-sm" title={pdfFile.name}>{pdfFile.name}</p>
+                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{(pdfFile.size / 1024 / 1024).toFixed(2)} MB</p>
               </div>
-              <button onClick={() => handleFileChange(null)} className="text-sm text-purple-400 hover:underline flex-shrink-0 ml-4">Change File</button>
+              <button onClick={() => handleFileChange(null)} className="text-[10px] font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 uppercase tracking-widest transition-colors">Change File</button>
             </div>
             
             {!docxBlob ? (
                 <button
                     onClick={handleConvert}
                     disabled={isConverting}
-                    className="w-full px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200"
+                    className="w-full px-8 py-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold uppercase tracking-widest text-[10px] rounded hover:bg-zinc-800 dark:hover:bg-white disabled:bg-zinc-200 dark:disabled:bg-zinc-800 disabled:cursor-not-allowed transition-all active:scale-95"
                 >
                     {isConverting ? progress : t.convert}
                 </button>
@@ -202,42 +202,42 @@ const PdfToWord: React.FC<PdfToWordProps> = ({ t, onConversionComplete }) => {
                  <div className="relative w-full" onMouseLeave={() => setShowDownloadMenu(false)}>
                     <button
                         onClick={() => setShowDownloadMenu(!showDownloadMenu)}
-                        className="w-full flex items-center justify-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200"
+                        className="w-full flex items-center justify-center px-8 py-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold uppercase tracking-widest text-[10px] rounded hover:bg-zinc-800 dark:hover:bg-white transition-all active:scale-95"
                     >
-                        <DownloadIcon className="w-5 h-5 me-2" />
+                        <DownloadIcon className="w-4 h-4 me-2" />
                         {t.download}
-                        <ChevronDownIcon className="w-5 h-5 ms-2" />
+                        <ChevronDownIcon className="w-4 h-4 ms-2" />
                     </button>
                     {showDownloadMenu && (
-                         <div className="absolute bottom-full mb-2 w-full bg-gray-600 rounded-lg shadow-xl py-1 z-10">
-                            <button onClick={() => handleDownload('docx')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">Word (.docx)</button>
-                            <button onClick={() => handleDownload('txt')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">Text (.txt)</button>
-                            <button onClick={() => handleDownload('pdf')} className="block w-full text-start px-4 py-2 text-sm text-gray-200 hover:bg-purple-600">PDF (.pdf)</button>
+                         <div className="absolute bottom-full mb-2 w-full bg-white dark:bg-zinc-900 border border-[var(--border-app)] rounded shadow-elevation-2 py-1 z-10 animate-pop-in">
+                            <button onClick={() => handleDownload('docx')} className="block w-full text-start px-5 py-2.5 text-[10px] font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800 uppercase tracking-widest">Word (.docx)</button>
+                            <button onClick={() => handleDownload('txt')} className="block w-full text-start px-5 py-2.5 text-[10px] font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800 uppercase tracking-widest">Text (.txt)</button>
+                            <button onClick={() => handleDownload('pdf')} className="block w-full text-start px-5 py-2.5 text-[10px] font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800 uppercase tracking-widest">PDF (.pdf)</button>
                          </div>
                     )}
                 </div>
             )}
             
             {progress && (
-                <div className="text-center mt-4">
+                <div className="text-center mt-6">
                     {isConverting ? (
                         <>
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400 mx-auto"></div>
-                            <p className="mt-2 text-gray-300">{progress}</p>
+                            <div className="animate-spin rounded-full h-6 w-6 border-2 border-zinc-200 border-t-zinc-900 dark:border-zinc-800 dark:border-t-zinc-100 mx-auto"></div>
+                            <p className="mt-3 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{progress}</p>
                         </>
                     ) : (
-                       <p className={`font-semibold ${progress.includes('Error') ? 'text-red-400' : 'text-green-400'}`}>{progress}</p>
+                       <p className={`text-[10px] font-bold uppercase tracking-widest ${progress.includes('Error') ? 'text-red-500' : 'text-zinc-900 dark:text-zinc-100'}`}>{progress}</p>
                     )}
                 </div>
             )}
 
             {extractedText && !isConverting && (
-              <div className="mt-6 w-full">
-                <h3 className="font-semibold text-gray-300 mb-2">Extracted Text Preview</h3>
+              <div className="mt-8 w-full animate-fadeIn">
+                <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">Extracted Text Preview</h3>
                 <textarea
                   readOnly
                   value={extractedText}
-                  className="w-full h-48 bg-gray-900/50 rounded-lg p-4 text-gray-300 resize-y border border-gray-600 focus:ring-2 focus:ring-purple-500"
+                  className="w-full h-48 bg-zinc-50 dark:bg-zinc-900 border border-[var(--border-app)] rounded-lg p-5 text-[var(--text-primary)] text-sm leading-relaxed resize-y outline-none focus:border-zinc-400 dark:focus:border-zinc-600 custom-scrollbar"
                 />
               </div>
             )}

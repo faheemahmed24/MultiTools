@@ -121,3 +121,19 @@ export interface DataSummarizerHistoryItem {
     inputText: string;
     result: SmartSummary;
 }
+
+export interface Tool {
+  key: string;
+  label: string;
+  description: string;
+  icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  tags: string[];
+  category: string;
+  isCore?: boolean;
+}
+
+export interface ToolGroup {
+  group: string;
+  icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  items: Tool[];
+}
