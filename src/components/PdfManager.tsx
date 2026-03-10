@@ -11,11 +11,11 @@ import { Squares2x2Icon } from './icons/Squares2x2Icon';
 import { ArrowPathIcon } from './icons/ArrowPathIcon';
 import { RotateRightIcon } from './icons/RotateRightIcon';
 import { DocxIcon } from './icons/DocxIcon';
-import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
+import * as pdfjsLib from 'pdfjs-dist';
 import * as PDFLib from 'pdf-lib';
 
 // Configure the worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://aistudiocdn.com/pdfjs-dist@^4.5.136/build/pdf.worker.mjs`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs`;
 
 interface ManagedNode {
   id: string;
@@ -104,6 +104,9 @@ const PdfManager: React.FC<{ t: TranslationSet }> = ({ t }) => {
     for (const file of pendingGroup.files) {
       if (file.type === 'application/pdf') {
         try {
+          if (!pdfjsLib || !pdfjsLib.getDocument) {
+            throw new Error('PDF.js library failed to load correctly.');
+          }
           const arrayBuffer = await file.arrayBuffer();
           const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
           const pagesToInclude = parseRange(importRange, pdf.numPages);
