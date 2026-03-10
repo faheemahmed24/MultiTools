@@ -47,59 +47,64 @@ function getMimeType(file: File): string {
  * Optimized for 100+ global languages, automatic dialect detection, and native script preservation.
  */
 export const transcribeAudio = async (file: File, languageHint: string = 'auto'): Promise<Omit<Transcription, 'id' | 'date'>> => {
-  const base64Data = await fileToBase64(file);
-  const mimeType = getMimeType(file);
+  try {
+    const base64Data = await fileToBase64(file);
+    const mimeType = getMimeType(file);
 
-  const transcriptionSchema = {
-    type: Type.OBJECT,
-    properties: {
-      language: { type: Type.STRING, description: "Full name of the detected primary language." },
-      languageCode: { type: Type.STRING, description: "BCP-47 language code." },
-      segments: {
-        type: Type.ARRAY,
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            startTime: { type: Type.STRING, description: "Timestamp in MM:SS format." },
-            endTime: { type: Type.STRING, description: "Timestamp in MM:SS format." },
-            speaker: { type: Type.STRING, description: "Identified speaker (e.g., Speaker 1, Speaker 2)." },
-            text: { type: Type.STRING, description: "Verbatim transcript for this segment. Use native script for the language detected." },
-          },
-          required: ["startTime", "endTime", "speaker", "text"]
+    const transcriptionSchema = {
+      type: Type.OBJECT,
+      properties: {
+        language: { type: Type.STRING, description: "Full name of the detected primary language." },
+        languageCode: { type: Type.STRING, description: "BCP-47 language code." },
+        segments: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              startTime: { type: Type.STRING, description: "Timestamp in MM:SS format." },
+              endTime: { type: Type.STRING, description: "Timestamp in MM:SS format." },
+              speaker: { type: Type.STRING, description: "Identified speaker (e.g., Speaker 1, Speaker 2)." },
+              text: { type: Type.STRING, description: "Verbatim transcript for this segment. Use native script for the language detected." },
+            },
+            required: ["startTime", "endTime", "speaker", "text"]
+          }
         }
+      },
+      required: ["language", "languageCode", "segments"]
+    };
+
+    const response = await ai.models.generateContent({
+      model: MODELS.primary,
+      contents: { 
+          parts: [
+              { inlineData: { mimeType, data: base64Data } },
+              { text: `Universal Transcription Protocol v5.2:
+                1. ACTION: Transcribe with 99.9% verbal accuracy.
+                2. LANGUAGE: Automatically detect from any global dialect (Urdu, Arabic, Hindi, English, Spanish, Chinese, Japanese, etc.).
+                3. CODE-SWITCHING: If multiple languages are spoken, transcribe each segment correctly in its native script.
+                4. DIARIZATION: Perform high-fidelity speaker separation.
+                5. STRUCTURE: Break content into logical segments with MM:SS timestamps.
+                6. HINT: User suggested "${languageHint}". If "auto", strictly rely on neural analysis.
+                7. OUTPUT: Return strictly valid JSON.` 
+              }
+          ] 
+      },
+      config: {
+          responseMimeType: 'application/json',
+          responseSchema: transcriptionSchema,
       }
-    },
-    required: ["language", "languageCode", "segments"]
-  };
+    });
 
-  const response = await ai.models.generateContent({
-    model: MODELS.primary,
-    contents: { 
-        parts: [
-            { inlineData: { mimeType, data: base64Data } },
-            { text: `Universal Transcription Protocol v5.2:
-              1. ACTION: Transcribe with 99.9% verbal accuracy.
-              2. LANGUAGE: Automatically detect from any global dialect (Urdu, Arabic, Hindi, English, Spanish, Chinese, Japanese, etc.).
-              3. CODE-SWITCHING: If multiple languages are spoken, transcribe each segment correctly in its native script.
-              4. DIARIZATION: Perform high-fidelity speaker separation.
-              5. STRUCTURE: Break content into logical segments with MM:SS timestamps.
-              6. HINT: User suggested "${languageHint}". If "auto", strictly rely on neural analysis.
-              7. OUTPUT: Return strictly valid JSON.` 
-            }
-        ] 
-    },
-    config: {
-        responseMimeType: 'application/json',
-        responseSchema: transcriptionSchema,
-    }
-  });
-
-  const parsed = JSON.parse(response.text || '{}');
-  return {
-    fileName: file.name,
-    detectedLanguage: parsed.language || 'Auto-Detected',
-    segments: parsed.segments || [],
-  };
+    const parsed = JSON.parse(response.text || '{}');
+    return {
+      fileName: file.name,
+      detectedLanguage: parsed.language || 'Auto-Detected',
+      segments: parsed.segments || [],
+    };
+  } catch (error: any) {
+    console.error('Transcription error:', error);
+    throw new Error(`Neural processing failed: ${error.message || 'Unknown error'}`);
+  }
 };
 
 export const translateText = async (text: string, src: string, target: string) => {

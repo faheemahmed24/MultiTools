@@ -75,9 +75,6 @@ const PdfToWord: React.FC<PdfToWordProps> = ({ t, onConversionComplete }) => {
       }
 
       try {
-        if (!pdfjsLib || !pdfjsLib.getDocument) {
-          throw new Error('PDF.js library failed to load correctly.');
-        }
         const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
         const pdf = await loadingTask.promise;
         const numPages = pdf.numPages;

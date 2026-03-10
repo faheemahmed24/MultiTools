@@ -136,9 +136,6 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
       }
 
       try {
-        if (!pdfjsLib || !pdfjsLib.getDocument) {
-          throw new Error('PDF.js library failed to load correctly.');
-        }
         const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
         const pdf = await loadingTask.promise;
         const numPages = pdf.numPages;
@@ -186,9 +183,9 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
         setProgress(t.conversionComplete);
         onConversionComplete({fileName: pdfFile.name, pageCount: totalPagesToConvert });
 
-      } catch (error: any) {
+      } catch (error) {
         console.error('Error converting PDF:', error);
-        setProgress(`Error during conversion: ${error.message || 'Unknown error'}`);
+        setProgress('Error during conversion.');
       } finally {
         setIsConverting(false);
       }

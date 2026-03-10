@@ -70,9 +70,8 @@ const PureOrganizer: React.FC<{ t: TranslationSet }> = ({ t }) => {
       const content = cat.items.join('\n\n');
       s.addText(content, { 
         x: 0.6, y: 1.2, w: '85%', h: 5.5, fontSize: 14, color: '374151',
-        align: isRTL(content) ? 'right' : 'left',
-        rtl: isRTL(content)
-      } as any);
+        align: isRTL(content) ? 'right' : 'left'
+      });
     });
 
     pptx.writeFile({ fileName: `MultiTools-Organized-${Date.now()}.pptx` });

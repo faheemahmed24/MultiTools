@@ -1,20 +1,58 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# MultiTools Industrial v4.0
 
-# Run and deploy your AI Studio app
+A high-precision neural architecture for speech intelligence, strategic planning, and universal data processing.
 
-This contains everything you need to run your app locally.
+## Features
+- **AI Transcriber**: World-class accuracy across 100+ global languages.
+- **PDF Copilot**: Intelligent PDF analysis and chat.
+- **AI PDF Editor**: Edit PDFs with neural assistance.
+- **AI Whiteboard**: Synthesize and enhance sketches.
+- **Pure Organizer**: Verbatim data categorization.
+- **Strategic Planner**: High-density executive reporting.
+- **AI Translator**: Nuanced translation between global dialects.
+- **Grammar Corrector**: High-fidelity style and grammar correction.
+- **PDF Manager**: Merge, split, and rotate PDF pages.
+- **PDF to Image / Image to PDF**: High-quality format conversion.
+- **Export to Sheets**: Intelligent data extraction to spreadsheets.
+- **Video to Audio**: Extract high-fidelity audio from video files.
+- **Text to Speech**: Neural voice synthesis.
+- **Smart Summarizer**: Executive data extraction and analysis.
 
-View your app in AI Studio: https://ai.studio/apps/110e422e-96f1-4ae5-9449-ef5ca5c89752
+## Setup Instructions
 
-## Run Locally
+### 1. Prerequisites
+- Node.js (v18 or higher)
+- npm or yarn
 
-**Prerequisites:**  Node.js
+### 2. API Key Configuration
+The app requires a Google Gemini API key.
+1. Get a free API key from [Google AI Studio](https://aistudio.google.com/).
+2. Copy `.env.example` to `.env.local`:
+   ```bash
+   cp .env.example .env.local
+   ```
+3. Open `.env.local` and set your key:
+   ```text
+   GEMINI_API_KEY=your_secret_key_here
+   ```
 
+### 3. Installation
+```bash
+npm install
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### 4. Development
+```bash
+npm run dev
+```
+
+### 5. Build for Production
+```bash
+npm run build
+```
+
+## Troubleshooting
+- **Microphone Permissions**: Ensure your browser has permission to use the mic.
+- **API Errors**: Check your API key and ensure it's enabled for the Gemini API.
+- **PDF Issues**: For large PDFs, ensure your browser has enough memory.
+- **Local Storage**: If the app crashes on startup, try clearing your browser's local storage for the site.

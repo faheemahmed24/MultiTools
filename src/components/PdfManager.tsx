@@ -104,9 +104,6 @@ const PdfManager: React.FC<{ t: TranslationSet }> = ({ t }) => {
     for (const file of pendingGroup.files) {
       if (file.type === 'application/pdf') {
         try {
-          if (!pdfjsLib || !pdfjsLib.getDocument) {
-            throw new Error('PDF.js library failed to load correctly.');
-          }
           const arrayBuffer = await file.arrayBuffer();
           const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
           const pagesToInclude = parseRange(importRange, pdf.numPages);
