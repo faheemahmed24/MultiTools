@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import useUserLocalStorage from './hooks/useUserLocalStorage';
-import i18n, { getTranslations } from './lib/i18n';
+import { useUserLocalStorage } from './hooks/useUserLocalStorage';
+import { getTranslations } from './lib/i18n';
 import type { Language, User, Transcription } from './types';
 import { transcribeAudio } from './services/geminiService';
 import { TOOL_STRUCTURE, ALL_TOOLS } from './constants';
@@ -57,7 +57,7 @@ interface ToolEntry {
 }
 
 function useUsageCounts(userId: string | undefined) {
-    return useUserLocalStorage<Record<string, number>>('toolUsageCounts_v4', {});
+    return useUserLocalStorage<Record<string, number>>(userId, 'toolUsageCounts_v4', {});
 }
 
 const CommandPalette: React.FC<{
@@ -158,11 +158,11 @@ function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeTool, setActiveTool] = useUserLocalStorage<string>('activeTool_v4', 'Home');
+  const [activeTool, setActiveTool] = useUserLocalStorage<string>(currentUser?.id, 'activeTool_v4', 'Home');
   const [usageCounts, setUsageCounts] = useUsageCounts(currentUser?.id);
   
-  const [transcriptions, setTranscriptions] = useUserLocalStorage<Transcription[]>('transcriptions', []);
-  const [currentTranscriptionId, setCurrentTranscriptionId] = useUserLocalStorage<string | null>('currentTranscriptionId', null);
+  const [transcriptions, setTranscriptions] = useUserLocalStorage<Transcription[]>(currentUser?.id, 'transcriptions', []);
+  const [currentTranscriptionId, setCurrentTranscriptionId] = useUserLocalStorage<string | null>(currentUser?.id, 'currentTranscriptionId', null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentProcessingFile, setCurrentProcessingFile] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
@@ -187,7 +187,7 @@ function App() {
   const handleToolSelect = useCallback((toolKey: string) => {
     setActiveTool(toolKey);
     if (toolKey !== 'Home' && toolKey !== 'History') {
-        setUsageCounts(prev => ({ ...prev, [toolKey]: (prev[toolKey] || 0) + 1 }));
+        setUsageCounts((prev: Record<string, number>) => ({ ...prev, [toolKey]: (prev[toolKey] || 0) + 1 }));
     }
   }, [setActiveTool, setUsageCounts]);
 
@@ -204,7 +204,7 @@ function App() {
           id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
           date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
         };
-        setTranscriptions(prev => [newTranscription, ...prev]);
+        setTranscriptions((prev: Transcription[]) => [newTranscription, ...prev]);
         lastId = newTranscription.id;
       }
       if (lastId) {
@@ -223,7 +223,7 @@ function App() {
 
   const mostUsedTools = useMemo(() => {
     return Object.entries(usageCounts)
-      .sort(([, a], [, b]) => b - a)
+      .sort(([, a], [, b]) => (b as number) - (a as number))
       .slice(0, 5)
       .map(([key]) => ALL_TOOLS.find(t => t.key === key))
       .filter(Boolean) as ToolEntry[];
@@ -241,8 +241,8 @@ function App() {
         return <LandingPage currentUser={currentUser} onStart={() => handleToolSelect('AI Transcriber')} onLogin={() => setIsAuthModalOpen(true)} onSelectTool={handleToolSelect} openSearch={() => setIsSearchOpen(true)} />;
       case 'AI Transcriber':
         if (currentTranscriptionId) {
-             const ct = transcriptions.find(tr => tr.id === currentTranscriptionId);
-             if (ct) return <TranscriptionView transcription={ct} onSave={() => {}} onUpdate={(id, segs) => setTranscriptions(prev => prev.map(t => t.id === id ? {...t, segments: segs} : t))} onClose={() => setCurrentTranscriptionId(null)} t={t} />;
+             const ct = transcriptions.find((tr: Transcription) => tr.id === currentTranscriptionId);
+             if (ct) return <TranscriptionView transcription={ct} onSave={() => {}} onUpdate={(id, segs) => setTranscriptions((prev: Transcription[]) => prev.map((t: Transcription) => t.id === id ? {...t, segments: segs} : t))} onClose={() => setCurrentTranscriptionId(null)} t={t} />;
         }
         return (
             <div className="space-y-8 md:space-y-12 animate-fadeIn">
@@ -271,7 +271,7 @@ function App() {
       case 'History':
         return <div className="h-full flex flex-col animate-fadeIn">
             <div className="mb-8 md:mb-14 text-center md:text-left"><h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter">System Archive</h2></div>
-            <HistoryPanel items={transcriptions} onSelect={(i) => { handleToolSelect('AI Transcriber'); setCurrentTranscriptionId(i.id); }} onDelete={(id) => setTranscriptions(p => p.filter(i => i.id !== id))} t={t} renderItem={(item) => (
+            <HistoryPanel items={transcriptions} onSelect={(i: Transcription) => { handleToolSelect('AI Transcriber'); setCurrentTranscriptionId(i.id); }} onDelete={(id: string) => setTranscriptions((p: Transcription[]) => p.filter((i: Transcription) => i.id !== id))} t={t} renderItem={(item: Transcription) => (
                <div className="flex-grow min-w-0"><p className="font-bold truncate text-gray-100 text-base md:text-lg">{item.fileName}</p><p className="text-[10px] text-purple-400 font-black uppercase mt-1.5 tracking-[0.2em]">{item.date} • {item.detectedLanguage}</p></div>
             )} />
         </div>;
