@@ -15,7 +15,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import * as PDFLib from 'pdf-lib';
 
 // Configure the worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 interface ManagedNode {
   id: string;
@@ -83,6 +83,7 @@ const PdfManager: React.FC<{ t: TranslationSet }> = ({ t }) => {
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         setPendingGroup({ files: fileArray, isMultiPagePdf: true, totalPages: pdf.numPages });
         setImportRange(`1-${pdf.numPages}`);
+        pdf.destroy();
       } catch (err) {
         console.error('PDF Error', err);
       } finally {
@@ -128,6 +129,7 @@ const PdfManager: React.FC<{ t: TranslationSet }> = ({ t }) => {
               });
             }
           }
+          pdf.destroy();
         } catch (e) {
           console.error("PDF integration error", e);
         }

@@ -13,6 +13,7 @@ import HistoryPanel from './components/HistoryPanel';
 import AuthModal from './components/AuthModal';
 import Loader from './components/Loader';
 import Toast, { ToastType } from './components/Toast';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Tool Components
 import AICopilot from './components/AICopilot';
@@ -167,6 +168,19 @@ function App() {
   const [currentProcessingFile, setCurrentProcessingFile] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
+  // Local Storage Migration Logic
+  useEffect(() => {
+    const MIGRATION_KEY = 'multitools_v4_migrated';
+    const isMigrated = localStorage.getItem(MIGRATION_KEY);
+    if (!isMigrated) {
+      // Clear old keys from previous versions to avoid conflicts
+      const oldKeys = ['settings', 'theme', 'activeTool', 'toolUsageCounts', 'transcriptions'];
+      oldKeys.forEach(k => localStorage.removeItem(k));
+      localStorage.setItem(MIGRATION_KEY, 'true');
+      console.log('System migration complete: Old data cleared.');
+    }
+  }, []);
+
   const t = useMemo(() => getTranslations('en'), []);
 
   const showToast = useCallback((message: string, type: ToastType = 'info') => {
@@ -236,54 +250,60 @@ function App() {
         </div>
     );
 
-    switch (activeTool) {
-      case 'Home':
-        return <LandingPage currentUser={currentUser} onStart={() => handleToolSelect('AI Transcriber')} onLogin={() => setIsAuthModalOpen(true)} onSelectTool={handleToolSelect} openSearch={() => setIsSearchOpen(true)} />;
-      case 'AI Transcriber':
-        if (currentTranscriptionId) {
-             const ct = transcriptions.find((tr: Transcription) => tr.id === currentTranscriptionId);
-             if (ct) return <TranscriptionView transcription={ct} onSave={() => {}} onUpdate={(id, segs) => setTranscriptions((prev: Transcription[]) => prev.map((t: Transcription) => t.id === id ? {...t, segments: segs} : t))} onClose={() => setCurrentTranscriptionId(null)} t={t} />;
-        }
-        return (
-            <div className="space-y-8 md:space-y-12 animate-fadeIn">
-                <div className="text-center md:text-left max-w-4xl">
-                    <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter mb-4">Speech Intelligence Hub</h2>
-                    <p className="text-gray-500 text-sm md:text-lg leading-relaxed">MultiTools Neural Core v4.0. Transcribe audio and video files with world-class accuracy across 100+ global languages and complex code-switching scenarios.</p>
-                </div>
-                <FileUpload onFilesSelect={handleFilesSelect} t={t} isProcessing={isProcessing} processingFiles={currentProcessingFile ? [currentProcessingFile] : []} />
-            </div>
-        );
-      case 'PDF Copilot': return <AICopilot t={t} />;
-      case 'Chat PDF': return <ChatPDF t={t} />;
-      case 'AI PDF Editor': return <AIPDFEditor t={t} />;
-      case 'AI Whiteboard': return <AIWhiteboard t={t} />;
-      case 'Pure Organizer': return <PureOrganizer t={t} />;
-      case 'Strategic Planner': return <StrategicPlanner t={t} />;
-      case 'AI Translator': return <AITranslator t={t} onTranslationComplete={() => {}} />;
-      case 'Grammar Corrector': return <GrammarCorrector t={t} onCorrectionComplete={() => {}} />;
-      case 'PDF Manager': return <PdfManager t={t} />;
-      case 'PDF to Image': return <PdfToImage t={t} onConversionComplete={() => {}} />;
-      case 'Image to PDF': return <ImageToPdf t={t} onConversionComplete={() => {}} />;
-      case 'Export to Sheets': return <ExportToSheets t={t} />;
-      case 'Video to Audio': return <VideoToAudio t={t} onConversionComplete={() => {}} />;
-      case 'Text to Speech': return <TextToSpeech t={t} onComplete={() => {}} />;
-      case 'Smart Summarizer': return <DataSummarizer t={t} onComplete={() => {}} />;
-      case 'History':
-        return <div className="h-full flex flex-col animate-fadeIn">
-            <div className="mb-8 md:mb-14 text-center md:text-left"><h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter">System Archive</h2></div>
-            <HistoryPanel items={transcriptions} onSelect={(i: Transcription) => { handleToolSelect('AI Transcriber'); setCurrentTranscriptionId(i.id); }} onDelete={(id: string) => setTranscriptions((p: Transcription[]) => p.filter((i: Transcription) => i.id !== id))} t={t} renderItem={(item: Transcription) => (
-               <div className="flex-grow min-w-0"><p className="font-bold truncate text-gray-100 text-base md:text-lg">{item.fileName}</p><p className="text-[10px] text-purple-400 font-black uppercase mt-1.5 tracking-[0.2em]">{item.date} • {item.detectedLanguage}</p></div>
-            )} />
-        </div>;
-      default: 
-        return (
-            <div className="min-h-[60vh] flex flex-col items-center justify-center text-center">
-                <BoltIcon className="w-16 h-16 text-gray-800 mb-6" />
-                <h2 className="text-2xl font-black text-white uppercase mb-2">{activeTool} Logic Offline</h2>
-                <p className="text-gray-500">This module is currently being optimized.</p>
-            </div>
-        );
-    }
+    return (
+      <ErrorBoundary>
+        {(() => {
+          switch (activeTool) {
+            case 'Home':
+              return <LandingPage currentUser={currentUser} onStart={() => handleToolSelect('AI Transcriber')} onLogin={() => setIsAuthModalOpen(true)} onSelectTool={handleToolSelect} openSearch={() => setIsSearchOpen(true)} />;
+            case 'AI Transcriber':
+              if (currentTranscriptionId) {
+                  const ct = transcriptions.find((tr: Transcription) => tr.id === currentTranscriptionId);
+                  if (ct) return <TranscriptionView transcription={ct} onSave={() => {}} onUpdate={(id, segs) => setTranscriptions((prev: Transcription[]) => prev.map((t: Transcription) => t.id === id ? {...t, segments: segs} : t))} onClose={() => setCurrentTranscriptionId(null)} t={t} />;
+              }
+              return (
+                  <div className="space-y-8 md:space-y-12 animate-fadeIn">
+                      <div className="text-center md:text-left max-w-4xl">
+                          <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter mb-4">Speech Intelligence Hub</h2>
+                          <p className="text-gray-500 text-sm md:text-lg leading-relaxed">MultiTools Neural Core v4.0. Transcribe audio and video files with world-class accuracy across 100+ global languages and complex code-switching scenarios.</p>
+                      </div>
+                      <FileUpload onFilesSelect={handleFilesSelect} t={t} isProcessing={isProcessing} processingFiles={currentProcessingFile ? [currentProcessingFile] : []} />
+                  </div>
+              );
+            case 'PDF Copilot': return <AICopilot t={t} />;
+            case 'Chat PDF': return <ChatPDF t={t} />;
+            case 'AI PDF Editor': return <AIPDFEditor t={t} />;
+            case 'AI Whiteboard': return <AIWhiteboard t={t} />;
+            case 'Pure Organizer': return <PureOrganizer t={t} />;
+            case 'Strategic Planner': return <StrategicPlanner t={t} />;
+            case 'AI Translator': return <AITranslator t={t} onTranslationComplete={() => {}} />;
+            case 'Grammar Corrector': return <GrammarCorrector t={t} onCorrectionComplete={() => {}} />;
+            case 'PDF Manager': return <PdfManager t={t} />;
+            case 'PDF to Image': return <PdfToImage t={t} onConversionComplete={() => {}} />;
+            case 'Image to PDF': return <ImageToPdf t={t} onConversionComplete={() => {}} />;
+            case 'Export to Sheets': return <ExportToSheets t={t} />;
+            case 'Video to Audio': return <VideoToAudio t={t} onConversionComplete={() => {}} />;
+            case 'Text to Speech': return <TextToSpeech t={t} onComplete={() => {}} />;
+            case 'Smart Summarizer': return <DataSummarizer t={t} onComplete={() => {}} />;
+            case 'History':
+              return <div className="h-full flex flex-col animate-fadeIn">
+                  <div className="mb-8 md:mb-14 text-center md:text-left"><h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter">System Archive</h2></div>
+                  <HistoryPanel items={transcriptions} onSelect={(i: Transcription) => { handleToolSelect('AI Transcriber'); setCurrentTranscriptionId(i.id); }} onDelete={(id: string) => setTranscriptions((p: Transcription[]) => p.filter((i: Transcription) => i.id !== id))} t={t} renderItem={(item: Transcription) => (
+                    <div className="flex-grow min-w-0"><p className="font-bold truncate text-gray-100 text-base md:text-lg">{item.fileName}</p><p className="text-[10px] text-purple-400 font-black uppercase mt-1.5 tracking-[0.2em]">{item.date} • {item.detectedLanguage}</p></div>
+                  )} />
+              </div>;
+            default: 
+              return (
+                  <div className="min-h-[60vh] flex flex-col items-center justify-center text-center">
+                      <BoltIcon className="w-16 h-16 text-gray-800 mb-6" />
+                      <h2 className="text-2xl font-black text-white uppercase mb-2">{activeTool} Logic Offline</h2>
+                      <p className="text-gray-500">This module is currently being optimized.</p>
+                  </div>
+              );
+          }
+        })()}
+      </ErrorBoundary>
+    );
   };
 
   return (

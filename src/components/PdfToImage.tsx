@@ -10,7 +10,7 @@ import { CheckIcon } from './icons/CheckIcon';
 import * as docx from 'docx';
 
 // Configure the worker to match the library version
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 interface GeneratedImage {
   src: string;
@@ -180,6 +180,7 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
           }
         }
         setGeneratedImages(images);
+        pdf.destroy();
         setProgress(t.conversionComplete);
         onConversionComplete({fileName: pdfFile.name, pageCount: totalPagesToConvert });
 

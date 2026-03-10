@@ -8,7 +8,7 @@ import { jsPDF } from 'jspdf';
 import { ChevronDownIcon } from './icons/ChevronDownIcon';
 
 // Configure the worker to match the library version
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 interface PdfToWordProps {
     t: TranslationSet;
@@ -122,6 +122,7 @@ const PdfToWord: React.FC<PdfToWordProps> = ({ t, onConversionComplete }) => {
 
         const blob = await docx.Packer.toBlob(doc);
         setDocxBlob(blob);
+        pdf.destroy();
         setProgress(t.conversionComplete);
         onConversionComplete({fileName: pdfFile.name});
         

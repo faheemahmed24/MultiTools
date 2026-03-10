@@ -2,7 +2,7 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { Transcription, SmartSummary } from '../types';
 
 // API key obtained exclusively from environment variable
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
 
 const MODELS = {
     primary: 'gemini-3-pro-preview', // High-fidelity for complex transcription and reasoning
