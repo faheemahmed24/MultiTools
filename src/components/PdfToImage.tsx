@@ -1,12 +1,9 @@
 import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
-import { UploadIcon } from './icons/UploadIcon';
-import { DownloadIcon } from './icons/DownloadIcon';
+import { Upload, Download, Copy, Check } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
 import JSZip from 'jszip';
 import { analyzeImage } from '../services/geminiService';
-import { CopyIcon } from './icons/CopyIcon';
-import { CheckIcon } from './icons/CheckIcon';
 import * as docx from 'docx';
 
 // Configure the worker to match the library version
@@ -282,7 +279,7 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         >
-          <UploadIcon className="w-16 h-16 text-gray-600 mb-6" />
+          <Upload className="w-16 h-16 text-gray-600 mb-6" />
           <input type="file" ref={fileInputRef} onChange={onFileChange} accept="application/pdf" className="hidden" />
           <button onClick={() => fileInputRef.current?.click()} className="px-10 py-4 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition-all shadow-lg">
             {t.uploadPdf}
@@ -364,7 +361,7 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
                     {isExtracting ? 'Synthesizing...' : t.extractText}
                   </button>
                   <button onClick={handleDownloadAll} className="flex items-center px-5 py-2 bg-gray-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-gray-700 transition-all">
-                    <DownloadIcon className="w-4 h-4 me-2" />
+                    <Download className="w-4 h-4 me-2" />
                     {t.downloadAll}
                   </button>
                 </div>
@@ -382,7 +379,7 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
                         download={`${pdfFile?.name.replace('.pdf', '') || 'page'}-${img.pageNumber}.${imageFormat}`}
                         className="p-3 bg-purple-600 rounded-full text-white hover:bg-purple-500 mb-2 shadow-2xl active:scale-90 transition-all"
                       >
-                        <DownloadIcon className="w-5 h-5" />
+                        <Download className="w-5 h-5" />
                       </a>
                       <p className="text-white font-black text-[10px] uppercase tracking-widest">Page {img.pageNumber}</p>
                     </div>
@@ -401,7 +398,7 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
                 <div className="flex items-center gap-2">
                     <div className="relative">
                         <button onClick={() => setShowTextExportMenu(!showTextExportMenu)} className="flex items-center px-4 py-2 bg-gray-800 text-white text-[10px] font-black uppercase rounded-lg hover:bg-gray-700 transition-all">
-                            <DownloadIcon className="w-4 h-4 me-2" /> {t.export}
+                            <Download className="w-4 h-4 me-2" /> {t.export}
                         </button>
                         {showTextExportMenu && (
                             <div onMouseLeave={() => setShowTextExportMenu(false)} className="absolute bottom-full mb-2 end-0 w-36 bg-[#0D0D15] border border-white/10 rounded-xl shadow-2xl py-2 z-50">
@@ -411,7 +408,7 @@ const PdfToImage: React.FC<PdfToImageProps> = ({ t, onConversionComplete }) => {
                         )}
                     </div>
                     <button onClick={handleCopyText} className="flex items-center px-4 py-2 bg-gray-800 text-white text-[10px] font-black uppercase rounded-lg hover:bg-gray-700 transition-all">
-                        {isTextCopied ? <CheckIcon className="w-4 h-4 me-2 text-green-500"/> : <CopyIcon className="w-4 h-4 me-2" />}
+                        {isTextCopied ? <Check className="w-4 h-4 me-2 text-green-500"/> : <Copy className="w-4 h-4 me-2" />}
                         {isTextCopied ? t.copied : t.copy}
                     </button>
                 </div>

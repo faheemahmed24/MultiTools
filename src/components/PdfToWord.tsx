@@ -1,11 +1,9 @@
 import React, { useState, useRef, useCallback } from 'react';
 import type { TranslationSet } from '../types';
-import { UploadIcon } from './icons/UploadIcon';
-import { DownloadIcon } from './icons/DownloadIcon';
+import { Upload, Download, ChevronDown } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
 import * as docx from 'docx';
 import { jsPDF } from 'jspdf';
-import { ChevronDownIcon } from './icons/ChevronDownIcon';
 
 // Configure the worker to match the library version
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
@@ -172,7 +170,7 @@ const PdfToWord: React.FC<PdfToWordProps> = ({ t, onConversionComplete }) => {
           className={`flex flex-col flex-grow items-center justify-center p-8 border-2 border-dashed rounded-xl transition-colors duration-300 ${isDragging ? 'border-purple-500 bg-gray-700' : 'border-gray-600 hover:border-purple-500'}`}
           onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}
         >
-          <UploadIcon className="w-12 h-12 text-gray-500 mb-4" />
+          <Upload className="w-12 h-12 text-gray-500 mb-4" />
           <input type="file" ref={fileInputRef} onChange={onFileChange} accept="application/pdf" className="hidden" />
           <button onClick={() => fileInputRef.current?.click()} className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors duration-200">
             {t.uploadPdf}
@@ -205,9 +203,9 @@ const PdfToWord: React.FC<PdfToWordProps> = ({ t, onConversionComplete }) => {
                         onClick={() => setShowDownloadMenu(!showDownloadMenu)}
                         className="w-full flex items-center justify-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200"
                     >
-                        <DownloadIcon className="w-5 h-5 me-2" />
+                        <Download className="w-5 h-5 me-2" />
                         {t.download}
-                        <ChevronDownIcon className="w-5 h-5 ms-2" />
+                        <ChevronDown className="w-5 h-5 ms-2" />
                     </button>
                     {showDownloadMenu && (
                          <div className="absolute bottom-full mb-2 w-full bg-gray-600 rounded-lg shadow-xl py-1 z-10">

@@ -1,9 +1,7 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import type { TranslationSet } from '../types';
-import { UploadIcon } from './icons/UploadIcon';
-import { DownloadIcon } from './icons/DownloadIcon';
-import { ChevronDownIcon } from './icons/ChevronDownIcon';
+import { Upload, Download, ChevronDown } from 'lucide-react';
 
 type AudioFormat = string;
 
@@ -222,7 +220,7 @@ const VideoToAudio: React.FC<{ t: TranslationSet, onConversionComplete: (data: {
           className={`flex flex-col flex-grow items-center justify-center p-8 border-2 border-dashed rounded-xl transition-all duration-300 ${isDragging ? 'border-purple-500 bg-gray-700' : 'border-gray-600 hover:border-purple-500'}`}
           onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}
         >
-          <UploadIcon className="w-12 h-12 text-gray-500 mb-4" />
+          <Upload className="w-12 h-12 text-gray-500 mb-4" />
           <input type="file" ref={fileInputRef} onChange={onFileChange} accept="video/*" className="hidden" />
           <button onClick={() => fileInputRef.current?.click()} className="px-8 py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-all transform hover:scale-105 shadow-lg">
             {t.uploadFile}
@@ -292,14 +290,14 @@ const VideoToAudio: React.FC<{ t: TranslationSet, onConversionComplete: (data: {
                             download={`${videoFile.name.replace(/\.[^/.]+$/, "")}.${currentFmt?.ext || 'wav'}`}
                             className="flex-grow flex items-center justify-center px-6 py-4 bg-green-600 text-white font-black text-lg rounded-xl hover:bg-green-700 transition-all shadow-xl"
                         >
-                            <DownloadIcon className="w-6 h-6 me-2" />
+                            <Download className="w-6 h-6 me-2" />
                             {t.download} .{outputFormat.toUpperCase()}
                         </a>
                         <button 
                             onClick={() => setShowFormatsMenu(!showFormatsMenu)}
                             className="px-4 bg-green-700 hover:bg-green-800 rounded-xl text-white transition-all shadow-xl"
                         >
-                            <ChevronDownIcon className={`w-6 h-6 transition-transform ${showFormatsMenu ? 'rotate-180' : ''}`} />
+                            <ChevronDown className={`w-6 h-6 transition-transform ${showFormatsMenu ? 'rotate-180' : ''}`} />
                         </button>
                      </div>
 

@@ -1,10 +1,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { TranslationSet } from '../types';
-import { SwatchIcon } from './icons/SwatchIcon';
-import { SparklesIcon } from './icons/SparklesIcon';
-import { TrashIcon } from './icons/TrashIcon';
-import { DownloadIcon } from './icons/DownloadIcon';
+import { Palette, Sparkles, Trash, Download } from 'lucide-react';
 import { generateWhiteboardImage } from '../services/geminiService';
 
 const AIWhiteboard: React.FC<{ t: TranslationSet }> = ({ t }) => {
@@ -130,16 +127,16 @@ const AIWhiteboard: React.FC<{ t: TranslationSet }> = ({ t }) => {
                 disabled={isGenerating}
                 className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-purple-500 transition-all disabled:opacity-50"
             >
-                {isGenerating ? 'Morphing...' : <><SparklesIcon className="w-4 h-4" /> AI Generate</>}
+                {isGenerating ? 'Morphing...' : <><Sparkles className="w-4 h-4" /> AI Generate</>}
             </button>
         </div>
 
         <div className="flex gap-2">
             <button onClick={clear} className="p-2 bg-gray-800 text-gray-400 hover:text-red-400 rounded-xl transition-all">
-                <TrashIcon className="w-5 h-5" />
+                <Trash className="w-5 h-5" />
             </button>
             <button onClick={download} className="p-2 bg-gray-800 text-gray-400 hover:text-white rounded-xl transition-all">
-                <DownloadIcon className="w-5 h-5" />
+                <Download className="w-5 h-5" />
             </button>
         </div>
       </div>
@@ -164,7 +161,7 @@ const AIWhiteboard: React.FC<{ t: TranslationSet }> = ({ t }) => {
             </div>
         )}
         <div className="absolute bottom-8 right-10 pointer-events-none opacity-10">
-            <SwatchIcon className="w-48 h-48 text-purple-500" />
+            <Palette className="w-48 h-48 text-purple-500" />
         </div>
       </div>
     </div>

@@ -1,16 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { TranslationSet } from '../types';
-import { UploadIcon } from './icons/UploadIcon';
-import { DownloadIcon } from './icons/DownloadIcon';
-import { PlusIcon } from './icons/PlusIcon';
-import { TrashIcon } from './icons/TrashIcon';
-import { CloseIcon } from './icons/CloseIcon';
-import { CheckCircleIcon } from './icons/CheckCircleIcon';
-import { BoltIcon } from './icons/BoltIcon';
-import { Squares2x2Icon } from './icons/Squares2x2Icon';
-import { ArrowPathIcon } from './icons/ArrowPathIcon';
-import { RotateRightIcon } from './icons/RotateRightIcon';
-import { DocxIcon } from './icons/DocxIcon';
+import { Upload, Download, Plus, Trash2, X, CheckCircle, Zap, LayoutGrid, RefreshCw, RotateCw, FileText } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
 import * as PDFLib from 'pdf-lib';
 
@@ -310,7 +300,7 @@ const PdfManager: React.FC<{ t: TranslationSet }> = ({ t }) => {
           <div className="bg-[#0D0D15] border border-purple-500/20 rounded-[2.5rem] p-10 max-w-lg w-full animate-pop-in shadow-2xl">
             <div className="flex items-center gap-4 mb-8">
                <div className="p-3 bg-purple-600 rounded-2xl">
-                  <BoltIcon className="w-8 h-8 text-white" />
+                  <Zap className="w-8 h-8 text-white" />
                </div>
                <div>
                   <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Import Protocol</h3>
@@ -372,7 +362,7 @@ const PdfManager: React.FC<{ t: TranslationSet }> = ({ t }) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
              <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center">
-                <Squares2x2Icon className="w-5 h-5 text-white" />
+                <LayoutGrid className="w-5 h-5 text-white" />
              </div>
              <div>
                 <h2 className="text-base font-black text-white uppercase tracking-tighter leading-none">PDF Architect</h2>
@@ -395,11 +385,11 @@ const PdfManager: React.FC<{ t: TranslationSet }> = ({ t }) => {
         <div className="flex flex-wrap items-center gap-4 border-t border-white/5 pt-4 overflow-x-auto no-scrollbar">
            <div className="flex items-center gap-2 pr-4 border-r border-white/5">
               <button onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-white/5 transition-colors min-w-[60px]">
-                 <PlusIcon className="w-5 h-5 text-purple-400" />
+                 <Plus className="w-5 h-5 text-purple-400" />
                  <span className="text-[9px] font-black text-gray-500 uppercase">Add</span>
               </button>
               <button onClick={clearAll} className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-red-900/10 transition-colors min-w-[60px]">
-                 <TrashIcon className="w-5 h-5 text-red-500/70" />
+                 <Trash2 className="w-5 h-5 text-red-500/70" />
                  <span className="text-[9px] font-black text-gray-500 uppercase">Clear All</span>
               </button>
            </div>
@@ -415,7 +405,7 @@ const PdfManager: React.FC<{ t: TranslationSet }> = ({ t }) => {
                       placeholder="e.g. 1-10" 
                       className="bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-[10px] text-white w-24 outline-none focus:border-purple-500"
                     />
-                    <button onClick={handleRangeSelect} className="bg-gray-800 p-1.5 rounded-lg hover:bg-gray-700 transition-all"><BoltIcon className="w-4 h-4 text-purple-400"/></button>
+                    <button onClick={handleRangeSelect} className="bg-gray-800 p-1.5 rounded-lg hover:bg-gray-700 transition-all"><Zap className="w-4 h-4 text-purple-400"/></button>
                  </div>
               </div>
               <div className="flex flex-col gap-1">
@@ -433,7 +423,7 @@ const PdfManager: React.FC<{ t: TranslationSet }> = ({ t }) => {
                    <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest">{selectedIds.size} Selected</span>
                    <div className="flex gap-1">
                       <button onClick={batchRotate} className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600/10 border border-purple-500/20 text-[9px] font-black text-purple-400 rounded-lg hover:bg-purple-600 hover:text-white transition-all">
-                        <RotateRightIcon className="w-3 h-3" /> Rotate
+                        <RotateCw className="w-3 h-3" /> Rotate
                       </button>
                       <button onClick={() => batchMove('start')} className="px-3 py-1.5 bg-gray-800 text-[9px] font-black text-gray-300 rounded-lg hover:bg-gray-700">Top</button>
                       <button onClick={() => batchMove('end')} className="px-3 py-1.5 bg-gray-800 text-[9px] font-black text-gray-300 rounded-lg hover:bg-gray-700">End</button>
@@ -456,7 +446,7 @@ const PdfManager: React.FC<{ t: TranslationSet }> = ({ t }) => {
             onDrop={e => { e.preventDefault(); setIsDragging(false); handleFilesSelect(e.dataTransfer.files); }}
           >
             <div className="p-8 bg-purple-600/10 rounded-full mb-8">
-               <UploadIcon className="w-20 h-20 text-purple-500/30" />
+               <Upload className="w-20 h-20 text-purple-500/30" />
             </div>
             <h3 className="text-3xl font-black text-white uppercase tracking-tighter mb-4 text-center">Architectural Core Offline</h3>
             <p className="text-gray-500 max-w-sm text-center text-sm font-medium leading-relaxed mb-10">Upload your PDF assets or high-resolution images to begin master assembly.</p>
@@ -490,7 +480,7 @@ const PdfManager: React.FC<{ t: TranslationSet }> = ({ t }) => {
                     {isSelected && (
                       <div className="absolute top-3 left-3 z-10">
                         <div className="bg-purple-500 text-white p-1 rounded-full shadow-lg">
-                           <CheckCircleIcon className="w-5 h-5" />
+                           <CheckCircle className="w-5 h-5" />
                         </div>
                       </div>
                     )}

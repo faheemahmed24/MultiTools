@@ -4,7 +4,7 @@ import { useUserLocalStorage } from './hooks/useUserLocalStorage';
 import { getTranslations } from './lib/i18n';
 import type { Language, User, Transcription } from './types';
 import { transcribeAudio } from './services/geminiService';
-import { TOOL_STRUCTURE, ALL_TOOLS } from './constants';
+import { ALL_TOOLS } from './constants';
 
 import Header from './components/Header';
 import FileUpload from './components/FileUpload';
@@ -33,20 +33,7 @@ import TextToSpeech from './components/TextToSpeech';
 import DataSummarizer from './components/DataSummarizer';
 
 // Icons
-import { SparklesIcon } from './components/icons/SparklesIcon';
-import { BoltIcon } from './components/icons/BoltIcon';
-import { TranscriberIcon } from './components/icons/TranscriberIcon';
-import { Squares2x2Icon } from './components/icons/Squares2x2Icon';
-import { ArrowPathIcon } from './components/icons/ArrowPathIcon';
-import { SearchIcon } from './components/icons/SearchIcon';
-import { XCircleIcon } from './components/icons/XCircleIcon';
-import { CubeIcon } from './components/icons/CubeIcon';
-import { SwatchIcon } from './components/icons/SwatchIcon';
-import { SummarizerIcon } from './components/icons/SummarizerIcon';
-import { DocumentDuplicateIcon } from './components/icons/DocumentDuplicateIcon';
-import { TranslatorIcon } from './components/icons/TranslatorIcon';
-import { GrammarIcon } from './components/icons/GrammarIcon';
-import { Menu } from 'lucide-react';
+import { Sparkles, Zap, Mic, Search, XCircle, Menu } from 'lucide-react';
 
 interface ToolEntry {
   key: string;
@@ -88,9 +75,9 @@ const CommandPalette: React.FC<{
     <div className="fixed inset-0 z-[200] bg-zinc-950/40 backdrop-blur-sm flex items-start justify-center pt-[15vh] px-4 animate-fadeIn">
       <div className="w-full max-w-2xl bg-white dark:bg-zinc-900 border border-[var(--border-app)] rounded-lg shadow-2xl overflow-hidden flex flex-col transform animate-pop-in">
         <div className="flex items-center gap-4 p-5 border-b border-[var(--border-app)]">
-          <SearchIcon className="w-5 h-5 text-zinc-400" />
+          <Search className="w-5 h-5 text-zinc-400" />
           <input autoFocus type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search tools..." className="flex-grow bg-transparent text-lg text-[var(--text-primary)] outline-none placeholder:text-zinc-400" />
-          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"><XCircleIcon className="w-5 h-5" /></button>
+          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"><XCircle className="w-5 h-5" /></button>
         </div>
         <div className="max-h-[50vh] overflow-y-auto p-2 custom-scrollbar space-y-1">
           {filtered.map(tool => (
@@ -117,7 +104,7 @@ const LandingPage: React.FC<{
       <div className="max-w-4xl w-full text-center relative z-10">
         <div className="space-y-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-zinc-100 dark:bg-zinc-900 border border-[var(--border-app)] text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-4">
-            <SparklesIcon className="w-3 h-3" /> MultiTools Industrial v4.0
+            <Sparkles className="w-3 h-3" /> MultiTools Industrial v4.0
           </div>
           
           <h1 className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tighter text-[var(--text-primary)] uppercase leading-[0.85] mb-6">
@@ -136,7 +123,7 @@ const LandingPage: React.FC<{
             onClick={onStart}
             className="w-full sm:w-auto px-10 py-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold uppercase tracking-widest text-[10px] rounded-md transition-all hover:bg-zinc-800 dark:hover:bg-white active:scale-95 flex items-center justify-center gap-3"
           >
-            <TranscriberIcon className="w-4 h-4" />
+            <Mic className="w-4 h-4" />
             {currentUser ? 'Open Workstation' : 'Initialize Session'}
           </button>
           
@@ -295,7 +282,7 @@ function App() {
             default: 
               return (
                   <div className="min-h-[60vh] flex flex-col items-center justify-center text-center">
-                      <BoltIcon className="w-16 h-16 text-gray-800 mb-6" />
+                      <Zap className="w-16 h-16 text-gray-800 mb-6" />
                       <h2 className="text-2xl font-black text-white uppercase mb-2">{activeTool} Logic Offline</h2>
                       <p className="text-gray-500">This module is currently being optimized.</p>
                   </div>

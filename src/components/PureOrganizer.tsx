@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import type { TranslationSet } from '../types';
 import { pureOrganizeData } from '../services/geminiService';
-import { Squares2x2Icon } from './icons/Squares2x2Icon';
-import { DownloadIcon } from './icons/DownloadIcon';
-import { SheetIcon } from './icons/SheetIcon';
-import { DocxIcon } from './icons/DocxIcon';
-import { BoltIcon } from './icons/BoltIcon';
-import { XCircleIcon } from './icons/XCircleIcon';
+import { LayoutGrid, Download, FileSpreadsheet, FileText, Zap, XCircle } from 'lucide-react';
 import { SkeletonLoader } from './Loader';
 import PptxGenJS from 'pptxgenjs';
 import * as XLSX from 'xlsx';
@@ -130,7 +125,7 @@ const PureOrganizer: React.FC<{ t: TranslationSet }> = ({ t }) => {
         <div>
           <div className="flex items-center gap-4 mb-2">
             <div className="w-12 h-12 bg-purple-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(168,85,247,0.4)]">
-                <Squares2x2Icon className="w-7 h-7 text-white" />
+                <LayoutGrid className="w-7 h-7 text-white" />
             </div>
             <h2 className="text-4xl font-black text-white tracking-tighter uppercase leading-none">
               Pure <span className="text-transparent bg-clip-text bg-gradient-to-br from-purple-400 to-pink-600">Organizer</span>
@@ -142,13 +137,13 @@ const PureOrganizer: React.FC<{ t: TranslationSet }> = ({ t }) => {
         {result && (
           <div className="flex gap-3 animate-pop-in">
             <button onClick={exportPPTX} className="group flex items-center gap-3 bg-white/5 hover:bg-purple-600/20 text-gray-300 hover:text-purple-400 px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest border border-white/10 hover:border-purple-500/30 transition-all">
-               <DownloadIcon className="w-4 h-4" /> PPTX
+               <Download className="w-4 h-4" /> PPTX
             </button>
             <button onClick={exportXLSX} className="group flex items-center gap-3 bg-white/5 hover:bg-green-600/20 text-gray-300 hover:text-green-400 px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest border border-white/10 hover:border-green-500/30 transition-all">
-               <SheetIcon className="w-4 h-4" /> EXCEL
+               <FileSpreadsheet className="w-4 h-4" /> EXCEL
             </button>
             <button onClick={exportDOCX} className="group flex items-center gap-3 bg-purple-600 text-white px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-purple-900/20 hover:scale-105 active:scale-95 transition-all">
-               <DocxIcon className="w-4 h-4" /> Word Report
+               <FileText className="w-4 h-4" /> Word Report
             </button>
           </div>
         )}
@@ -168,7 +163,7 @@ const PureOrganizer: React.FC<{ t: TranslationSet }> = ({ t }) => {
                     dir="auto"
                 />
                 {inputText && (
-                    <button onClick={() => {setInputText(''); setResult(null);}} className="absolute top-6 right-6 p-2 bg-white/5 hover:bg-red-500/20 text-gray-500 hover:text-red-400 rounded-xl transition-all"><XCircleIcon className="w-6 h-6"/></button>
+                    <button onClick={() => {setInputText(''); setResult(null);}} className="absolute top-6 right-6 p-2 bg-white/5 hover:bg-red-500/20 text-gray-500 hover:text-red-400 rounded-xl transition-all"><XCircle className="w-6 h-6"/></button>
                 )}
            </div>
            
@@ -184,7 +179,7 @@ const PureOrganizer: React.FC<{ t: TranslationSet }> = ({ t }) => {
                     </>
                 ) : (
                     <>
-                        <BoltIcon className="w-5 h-5 group-hover:rotate-12 transition-transform" /> 
+                        <Zap className="w-5 h-5 group-hover:rotate-12 transition-transform" /> 
                         Structure Verbatim Data
                     </>
                 )}
@@ -196,7 +191,7 @@ const PureOrganizer: React.FC<{ t: TranslationSet }> = ({ t }) => {
             {!result && !isProcessing && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center opacity-20 px-10">
                     <div className="w-32 h-32 bg-purple-500/10 rounded-full flex items-center justify-center mb-8 border border-purple-500/20">
-                        <Squares2x2Icon className="w-12 h-12 text-purple-400" />
+                        <LayoutGrid className="w-12 h-12 text-purple-400" />
                     </div>
                     <h4 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Structure Preview</h4>
                     <p className="text-sm font-medium text-gray-400 leading-relaxed">Your data will appear here organized into distinct, verbatim categories with perfect typography.</p>
@@ -258,7 +253,7 @@ const PureOrganizer: React.FC<{ t: TranslationSet }> = ({ t }) => {
       {error && (
         <div className="p-6 bg-red-500/10 border border-red-500/20 text-red-400 rounded-3xl text-sm font-bold text-center animate-shake">
             <div className="flex items-center justify-center gap-3 mb-1">
-                <XCircleIcon className="w-5 h-5" />
+                <XCircle className="w-5 h-5" />
                 <span>HEAVY PROCESSING FAULT</span>
             </div>
             <p className="opacity-60">{error}</p>
