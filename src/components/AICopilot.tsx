@@ -22,7 +22,7 @@ const AICopilot: React.FC<{ t: TranslationSet }> = ({ t }) => {
 
     try {
         const result = await runAICommand(currentCmd, activeFile || undefined);
-        setHistory(prev => [...prev, { role: 'ai', text: result }]);
+        setHistory(prev => [...prev, { role: 'ai', text: result || '' }]);
     } catch (err: any) {
         setHistory(prev => [...prev, { role: 'ai', text: `System Error: ${err.message}` }]);
     } finally {

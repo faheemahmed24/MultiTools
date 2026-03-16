@@ -76,7 +76,7 @@ const AIPDFEditor: React.FC<{ t: TranslationSet }> = ({ t }) => {
     setRedoStack([]);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Task: ${action}\n\nTarget Text:\n${content}`,

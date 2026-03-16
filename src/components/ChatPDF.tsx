@@ -20,7 +20,7 @@ const ChatPDF: React.FC<{ t: TranslationSet }> = ({ t }) => {
     setIsProcessing(true);
     try {
       const result = await transcribeAudio(files[0], 'auto');
-      const text = result.segments.map(s => s.text).join('\n');
+      const text = result.segments.map((s: any) => s.text).join('\n');
       setDocumentContent(text);
       setFileName(files[0].name);
       setChatHistory([{ role: 'ai', text: `System initialized. I have indexed "${files[0].name}". How can I help you analyze it today?` }]);
@@ -42,7 +42,7 @@ const ChatPDF: React.FC<{ t: TranslationSet }> = ({ t }) => {
     setIsResponding(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `You are an expert document analyzer. Base your answers strictly on the following text:\n\n--- DOCUMENT START ---\n${documentContent}\n--- DOCUMENT END ---\n\nQuestion: ${userQuery}`,

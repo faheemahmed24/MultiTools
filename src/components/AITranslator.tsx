@@ -40,11 +40,12 @@ const AITranslator: React.FC<AITranslatorProps> = ({ t, onTranslationComplete })
     setError(null);
     try {
       const result = await translateText(debouncedInputText, sourceLang.name, targetLang.name);
-      setTranslatedText(result);
-      setEditedTranslatedText(result);
+      const finalResult = result || '';
+      setTranslatedText(finalResult);
+      setEditedTranslatedText(finalResult);
       onTranslationComplete({
         inputText: debouncedInputText,
-        translatedText: result,
+        translatedText: finalResult,
         sourceLang: sourceLang.name,
         targetLang: targetLang.name
       });
